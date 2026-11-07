@@ -152,13 +152,19 @@
     if (walkBtn) walkBtn.addEventListener('click', doWalk);
     if (restBtn) restBtn.addEventListener('click', doRest);
 
-    setInterval(async () => {
-        try {
-            const state = await Game.get('/game/state');
+    // Обновление состояния: редко и только когда вкладка активна (не грузим сервер).
+    function pollState() {
+        if (document.hidden) return;
+        Game.get('/game/state').then((state) => {
             currentEnergy = state.energy;
             Game.updateState(state);
-        } catch (e) {}
-    }, 5000);
+        }).catch(() => {});
+    }
+
+    setInterval(pollState, 30000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollState();
+    });
 })();
 </script>
 
