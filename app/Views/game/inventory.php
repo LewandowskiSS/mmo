@@ -115,6 +115,7 @@ $rarityHex = [
                                     data-name="<?= esc($it->name) ?>"
                                     data-price="<?= (int) ($it->price ?? 0) ?>"
                                     data-rarity="<?= esc($it->rarity) ?>"
+                                    data-qty="<?= (int) $it->quantity ?>"
                                     class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
                                     💰 Продать за <span class="font-semibold">🪙 <?= (int) ($it->price ?? 0) ?></span>
                                 </button>
@@ -173,26 +174,52 @@ function inventoryFilters() {
             if (action === 'sell') {
                 const name = btn.dataset.name || 'предмет';
                 const price = parseInt(btn.dataset.price || '0', 10);
+                const qty = parseInt(btn.dataset.qty || '1', 10);
                 const color = rarityColors[btn.dataset.rarity] || '#e2e8f0';
 
                 const c = await Swal.fire({
-                    title: 'Вы действительно хотите продать',
-                    html: '<span style="color:' + color + ';font-weight:700">' + name + '</span> за <b>🪙 ' + price + '</b>?',
-                    icon: 'question',
+                    title: 'Быстрая продажа',
+                    html:
+                        '<span style="color:' + color + ';font-weight:700">' + name + '</span>' +
+                        '<p style="margin-top:8px;font-size:0.9em">Сколько продать? Ты получишь <b>🪙 ' + price + '</b> за каждый предмет.</p>' +
+                        '<div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">' +
+                            '<input id="sell-qty" type="number" min="1" max="' + qty + '" value="1" ' +
+                                'style="width:110px;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 10px;color:#e2e8f0;text-align:center;font-size:1.1em;" />' +
+                            '<button type="button" id="sell-all" ' +
+                                'style="background:#334155;border:1px solid #475569;border-radius:8px;padding:8px 14px;color:#e2e8f0;font-weight:600;font-size:0.9em;">Все (' + qty + ')</button>' +
+                        '</div>',
                     showCancelButton: true,
-                    confirmButtonText: 'Да',
-                    cancelButtonText: 'Нет',
+                    confirmButtonText: 'Продать',
+                    cancelButtonText: 'Отмена',
                     background: '#1e293b',
                     color: '#e2e8f0',
                     confirmButtonColor: '#10b981',
                     cancelButtonColor: '#64748b',
+                    didOpen: () => {
+                        const input = document.getElementById('sell-qty');
+                        input.focus();
+                        input.select();
+                        document.getElementById('sell-all').addEventListener('click', () => {
+                            input.value = qty;
+                            input.dispatchEvent(new Event('input'));
+                        });
+                    },
+                    preConfirm: () => {
+                        const val = parseInt(document.getElementById('sell-qty').value, 10);
+                        if (!val || val < 1 || val > qty) {
+                            Swal.showValidationMessage('Введи число от 1 до ' + qty);
+                            return false;
+                        }
+                        return val;
+                    },
                 });
                 if (!c.isConfirmed) return;
+                var sellQty = c.value;
             }
 
             btn.disabled = true;
             try {
-                const data = await Game.post(urls[action], { inv_id: invId });
+                const data = await Game.post(urls[action], { inv_id: invId, quantity: sellQty });
                 Game.toast(data.message, data.success ? 'success' : 'error');
                 if (data.success) {
                     setTimeout(() => window.location.reload(), 600);

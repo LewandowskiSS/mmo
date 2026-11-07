@@ -514,9 +514,14 @@ class Game extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден']);
         }
 
-        $price = max(0, (int) $item->price);
-        if ((int) $inv->quantity > 1) {
-            $inventory->update($inv->id, ['quantity' => (int) $inv->quantity - 1]);
+        $maxQty   = (int) $inv->quantity;
+        $quantity = (int) ($this->request->getPost('quantity') ?: 1);
+        $quantity = max(1, min($quantity, $maxQty));
+
+        $price = max(0, (int) $item->price) * $quantity;
+
+        if ($quantity < $maxQty) {
+            $inventory->update($inv->id, ['quantity' => $maxQty - $quantity]);
         } else {
             $inventory->delete($inv->id);
         }
