@@ -440,6 +440,53 @@ class Game extends BaseController
         ]);
     }
 
+    public function shop()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        $items = (new ItemModel())->orderBy('price', 'ASC')->findAll();
+
+        return view('game/shop', [
+            'character' => $character,
+            'items'     => $items,
+        ]);
+    }
+
+    public function buy()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $itemId = (int) $this->request->getPost('item_id');
+        $item   = (new ItemModel())->find($itemId);
+
+        if (! $item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден']);
+        }
+
+        if ($character->gold < $item->price) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Не хватает золота',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        (new CharacterModel())->update($character->id, ['gold' => $character->gold - $item->price]);
+        $this->giveItem($character->id, $item->id);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Куплено: {$item->emoji} {$item->name} (-{$item->price} 🪙)",
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
     // ---------- Приватные помощники ----------
 
     private function currentCharacter()

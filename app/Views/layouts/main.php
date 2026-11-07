@@ -15,6 +15,7 @@
                 <?php if (session()->get('user_id')): ?>
                     <a href="/" class="text-slate-300 hover:text-white">Игра</a>
                     <a href="/game/inventory" class="text-slate-300 hover:text-white">Инвентарь</a>
+                    <a href="/game/shop" class="text-slate-300 hover:text-white">Магазин</a>
                     <a href="/logout" class="text-slate-300 hover:text-white">Выйти</a>
                 <?php else: ?>
                     <a href="/login" class="text-slate-300 hover:text-white">Войти</a>
