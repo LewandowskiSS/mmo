@@ -92,14 +92,16 @@ $rcMap = [
                 @click="doAction('/game/walk')">
                 🚶 Прогулка <span class="text-sm font-normal">(-1 ⚡)</span>
             </button>
-            <svg class="absolute pointer-events-none" style="top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px)" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"
-                 :style="walking ? 'opacity:1; transition: none' : 'opacity:0; transition: none'">
-                <rect x="3" y="3" width="94" height="94" rx="14" fill="none"
-                      stroke="#34d399" stroke-width="2" vector-effect="non-scaling-stroke"
-                      pathLength="100" stroke-dasharray="100"
-                      :stroke-dashoffset="walking ? 0 : 100"
-                      :style="walking ? 'transition: stroke-dashoffset 3000ms linear' : 'transition: none'" />
-            </svg>
+            <div class="absolute pointer-events-none" style="top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px)"
+                 :style="walking ? 'opacity:1' : 'opacity:0'">
+                <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    <rect x="3" y="3" width="94" height="94" rx="14" fill="none"
+                          stroke="#34d399" stroke-width="2" vector-effect="non-scaling-stroke"
+                          pathLength="100" stroke-dasharray="100"
+                          :stroke-dashoffset="walking ? 0 : 100"
+                          :style="walking ? 'transition: stroke-dashoffset 3000ms linear' : 'transition: none'" />
+                </svg>
+            </div>
         </div>
 
         <div id="rest-block" x-show="restVisible">
