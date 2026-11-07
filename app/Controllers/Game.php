@@ -383,9 +383,15 @@ class Game extends BaseController
             }
         }
 
+        $counts = [];
+        foreach ($items as $it) {
+            $counts[$it->rarity] = ($counts[$it->rarity] ?? 0) + 1;
+        }
+
         return view('game/inventory', [
             'character' => $character,
             'items'     => $items,
+            'counts'    => $counts,
         ]);
     }
 

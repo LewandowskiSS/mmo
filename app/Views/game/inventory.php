@@ -34,7 +34,7 @@ $rarityHex = [
 ];
 ?>
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="inventoryFilters()">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">🎒 Инвентарь</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
@@ -48,32 +48,34 @@ $rarityHex = [
     <?php else: ?>
 
         <div class="flex gap-2 text-sm">
-            <button type="button" data-tab="all" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-700 text-white font-semibold">Все</button>
-            <button type="button" data-tab="weapon" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">⚔️ Оружие</button>
-            <button type="button" data-tab="armor" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">🛡️ Броня</button>
-            <button type="button" data-tab="consumable" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">🧪 Расходники</button>
+            <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">Все</button>
+            <button type="button" @click="tab = 'weapon'" :class="tab === 'weapon' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">⚔️ Оружие</button>
+            <button type="button" @click="tab = 'armor'" :class="tab === 'armor' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">🛡️ Броня</button>
+            <button type="button" @click="tab = 'consumable'" :class="tab === 'consumable' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">🧪 Расходники</button>
         </div>
 
-        <input id="inv-search" type="text" placeholder="🔍 Поиск по имени..."
+        <input x-model="search" type="text" placeholder="🔍 Поиск по имени..."
             class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm">
 
         <div class="flex flex-wrap gap-1.5">
             <?php foreach ($rarityNames as $key => $name): ?>
-                <button type="button" data-rarity="<?= $key ?>"
-                    class="rarity-chip text-xs px-2.5 py-1 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-700">
-                    <?= esc($name) ?> <span data-count="<?= $key ?>" class="opacity-60">0</span>
+                <button type="button" @click="toggleRarity('<?= $key ?>')"
+                    :style="rarities.includes('<?= $key ?>') ? 'background:<?= $rarityHex[$key] ?>33;border-color:<?= $rarityHex[$key] ?>' : ''"
+                    class="rarity-chip text-xs px-2.5 py-1 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-700"
+                    :class="rarities.includes('<?= $key ?>') ? 'text-white' : ''">
+                    <?= esc($name) ?> <span class="opacity-60"><?= esc($counts[$key] ?? 0) ?></span>
                 </button>
             <?php endforeach; ?>
         </div>
 
-        <ul id="inv-list" class="space-y-3">
+        <ul class="space-y-3">
             <?php foreach ($items as $it): ?>
                 <?php $rc = $rarityColorMap[$it->rarity] ?? 'text-slate-300'; ?>
                 <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3"
                     data-inv="<?= (int) $it->inv_id ?>"
                     data-type="<?= esc($it->type) ?>"
                     data-rarity="<?= esc($it->rarity) ?>"
-                    data-name="<?= esc($it->name) ?>">
+                    x-show="matches('<?= esc($it->type) ?>', '<?= esc($it->rarity) ?>', '<?= esc($it->name) ?>')">
                     <div class="text-3xl"><?= esc($it->emoji) ?></div>
                     <div class="flex-1">
                         <p class="font-semibold <?= $rc ?>">
@@ -108,81 +110,37 @@ $rarityHex = [
             <?php endforeach; ?>
         </ul>
 
-        <p id="inv-empty" class="hidden text-center py-8 text-slate-500">Ничего не найдено.</p>
+        <p class="hidden text-center py-8 text-slate-500" x-show="!anyVisible()">Ничего не найдено.</p>
     <?php endif; ?>
 </div>
 
 <script>
+function inventoryFilters() {
+    return {
+        tab: 'all',
+        search: '',
+        rarities: [],
+        toggleRarity(r) {
+            const i = this.rarities.indexOf(r);
+            if (i >= 0) this.rarities.splice(i, 1);
+            else this.rarities.push(r);
+        },
+        matches(type, rarity, name) {
+            const term = this.search.trim().toLowerCase();
+            const okSearch = !term || name.toLowerCase().includes(term);
+            const okTab = this.tab === 'all' || type === this.tab;
+            const okRarity = this.rarities.length === 0 || this.rarities.includes(rarity);
+            return okSearch && okTab && okRarity;
+        },
+        anyVisible() {
+            const lis = document.querySelectorAll('ul li[x-show]');
+            return Array.from(lis).some((li) => li.style.display !== 'none');
+        },
+    };
+}
+
+// Действия (надеть/снять/использовать) — через общий Game.post
 (function () {
-    const list = document.getElementById('inv-list');
-    const search = document.getElementById('inv-search');
-    const empty = document.getElementById('inv-empty');
-    const tabBtns = document.querySelectorAll('[data-tab]');
-    const chips = document.querySelectorAll('[data-rarity]');
-    const rarityHex = <?= json_encode($rarityHex) ?>;
-
-    let selectedTab = 'all';
-    let selectedRarities = new Set();
-
-    // Счётчики редкости (по всем предметам)
-    const counts = {};
-    document.querySelectorAll('#inv-list li').forEach(function (li) {
-        const r = li.dataset.rarity;
-        counts[r] = (counts[r] || 0) + 1;
-    });
-    chips.forEach(function (chip) {
-        const el = chip.querySelector('[data-count]');
-        if (el) el.textContent = counts[chip.dataset.rarity] || 0;
-    });
-
-    function applyFilters() {
-        const term = search.value.trim().toLowerCase();
-        let visible = 0;
-        document.querySelectorAll('#inv-list li').forEach(function (li) {
-            const name = li.dataset.name.toLowerCase();
-            const matchSearch = !term || name.includes(term);
-            const matchTab = selectedTab === 'all' || li.dataset.type === selectedTab;
-            const matchRarity = selectedRarities.size === 0 || selectedRarities.has(li.dataset.rarity);
-            const show = matchSearch && matchTab && matchRarity;
-            li.style.display = show ? '' : 'none';
-            if (show) visible++;
-        });
-        if (empty) empty.classList.toggle('hidden', visible !== 0);
-    }
-
-    tabBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            selectedTab = btn.dataset.tab;
-            tabBtns.forEach(function (b) {
-                b.className = 'tab-btn px-3 py-1.5 rounded-lg text-slate-300 hover:bg-slate-700';
-            });
-            btn.className = 'tab-btn px-3 py-1.5 rounded-lg bg-slate-700 text-white font-semibold';
-            applyFilters();
-        });
-    });
-
-    chips.forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            const r = chip.dataset.rarity;
-            const hex = rarityHex[r] || '#64748b';
-            if (selectedRarities.has(r)) {
-                selectedRarities.delete(r);
-                chip.style.background = '';
-                chip.style.borderColor = '';
-                chip.classList.remove('text-white');
-            } else {
-                selectedRarities.add(r);
-                chip.style.background = hex + '33';
-                chip.style.borderColor = hex;
-                chip.classList.add('text-white');
-            }
-            applyFilters();
-        });
-    });
-
-    if (search) search.addEventListener('input', applyFilters);
-
-    // Действия (надеть/снять/использовать)
     document.querySelectorAll('[data-action]').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             const li = btn.closest('li');
