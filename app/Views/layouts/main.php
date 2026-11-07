@@ -105,6 +105,10 @@
                                     <span class="text-lg">❤️</span>
                                     <div><p class="text-slate-400">Здоровье</p><p class="font-semibold"><?= esc(\App\Controllers\BaseController::$layoutData['characterHp'] ?? 0) ?>/<?= esc(\App\Controllers\BaseController::$layoutData['characterMaxHp'] ?? 50) ?></p></div>
                                 </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">💎</span>
+                                    <div><p class="text-slate-400">Алмазы</p><p class="font-semibold"><?= esc(\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0) ?></p></div>
+                                </div>
                             </div>
 
                             <nav class="p-2 space-y-0.5 text-sm">

@@ -576,44 +576,94 @@ class Game extends BaseController
             ];
         }
 
+        // Общий прогресс дня: сколько заданий выполнено из назначенных
+        $total     = count($items);
+        $completed = 0;
+        foreach ($items as $it) {
+            if ($it['claimed'] || $it['progress'] >= $it['target']) {
+                $completed++;
+            }
+        }
+        $percent = $total > 0 ? (int) floor($completed / $total * 100) : 0;
+
+        // Пороги наград: 25/50/75/100% + иконка сундука
+        $milestones = $this->taskMilestones();
+        $claimedMilestones = [];
+        if ($rows) {
+            $claimedMilestones = array_filter(explode(',', (string) ($rows[0]->milestones_claimed ?? '')));
+        }
+        foreach ($milestones as &$m) {
+            $m['icon']      = ($m['percent'] === 100 || $m['percent'] === 75) ? 'gold' : (($m['percent'] === 50) ? 'silver' : 'bronze');
+            $m['claimable'] = $percent >= $m['percent'] && ! in_array((string) $m['percent'], $claimedMilestones, true);
+            $m['claimed']   = in_array((string) $m['percent'], $claimedMilestones, true);
+        }
+        unset($m);
+
         return view('game/tasks', [
-            'character' => $character,
-            'items'     => $items,
+            'character'         => $character,
+            'items'             => $items,
+            'total'             => $total,
+            'completed'         => $completed,
+            'percent'           => $percent,
+            'milestones'        => $milestones,
         ]);
     }
 
-    public function claimTask()
+    public function claimMilestone()
     {
         $character = $this->currentCharacter();
         if (! $character) {
             return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
         }
 
-        $taskId = (int) $this->request->getPost('task_id');
-        $today  = date('Y-m-d');
+        $percent = (int) $this->request->getPost('percent');
+        if (! in_array($percent, [25, 50, 75, 100], true)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Неизвестная награда']);
+        }
 
-        $row = (new CharacterTaskModel())
+        $today = date('Y-m-d');
+        $rows  = (new CharacterTaskModel())
             ->where('character_id', $character->id)
-            ->where('task_id', $taskId)
             ->where('task_date', $today)
-            ->first();
+            ->findAll();
 
-        if (! $row) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Задание не найдено']);
+        if (empty($rows)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Нет заданий на сегодня']);
         }
-        if ((int) $row->progress < (int) $row->target) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Задание ещё не выполнено']);
+
+        // Проверка процента выполнения
+        $total     = count($rows);
+        $completed = 0;
+        foreach ($rows as $row) {
+            if ($row->claimed || (int) $row->progress >= (int) $row->target) {
+                $completed++;
+            }
         }
-        if ($row->claimed) {
+        $currentPercent = $total > 0 ? (int) floor($completed / $total * 100) : 0;
+
+        if ($currentPercent < $percent) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Порог ещё не достигнут']);
+        }
+
+        // Уже получена?
+        $claimedStr        = (string) ($rows[0]->milestones_claimed ?? '');
+        $claimedMilestones = array_filter(explode(',', $claimedStr));
+        if (in_array((string) $percent, $claimedMilestones, true)) {
             return $this->response->setJSON(['success' => false, 'message' => 'Награда уже получена']);
         }
 
-        $this->grantRewards($character, (int) $row->reward_xp, (int) $row->reward_gold);
-        (new CharacterTaskModel())->update($row->id, ['claimed' => 1]);
+        // Выдаём награду по порогу
+        $rewards = $this->milestoneReward($percent, $character);
+        $claimedMilestones[] = (string) $percent;
+        (new CharacterTaskModel())
+            ->where('character_id', $character->id)
+            ->where('task_date', $today)
+            ->set(['milestones_claimed' => implode(',', $claimedMilestones)])
+            ->update();
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Награда получена: +{$row->reward_gold} 🪙, +{$row->reward_xp} XP",
+            'message' => 'Награда получена: ' . $rewards,
             'state'   => $this->characterState($character),
         ]);
     }
@@ -761,6 +811,7 @@ class Game extends BaseController
             'bronze_keys'    => (int) ($character->bronze_keys ?? 0),
             'silver_keys'    => (int) ($character->silver_keys ?? 0),
             'gold_keys'      => (int) ($character->gold_keys ?? 0),
+            'diamonds'       => (int) ($character->diamonds ?? 0),
             'next_energy_in' => $this->secondsUntilNextEnergy($character),
         ];
     }
@@ -972,6 +1023,47 @@ class Game extends BaseController
                 'equipped'     => 0,
             ]);
         }
+    }
+
+    private function taskMilestones(): array
+    {
+        return [
+            ['percent' => 25,  'type' => 'gold',      'amount' => 100,  'label' => '100 золота'],
+            ['percent' => 50,  'type' => 'diamonds',  'amount' => 5,    'label' => '5 алмазов'],
+            ['percent' => 75,  'type' => 'gold_item', 'amount' => 200,  'item' => 3, 'label' => '200 золота + предмет'],
+            ['percent' => 100, 'type' => 'diamonds',  'amount' => 15,   'label' => '15 алмазов'],
+        ];
+    }
+
+    private function milestoneReward($percent, $character): string
+    {
+        foreach ($this->taskMilestones() as $m) {
+            if ($m['percent'] !== $percent) {
+                continue;
+            }
+
+            if ($m['type'] === 'gold') {
+                (new CharacterModel())->update($character->id, ['gold' => $character->gold + $m['amount']]);
+                return "+{$m['amount']} 🪙";
+            }
+
+            if ($m['type'] === 'diamonds') {
+                (new CharacterModel())->update($character->id, ['diamonds' => ((int) ($character->diamonds ?? 0)) + $m['amount']]);
+                return "+{$m['amount']} 💎";
+            }
+
+            if ($m['type'] === 'gold_item') {
+                (new CharacterModel())->update($character->id, ['gold' => $character->gold + $m['amount']]);
+                $item = (new ItemModel())->find($m['item']);
+                if ($item) {
+                    $this->giveItem($character->id, $item->id);
+                    return "+{$m['amount']} 🪙 + {$item->emoji} {$item->name}";
+                }
+                return "+{$m['amount']} 🪙";
+            }
+        }
+
+        return '';
     }
 
     private function progressTask($characterId, $type)

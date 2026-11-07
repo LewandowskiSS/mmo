@@ -58,6 +58,7 @@ abstract class BaseController extends Controller
                     'characterMaxEnergy' => (int) $character->max_energy,
                     'characterHp'        => (int) $character->hp,
                     'characterMaxHp'     => (int) $character->max_hp,
+                    'characterDiamonds'  => (int) ($character->diamonds ?? 0),
                 ];
             }
         }
