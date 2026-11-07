@@ -96,11 +96,9 @@ $rcMap = [
                  :class="walking ? 'opacity-100' : 'opacity-0'"
                  style="top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px)">
                 <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    <rect x="3" y="3" width="94" height="94" rx="14" fill="none"
+                    <rect class="ring-rect" x="3" y="3" width="94" height="94" rx="14" fill="none"
                           stroke="#34d399" stroke-width="2" vector-effect="non-scaling-stroke"
-                          pathLength="100" stroke-dasharray="100"
-                          :stroke-dashoffset="walking ? 0 : 100"
-                          :style="walking ? 'transition: stroke-dashoffset 3000ms linear' : 'transition: none'" />
+                          pathLength="100" stroke-dasharray="100" />
                 </svg>
             </div>
         </div>
@@ -145,6 +143,17 @@ $rcMap = [
     </div>
 </div>
 
+<style>
+    .ring-rect { stroke-dashoffset: 100; }
+    .ring-rect.ring-run {
+        animation: ringFill 3s linear forwards;
+    }
+    @keyframes ringFill {
+        from { stroke-dashoffset: 100; }
+        to   { stroke-dashoffset: 0; }
+    }
+</style>
+
 <script>
 function gameDashboard(initialEnergy) {
     return {
@@ -168,7 +177,16 @@ function gameDashboard(initialEnergy) {
         },
 
         startCooldown() {
-            this.walking = true;
+            this.walking = false;
+            this.$nextTick(() => {
+                const rect = document.querySelector('.ring-rect');
+                if (rect) {
+                    rect.classList.remove('ring-run');
+                    void rect.getBoundingClientRect(); // reflow — перезапуск анимации
+                    rect.classList.add('ring-run');
+                }
+                this.walking = true;
+            });
             setTimeout(() => {
                 this.walking = false;
             }, 3000);
