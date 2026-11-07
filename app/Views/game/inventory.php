@@ -1,6 +1,19 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<?php
+$rarityColorMap = [
+    'common'    => 'text-slate-400',
+    'uncommon'  => 'text-emerald-400',
+    'rare'      => 'text-sky-400',
+    'elite'     => 'text-violet-400',
+    'epic'      => 'text-pink-400',
+    'legendary' => 'text-amber-400',
+    'celestial' => 'text-cyan-400',
+    'exotic'    => 'text-red-400',
+];
+?>
+
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">🎒 Инвентарь</h1>
@@ -15,10 +28,11 @@
     <?php else: ?>
         <ul class="space-y-3">
             <?php foreach ($items as $it): ?>
+                <?php $rc = $rarityColorMap[$it->rarity] ?? 'text-slate-300'; ?>
                 <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3" data-inv="<?= (int) $it->inv_id ?>">
                     <div class="text-3xl"><?= esc($it->emoji) ?></div>
                     <div class="flex-1">
-                        <p class="font-semibold">
+                        <p class="font-semibold <?= $rc ?>">
                             <?= esc($it->name) ?>
                             <?php if ($it->equipped): ?><span class="text-xs text-emerald-400 ml-1">✓ надето</span><?php endif; ?>
                         </p>
@@ -26,6 +40,13 @@
                             <?= $it->type === 'weapon' ? 'Оружие' : ($it->type === 'armor' ? 'Броня' : 'Расходник') ?>
                             <?php if ($it->type !== 'consumable'): ?>
                                 · +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? 'атаки' : 'защиты' ?>
+                                <?php if ($it->cmp === 'up'): ?>
+                                    <span class="text-emerald-400 font-bold">▲</span>
+                                <?php elseif ($it->cmp === 'down'): ?>
+                                    <span class="text-red-400 font-bold">▼</span>
+                                <?php elseif ($it->cmp === 'equal'): ?>
+                                    <span class="text-slate-500 font-bold">=</span>
+                                <?php endif; ?>
                             <?php else: ?>
                                 · восстанавливает <?= (int) $it->value ?> <?= $it->stat === 'hp' ? 'HP' : 'энергии' ?>
                             <?php endif; ?>

@@ -7,6 +7,7 @@ use App\Models\CharacterModel;
 use App\Models\CharacterTaskModel;
 use App\Models\ChestModel;
 use App\Models\DailyTaskModel;
+use App\Models\EventLogModel;
 use App\Models\InventoryModel;
 use App\Models\ItemModel;
 use App\Models\MonsterModel;
@@ -34,10 +35,10 @@ class Game extends BaseController
             'hp_percent'     => (int) round($character->hp / $character->max_hp * 100),
             'energy_percent' => (int) round($character->energy / $character->max_energy * 100),
             'rest_cost'      => max(1, $character->max_hp - $character->hp),
-            'battle_log'     => (new BattleLogModel())
+            'event_log'      => (new EventLogModel())
                 ->where('character_id', $character->id)
                 ->orderBy('id', 'DESC')
-                ->findAll(10),
+                ->findAll(5),
         ]);
     }
 
@@ -113,11 +114,13 @@ class Game extends BaseController
         }
 
         $texts = $this->flavorTexts();
+        $text  = $texts[array_rand($texts)];
+        $this->logEvent($character->id, 'walk', $text);
 
         return $this->response->setJSON([
             'success' => true,
             'type'    => 'text',
-            'message' => $texts[array_rand($texts)],
+            'message' => $text,
             'state'   => $this->characterState($character),
         ]);
     }
@@ -171,6 +174,7 @@ class Game extends BaseController
             $gold     = random_int($monster->gold_min, $monster->gold_max);
             $newLevel = $this->grantRewards($character, $xp, $gold);
             $this->logBattle($character->id, $monster->id, 'win', $xp, $gold);
+            $this->logEvent($character->id, 'battle', "Победа над {$monster->name}", null, $monster->emoji);
             $this->progressTask($character->id, 'kill');
             $this->progressTask($character->id, 'win');
             $this->session->remove('battle');
@@ -196,6 +200,7 @@ class Game extends BaseController
         if ($newHp <= 0) {
             $goldLost = $this->applyDeath($character);
             $this->logBattle($character->id, $monster->id, 'lose', 0, 0);
+            $this->logEvent($character->id, 'battle', "Поражение от {$monster->name}", null, $monster->emoji);
             $this->session->remove('battle');
 
             return $this->response->setJSON([
@@ -249,6 +254,7 @@ class Game extends BaseController
 
         if (random_int(1, 100) <= 50) {
             $this->logBattle($character->id, $monster->id, 'flee', 0, 0);
+            $this->logEvent($character->id, 'battle', "Сбежал от {$monster->name}", null, $monster->emoji);
             $this->session->remove('battle');
 
             return $this->response->setJSON([
@@ -268,6 +274,7 @@ class Game extends BaseController
         if ($newHp <= 0) {
             $goldLost = $this->applyDeath($character);
             $this->logBattle($character->id, $monster->id, 'lose', 0, 0);
+            $this->logEvent($character->id, 'battle', "Поражение от {$monster->name}", null, $monster->emoji);
             $this->session->remove('battle');
 
             return $this->response->setJSON([
@@ -333,11 +340,48 @@ class Game extends BaseController
         }
 
         $items = (new InventoryModel())
-            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.description, items.emoji')
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->orderBy('inventory.id', 'ASC')
             ->findAll();
+
+        // Значения надетой экипировки по типам (для сравнения)
+        $equippedRows = (new InventoryModel())
+            ->select('items.type AS type, items.value AS value')
+            ->join('items', 'items.id = inventory.item_id')
+            ->where('inventory.character_id', $character->id)
+            ->where('inventory.equipped', 1)
+            ->findAll();
+
+        $equippedValue = [];
+        foreach ($equippedRows as $eq) {
+            $equippedValue[$eq->type] = (int) $eq->value;
+        }
+
+        foreach ($items as $it) {
+            if ($it->type === 'consumable') {
+                $it->cmp = null;
+                continue;
+            }
+
+            if ($it->equipped) {
+                $it->cmp = 'equipped';
+                continue;
+            }
+
+            $current = $equippedValue[$it->type] ?? null;
+
+            if ($current === null) {
+                $it->cmp = 'up'; // ничего не надето — апгрейд
+            } elseif ((int) $it->value > $current) {
+                $it->cmp = 'up';
+            } elseif ((int) $it->value < $current) {
+                $it->cmp = 'down';
+            } else {
+                $it->cmp = 'equal';
+            }
+        }
 
         return view('game/inventory', [
             'character' => $character,
@@ -1010,6 +1054,17 @@ class Game extends BaseController
         return $keyType . '_keys';
     }
 
+    private function logEvent($characterId, $type, $message, $rarity = null, $emoji = null): void
+    {
+        (new EventLogModel())->insert([
+            'character_id' => $characterId,
+            'type'         => $type,
+            'message'      => mb_substr($message, 0, 255),
+            'rarity'       => $rarity,
+            'emoji'        => $emoji,
+        ]);
+    }
+
     private function consumeStep($character): void
     {
         (new CharacterModel())->update($character->id, [
@@ -1095,11 +1150,13 @@ class Game extends BaseController
         // 35% — текст
         if ($roll <= 75) {
             $texts = $this->flavorTexts();
+            $text  = $texts[array_rand($texts)];
+            $this->logEvent($character->id, 'walk', $text);
 
             return [
                 'success' => true,
                 'type'    => 'text',
-                'message' => $texts[array_rand($texts)],
+                'message' => $text,
                 'state'   => $this->characterState($character),
             ];
         }
@@ -1108,6 +1165,7 @@ class Game extends BaseController
         if ($roll <= 87) {
             $gold = random_int(1, 5) + $character->level;
             (new CharacterModel())->update($character->id, ['gold' => $character->gold + $gold]);
+            $this->logEvent($character->id, 'gold', "Найдено {$gold} золота");
 
             return [
                 'success' => true,
@@ -1123,6 +1181,7 @@ class Game extends BaseController
             $item  = $items[array_rand($items)];
             $this->giveItem($character->id, $item->id);
             $this->progressTask($character->id, 'item');
+            $this->logEvent($character->id, 'item', $item->name, $item->rarity, $item->emoji);
 
             return [
                 'success' => true,
@@ -1135,6 +1194,7 @@ class Game extends BaseController
         // 3% — ключ
         if ($roll <= 98) {
             (new CharacterModel())->update($character->id, ['bronze_keys' => ((int) ($character->bronze_keys ?? 0)) + 1]);
+            $this->logEvent($character->id, 'key', 'Найден бронзовый ключ');
 
             return [
                 'success' => true,
@@ -1145,6 +1205,7 @@ class Game extends BaseController
         }
 
         // 2% — ничего
+        $this->logEvent($character->id, 'walk', 'Ты прогулялся по округе, но ничего не нашёл.');
         return [
             'success' => true,
             'type'    => 'nothing',

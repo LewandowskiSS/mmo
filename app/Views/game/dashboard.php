@@ -1,6 +1,19 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<?php
+$rcMap = [
+    'common'    => 'text-slate-400',
+    'uncommon'  => 'text-emerald-400',
+    'rare'      => 'text-sky-400',
+    'elite'     => 'text-violet-400',
+    'epic'      => 'text-pink-400',
+    'legendary' => 'text-amber-400',
+    'celestial' => 'text-cyan-400',
+    'exotic'    => 'text-red-400',
+];
+?>
+
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <div>
@@ -80,20 +93,27 @@
     <p id="energy-timer" class="text-xs text-slate-500 text-center">Энергия восстанавливается: 1 ⚡ в минуту.</p>
 
     <div>
-        <h2 class="text-lg font-semibold mb-2">📜 Журнал боёв</h2>
-        <?php if (empty($battle_log)): ?>
+        <h2 class="text-lg font-semibold mb-2">📜 Журнал событий</h2>
+        <?php if (empty($event_log)): ?>
             <p class="text-sm text-slate-500">Пока нет записей. Отправься на прогулку!</p>
         <?php else: ?>
             <ul class="space-y-2">
-                <?php foreach ($battle_log as $entry): ?>
-                    <li class="text-sm bg-slate-800 rounded-lg px-3 py-2 flex justify-between">
-                        <span>
-                            <?php if ($entry->result === 'win'): ?>✅ Победа
-                            <?php elseif ($entry->result === 'lose'): ?>❌ Поражение
-                            <?php else: ?>💨 Побег<?php endif; ?>
-                            <?php if ($entry->xp_gained > 0): ?> (+<?= esc($entry->xp_gained) ?> XP)<?php endif; ?>
+                <?php foreach ($event_log as $e): ?>
+                    <li class="text-sm bg-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2">
+                        <span class="truncate">
+                            <?php if ($e->type === 'battle'): ?>
+                                <?= esc($e->emoji) ?> <?= esc($e->message) ?>
+                            <?php elseif ($e->type === 'item'): ?>
+                                <span class="<?= $rcMap[$e->rarity] ?? 'text-slate-300' ?>"><?= esc($e->emoji) ?> <?= esc($e->message) ?></span>
+                            <?php elseif ($e->type === 'gold'): ?>
+                                💰 <?= esc($e->message) ?>
+                            <?php elseif ($e->type === 'key'): ?>
+                                🔑 <?= esc($e->message) ?>
+                            <?php else: ?>
+                                🚶 <?= esc($e->message) ?>
+                            <?php endif; ?>
                         </span>
-                        <span class="text-slate-400 text-xs"><?= esc($entry->created_at) ?></span>
+                        <span class="text-slate-400 text-xs shrink-0"><?= esc($e->created_at) ?></span>
                     </li>
                 <?php endforeach; ?>
             </ul>
