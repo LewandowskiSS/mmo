@@ -1500,6 +1500,8 @@ class Game extends BaseController
                 'success' => true,
                 'type'    => 'item',
                 'message' => "Ты нашёл предмет: {$item->emoji} {$item->name}!",
+                'rarity'  => $item->rarity,
+                'emoji'   => $item->emoji,
                 'state'   => $this->characterState($character),
             ];
         }

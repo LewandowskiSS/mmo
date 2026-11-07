@@ -12,9 +12,20 @@ $rcMap = [
     'celestial' => 'text-cyan-400',
     'exotic'    => 'text-red-400',
 ];
+$initialLogs = [];
+foreach ($event_log as $e) {
+    $initialLogs[] = [
+        'type'       => $e->type,
+        'message'    => $e->message,
+        'emoji'      => $e->emoji,
+        'rarity'     => $e->rarity,
+        'created_at' => $e->created_at,
+        'isNew'      => false,
+    ];
+}
 ?>
 
-<div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>)">
+<div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>, <?= htmlspecialchars(json_encode($initialLogs, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold"><?= esc($character->name) ?></h1>
@@ -110,30 +121,29 @@ $rcMap = [
 
     <div>
         <h2 class="text-lg font-semibold mb-2">📜 Журнал событий</h2>
-        <?php if (empty($event_log)): ?>
-            <p class="text-sm text-slate-500">Пока нет записей. Отправься на прогулку!</p>
-        <?php else: ?>
-            <ul class="space-y-2">
-                <?php foreach ($event_log as $e): ?>
-                    <li class="text-sm bg-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2">
-                        <span class="truncate">
-                            <?php if ($e->type === 'battle'): ?>
-                                <?= esc($e->emoji) ?> <?= esc($e->message) ?>
-                            <?php elseif ($e->type === 'item'): ?>
-                                <span class="<?= $rcMap[$e->rarity] ?? 'text-slate-300' ?>"><?= esc($e->emoji) ?> <?= esc($e->message) ?></span>
-                            <?php elseif ($e->type === 'gold'): ?>
-                                💰 <?= esc($e->message) ?>
-                            <?php elseif ($e->type === 'key'): ?>
-                                🔑 <?= esc($e->message) ?>
-                            <?php else: ?>
-                                🚶 <?= esc($e->message) ?>
-                            <?php endif; ?>
-                        </span>
-                        <span class="text-slate-400 text-xs shrink-0"><?= esc($e->created_at) ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
+        <p class="text-sm text-slate-500" x-show="logs.length === 0" x-cloak>Пока нет записей. Отправься на прогулку!</p>
+        <ul class="space-y-2">
+            <template x-for="log in logs" :key="log.created_at + '|' + log.message">
+                <li class="text-sm bg-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2"
+                    :class="log.isNew ? 'log-enter' : ''">
+                    <span class="truncate">
+                        <template x-if="log.type === 'item'">
+                            <span :class="rc(log.rarity)" x-text="(log.emoji ? log.emoji + ' ' : '') + log.message"></span>
+                        </template>
+                        <template x-if="log.type === 'gold'">
+                            <span class="text-slate-300" x-text="'💰 ' + log.message"></span>
+                        </template>
+                        <template x-if="log.type === 'key'">
+                            <span class="text-slate-300" x-text="'🔑 ' + log.message"></span>
+                        </template>
+                        <template x-if="log.type !== 'item' && log.type !== 'gold' && log.type !== 'key'">
+                            <span class="text-slate-300" x-text="'🚶 ' + log.message"></span>
+                        </template>
+                    </span>
+                    <span class="text-slate-400 text-xs shrink-0" x-text="log.created_at"></span>
+                </li>
+            </template>
+        </ul>
     </div>
 </div>
 
@@ -149,6 +159,9 @@ $rcMap = [
     .event-anim {
         animation: fadeSlide .5s ease;
     }
+    .log-enter {
+        animation: fadeSlide .5s ease;
+    }
     @keyframes fadeSlide {
         from { opacity: 0; transform: translateY(6px); }
         to   { opacity: 1; transform: translateY(0); }
@@ -156,12 +169,13 @@ $rcMap = [
 </style>
 
 <script>
-function gameDashboard(initialEnergy) {
+function gameDashboard(initialEnergy, initialLogs = []) {
     return {
         energy: initialEnergy,
         walking: false,
         event: { type: 'text', message: 'Нажми «Прогулка», чтобы отправиться в путь.' },
         restVisible: <?= $character->hp < $character->max_hp ? 'true' : 'false' ?>,
+        logs: initialLogs,
 
         monsterPct() {
             const b = this.event.battle;
@@ -183,6 +197,36 @@ function gameDashboard(initialEnergy) {
             el.classList.remove('event-anim');
             void el.offsetWidth; // reflow — перезапуск анимации
             el.classList.add('event-anim');
+        },
+
+        rc(r) {
+            const map = {
+                common: 'text-slate-400', uncommon: 'text-emerald-400', rare: 'text-sky-400',
+                elite: 'text-violet-400', epic: 'text-pink-400', legendary: 'text-amber-400',
+                celestial: 'text-cyan-400', exotic: 'text-red-400',
+            };
+            return map[r] || 'text-slate-300';
+        },
+
+        // Добавляем новое событие в начало журнала (без перезагрузки)
+        prependLog(data) {
+            if (!data || !data.type || data.type === 'monster' || !data.message) return;
+
+            let emoji = '🚶';
+            let rarity = null;
+            if (data.type === 'gold') emoji = '💰';
+            else if (data.type === 'key') emoji = '🔑';
+            else if (data.type === 'item') { emoji = data.emoji || '🎒'; rarity = data.rarity || null; }
+
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+                ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+            const entry = { type: data.type, message: data.message, emoji: emoji, rarity: rarity, created_at: ts, isNew: true };
+            this.logs.unshift(entry);
+            if (this.logs.length > 10) this.logs.pop();
+            setTimeout(() => { entry.isNew = false; }, 600);
         },
 
         startCooldown() {
@@ -210,6 +254,7 @@ function gameDashboard(initialEnergy) {
                 }
                 this.event = data;
                 this.animateEvent();
+                this.prependLog(data);
             } catch (e) {
                 Game.toast('Ошибка соединения', 'error');
             }
