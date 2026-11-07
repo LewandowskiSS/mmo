@@ -34,7 +34,7 @@
                 data-key-type="<?= esc($chest->key_type) ?>"
                 data-key-price="<?= (int) $chest->key_price ?>">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="text-3xl"><?= esc($chest->emoji) ?></div>
+                    <img src="/img/chests/<?= esc($chest->key_type) ?>.png" alt="<?= esc($chest->name) ?>" class="w-14 h-14 object-contain shrink-0">
                     <div class="flex-1">
                         <p class="font-semibold"><?= esc($chest->name) ?></p>
                         <p class="text-xs text-slate-400">Шанс выпадения:</p>
