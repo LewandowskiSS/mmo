@@ -246,6 +246,15 @@ class Game extends BaseController
 
         $this->session->set('battle', [
             'monster_id' => $monster->id,
+            'name'       => $monster->name,
+            'emoji'      => $monster->emoji,
+            'level'      => $monster->level,
+            'max_hp'     => $monster->hp,
+            'attack'     => $monster->attack,
+            'defense'    => $monster->defense,
+            'xp_reward'  => $monster->xp_reward,
+            'gold_min'   => $monster->gold_min,
+            'gold_max'   => $monster->gold_max,
             'monster_hp' => $monsterHp,
         ]);
 
