@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <title>⚔️ Моя ММО</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/game.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
     <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0">
@@ -49,6 +50,5 @@
     <footer class="text-center text-xs text-slate-600 py-6">
         Учебный проект в духе браузерных MMO
     </footer>
-    <script src="/js/game.js"></script>
 </body>
 </html>
