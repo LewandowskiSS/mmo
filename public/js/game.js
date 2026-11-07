@@ -93,11 +93,24 @@
 })();
 
 // Общее состояние лейаута (сайдбар + профиль)
-function layout() {
+function layout(seed = {}) {
     return {
         sidebarCollapsed: true,
         sidebarMobile: false,
         profileOpen: false,
+
+        // Живые данные профиля (обновляются с /game/state при каждом открытии меню)
+        st: {
+            name: seed.name || 'Игрок',
+            level: seed.level || 1,
+            xpPercent: seed.xpPercent || 0,
+            gold: seed.gold || 0,
+            energy: seed.energy || 0,
+            maxEnergy: seed.maxEnergy || 20,
+            hp: seed.hp || 0,
+            maxHp: seed.maxHp || 50,
+            diamonds: seed.diamonds || 0,
+        },
 
         init() {
             const saved = localStorage.getItem('sidebarCollapsed');
@@ -112,6 +125,30 @@ function layout() {
             } else {
                 this.sidebarCollapsed = !this.sidebarCollapsed;
                 localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? '1' : '0');
+            }
+        },
+
+        toggleProfile() {
+            this.profileOpen = !this.profileOpen;
+            if (this.profileOpen) {
+                this.refreshProfile();
+            }
+        },
+
+        async refreshProfile() {
+            try {
+                const s = await Game.get('/game/state');
+                if (!s || s.level === undefined) return;
+                this.st.level = s.level;
+                this.st.xpPercent = s.xp_needed ? Math.min(100, Math.round(s.xp / s.xp_needed * 100)) : 0;
+                this.st.gold = s.gold;
+                this.st.energy = s.energy;
+                this.st.maxEnergy = s.max_energy;
+                this.st.hp = s.hp;
+                this.st.maxHp = s.max_hp;
+                this.st.diamonds = s.diamonds;
+            } catch (e) {
+                // Тихо: при ошибке показываем последние известные значения
             }
         },
     };

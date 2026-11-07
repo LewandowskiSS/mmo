@@ -11,7 +11,17 @@
     <script src="/js/game.js"></script>
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen" x-data="layout()">
+<body class="bg-slate-900 text-slate-100 min-h-screen" x-data="layout(<?= htmlspecialchars(json_encode([
+    'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',
+    'level'     => (int) (\App\Controllers\BaseController::$layoutData['characterLevel'] ?? 1),
+    'xpPercent' => (int) (\App\Controllers\BaseController::$layoutData['characterXpPercent'] ?? 0),
+    'gold'      => (int) (\App\Controllers\BaseController::$layoutData['characterGold'] ?? 0),
+    'energy'    => (int) (\App\Controllers\BaseController::$layoutData['characterEnergy'] ?? 0),
+    'maxEnergy' => (int) (\App\Controllers\BaseController::$layoutData['characterMaxEnergy'] ?? 20),
+    'hp'        => (int) (\App\Controllers\BaseController::$layoutData['characterHp'] ?? 0),
+    'maxHp'     => (int) (\App\Controllers\BaseController::$layoutData['characterMaxHp'] ?? 50),
+    'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
+]), ENT_QUOTES, 'UTF-8') ?>)">
 
     <!-- Сайдбар: расширенный (десктоп) / полоса иконок (свернут) / оверлей (мобайл) -->
     <aside class="fixed inset-y-0 left-0 z-40 bg-slate-800 border-r border-slate-700 transition-all duration-200 flex flex-col"
@@ -75,7 +85,7 @@
 
                 <?php if (session()->get('user_id')): ?>
                     <div class="relative">
-                        <button type="button" @click="profileOpen = !profileOpen" class="flex items-center gap-2 hover:opacity-80">
+                        <button type="button" @click="toggleProfile()" class="flex items-center gap-2 hover:opacity-80">
                             <span class="text-2xl">👤</span>
                         </button>
                         <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false"
@@ -84,10 +94,10 @@
                             <div class="p-4 border-b border-slate-700 flex items-center gap-3">
                                 <span class="text-3xl">👤</span>
                                 <div class="flex-1">
-                                    <p class="font-bold text-emerald-400"><?= esc(\App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок') ?></p>
-                                    <p class="text-xs text-slate-400">Уровень <?= esc(\App\Controllers\BaseController::$layoutData['characterLevel'] ?? 1) ?></p>
+                                    <p class="font-bold text-emerald-400" x-text="st.name"></p>
+                                    <p class="text-xs text-slate-400">Уровень <span x-text="st.level"></span></p>
                                     <div class="mt-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-purple-500" style="width: <?= esc(\App\Controllers\BaseController::$layoutData['characterXpPercent'] ?? 0) ?>%"></div>
+                                        <div class="h-full bg-purple-500 transition-all duration-300" :style="'width:' + st.xpPercent + '%'"></div>
                                     </div>
                                 </div>
                             </div>
@@ -95,19 +105,19 @@
                             <div class="p-4 border-b border-slate-700 grid grid-cols-2 gap-3 text-xs">
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">🪙</span>
-                                    <div><p class="text-slate-400">Золото</p><p class="font-semibold"><?= esc(\App\Controllers\BaseController::$layoutData['characterGold'] ?? 0) ?></p></div>
+                                    <div><p class="text-slate-400">Золото</p><p class="font-semibold" x-text="st.gold"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">⚡</span>
-                                    <div><p class="text-slate-400">Энергия</p><p class="font-semibold"><?= esc(\App\Controllers\BaseController::$layoutData['characterEnergy'] ?? 0) ?>/<?= esc(\App\Controllers\BaseController::$layoutData['characterMaxEnergy'] ?? 20) ?></p></div>
+                                    <div><p class="text-slate-400">Энергия</p><p class="font-semibold" x-text="st.energy + '/' + st.maxEnergy"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">❤️</span>
-                                    <div><p class="text-slate-400">Здоровье</p><p class="font-semibold"><?= esc(\App\Controllers\BaseController::$layoutData['characterHp'] ?? 0) ?>/<?= esc(\App\Controllers\BaseController::$layoutData['characterMaxHp'] ?? 50) ?></p></div>
+                                    <div><p class="text-slate-400">Здоровье</p><p class="font-semibold" x-text="st.hp + '/' + st.maxHp"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">💎</span>
-                                    <div><p class="text-slate-400">Алмазы</p><p class="font-semibold"><?= esc(\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0) ?></p></div>
+                                    <div><p class="text-slate-400">Алмазы</p><p class="font-semibold" x-text="st.diamonds"></p></div>
                                 </div>
                             </div>
 
