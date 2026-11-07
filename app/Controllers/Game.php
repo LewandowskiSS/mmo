@@ -493,11 +493,37 @@ class Game extends BaseController
             return redirect()->to('/login');
         }
 
-        $items = (new ItemModel())->orderBy('price', 'ASC')->findAll();
+        return view('game/shop', ['character' => $character]);
+    }
 
-        return view('game/shop', [
+    public function shopCategory(string $category)
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        $categories = [
+            'gear' => ['title' => 'Оружейная лавка', 'icon' => '⚔️', 'desc' => 'Оружие и броня для твоего героя. Лучший выбор для тех, кто идёт в бой!'],
+            'potions' => ['title' => 'Аптека зелий', 'icon' => '🧪', 'desc' => 'Зелья на любой случай: здоровье, энергия — всё для выживания.'],
+        ];
+
+        if (! isset($categories[$category])) {
+            return redirect()->to('/game/shop');
+        }
+
+        $types = ($category === 'potions') ? ['consumable'] : ['weapon', 'armor'];
+
+        $items = (new ItemModel())
+            ->whereIn('type', $types)
+            ->orderBy('price', 'ASC')
+            ->findAll();
+
+        return view('game/shop_category', [
             'character' => $character,
             'items'     => $items,
+            'category'  => $category,
+            'shopInfo'  => $categories[$category],
         ]);
     }
 
