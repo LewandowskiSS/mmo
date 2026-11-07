@@ -125,7 +125,7 @@
             </div>
         </header>
 
-        <main class="px-4 py-6 w-full flex-1 max-w-4xl">
+        <main class="px-4 py-6 w-full flex-1 max-w-4xl mx-auto">
             <?php foreach (['success', 'error', 'info'] as $flashType): ?>
                 <?php $flashMsg = session()->getFlashdata($flashType); ?>
                 <?php if ($flashMsg): ?>
