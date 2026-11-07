@@ -14,5 +14,6 @@ class CharacterModel extends Model
         'user_id', 'name', 'level', 'xp', 'gold',
         'hp', 'max_hp', 'attack', 'defense',
         'energy', 'max_energy', 'last_energy_at', 'last_step_at',
+        'bronze_keys', 'silver_keys', 'gold_keys',
     ];
 }

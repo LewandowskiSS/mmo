@@ -11,7 +11,7 @@ class ChestModel extends Model
     protected $returnType    = 'object';
     protected $useTimestamps = true;
     protected $allowedFields = [
-        'name', 'emoji', 'price',
+        'name', 'emoji', 'key_type', 'key_price',
         'common_rate', 'uncommon_rate', 'rare_rate', 'epic_rate', 'legendary_rate',
     ];
 }

@@ -31,3 +31,4 @@ $routes->get('game/tasks', 'Game::tasks');
 $routes->post('game/claimTask', 'Game::claimTask');
 $routes->get('game/chests', 'Game::chests');
 $routes->post('game/openChest', 'Game::openChest');
+$routes->post('game/buyKey', 'Game::buyKey');

@@ -126,12 +126,24 @@ class Game extends BaseController
             ]);
         }
 
-        // 15% — ничего
-        if ($roll <= 95) {
+        // 12% — ничего
+        if ($roll <= 92) {
             return $this->response->setJSON([
                 'success' => true,
                 'type'    => 'nothing',
                 'message' => 'Ты прогулялся по округе, но ничего не нашёл.',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        // 3% — бронзовый ключ
+        if ($roll <= 95) {
+            (new CharacterModel())->update($character->id, ['bronze_keys' => ((int) ($character->bronze_keys ?? 0)) + 1]);
+
+            return $this->response->setJSON([
+                'success' => true,
+                'type'    => 'key',
+                'message' => 'Ты нашёл бронзовый ключ! 🔑',
                 'state'   => $this->characterState($character),
             ]);
         }
@@ -613,15 +625,18 @@ class Game extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Сундук не найден']);
         }
 
-        if ($character->gold < $chest->price) {
+        $keyField = $this->keyFieldFor($chest->key_type);
+        $keyCount = (int) ($character->$keyField ?? 0);
+
+        if ($keyCount < 1) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Не хватает золота',
+                'message' => 'Нет ключа! Купи или найди ключ.',
                 'state'   => $this->characterState($character),
             ]);
         }
 
-        (new CharacterModel())->update($character->id, ['gold' => $character->gold - $chest->price]);
+        (new CharacterModel())->update($character->id, [$keyField => $keyCount - 1]);
 
         $rarity = $this->rollRarity($chest);
         $item   = $this->randomItemByRarity($rarity);
@@ -632,6 +647,41 @@ class Game extends BaseController
             'message' => "Из сундука выпало: {$item->emoji} {$item->name}",
             'rarity'  => $rarity,
             'item'    => ['name' => $item->name, 'emoji' => $item->emoji, 'rarity' => $rarity],
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
+    public function buyKey()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $keyType = (string) $this->request->getPost('key_type');
+        $chest   = (new ChestModel())->where('key_type', $keyType)->first();
+
+        if (! $chest) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Ключ не найден']);
+        }
+
+        if ($character->gold < $chest->key_price) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Не хватает золота',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        $keyField = $this->keyFieldFor($keyType);
+        (new CharacterModel())->update($character->id, [
+            'gold'    => $character->gold - $chest->key_price,
+            $keyField => ((int) ($character->$keyField ?? 0)) + 1,
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Куплен ключ для {$chest->name}!",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -666,6 +716,9 @@ class Game extends BaseController
             'max_energy'     => (int) $character->max_energy,
             'attack'         => (int) $character->attack,
             'defense'        => (int) $character->defense,
+            'bronze_keys'    => (int) ($character->bronze_keys ?? 0),
+            'silver_keys'    => (int) ($character->silver_keys ?? 0),
+            'gold_keys'      => (int) ($character->gold_keys ?? 0),
             'next_energy_in' => $this->secondsUntilNextEnergy($character),
         ];
     }
@@ -941,6 +994,11 @@ class Game extends BaseController
     private function scaleTaskXp($base, $level): int
     {
         return (int) $base + ($level - 1) * 3;
+    }
+
+    private function keyFieldFor($keyType): string
+    {
+        return $keyType . '_keys';
     }
 
     private function rollRarity($chest): string
