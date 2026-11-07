@@ -1007,8 +1007,11 @@ class Game extends BaseController
             'common'    => (float) $chest->common_rate,
             'uncommon'  => (float) $chest->uncommon_rate,
             'rare'      => (float) $chest->rare_rate,
+            'elite'     => (float) $chest->elite_rate,
             'epic'      => (float) $chest->epic_rate,
             'legendary' => (float) $chest->legendary_rate,
+            'celestial' => (float) $chest->celestial_rate,
+            'exotic'    => (float) $chest->exotic_rate,
         ];
 
         $roll = mt_rand(0, 9999) / 100;

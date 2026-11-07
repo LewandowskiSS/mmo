@@ -23,12 +23,21 @@ class ItemSeeder extends Seeder
             ['name' => 'Мифриловый меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 15, 'price' => 500, 'description' => 'Лёгкий и острый мифриловый клинок.', 'emoji' => '🗡️', 'rarity' => 'rare'],
             ['name' => 'Мифриловая броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 12, 'price' => 550, 'description' => 'Броня из звонкого мифрила.', 'emoji' => '🛡️', 'rarity' => 'rare'],
             ['name' => 'Большое зелье', 'type' => 'consumable', 'stat' => 'hp', 'value' => 60, 'price' => 120, 'description' => 'Восстанавливает 60 HP.', 'emoji' => '🧪', 'rarity' => 'rare'],
+            // elite
+            ['name' => 'Рунический меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 20, 'price' => 900, 'description' => 'Клинок, покрытый светящимися рунами.', 'emoji' => '🗡️', 'rarity' => 'elite'],
+            ['name' => 'Руническая броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 17, 'price' => 950, 'description' => 'Доспех, усиленный древними рунами.', 'emoji' => '🛡️', 'rarity' => 'elite'],
             // epic
             ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '🐉', 'rarity' => 'epic'],
             ['name' => 'Драконья броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 20, 'price' => 1600, 'description' => 'Чешуйчатая драконья броня.', 'emoji' => '🛡️', 'rarity' => 'epic'],
             // legendary
             ['name' => 'Меч Богов', 'type' => 'weapon', 'stat' => 'attack', 'value' => 40, 'price' => 5000, 'description' => 'Легендарный клинок богов.', 'emoji' => '⚔️', 'rarity' => 'legendary'],
             ['name' => 'Броня Богов', 'type' => 'armor', 'stat' => 'defense', 'value' => 30, 'price' => 5000, 'description' => 'Непробиваемая броня богов.', 'emoji' => '🛡️', 'rarity' => 'legendary'],
+            // celestial
+            ['name' => 'Клинок Рассвета', 'type' => 'weapon', 'stat' => 'attack', 'value' => 55, 'price' => 12000, 'description' => 'Небесный клинок, сияющий светом.', 'emoji' => '🌅', 'rarity' => 'celestial'],
+            ['name' => 'Доспех Света', 'type' => 'armor', 'stat' => 'defense', 'value' => 42, 'price' => 12000, 'description' => 'Священный доспех небесных воинов.', 'emoji' => '🛡️', 'rarity' => 'celestial'],
+            // exotic
+            ['name' => 'Клинок Бездны', 'type' => 'weapon', 'stat' => 'attack', 'value' => 75, 'price' => 30000, 'description' => 'Экзотический клинок из самой бездны.', 'emoji' => '🌌', 'rarity' => 'exotic'],
+            ['name' => 'Доспех Бездны', 'type' => 'armor', 'stat' => 'defense', 'value' => 60, 'price' => 30000, 'description' => 'Броня, выкованная в пустоте.', 'emoji' => '🛡️', 'rarity' => 'exotic'],
         ];
 
         $this->db->table('items')->insertBatch($items);

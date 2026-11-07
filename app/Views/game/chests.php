@@ -48,8 +48,11 @@
                         <tr><td class="py-1 text-slate-400">Обычный</td><td class="text-right"><?= (float) $chest->common_rate ?>%</td></tr>
                         <tr><td class="py-1 text-emerald-400">Необычный</td><td class="text-right"><?= (float) $chest->uncommon_rate ?>%</td></tr>
                         <tr><td class="py-1 text-sky-400">Редкий</td><td class="text-right"><?= (float) $chest->rare_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-purple-400">Эпический</td><td class="text-right"><?= (float) $chest->epic_rate ?>%</td></tr>
+                        <tr><td class="py-1 text-violet-400">Элитный</td><td class="text-right"><?= (float) $chest->elite_rate ?>%</td></tr>
+                        <tr><td class="py-1 text-pink-400">Эпический</td><td class="text-right"><?= (float) $chest->epic_rate ?>%</td></tr>
                         <tr><td class="py-1 text-amber-400">Легендарный</td><td class="text-right"><?= (float) $chest->legendary_rate ?>%</td></tr>
+                        <tr><td class="py-1 text-cyan-400">Небесный</td><td class="text-right"><?= (float) $chest->celestial_rate ?>%</td></tr>
+                        <tr><td class="py-1 text-red-400">Экзотический</td><td class="text-right"><?= (float) $chest->exotic_rate ?>%</td></tr>
                     </tbody>
                 </table>
             </li>
@@ -67,17 +70,23 @@
     };
     const rarityColors = {
         common: '#94a3b8',
-        uncommon: '#34d399',
-        rare: '#38bdf8',
-        epic: '#a78bfa',
-        legendary: '#fbbf24',
+        uncommon: '#22c55e',
+        rare: '#3b82f6',
+        elite: '#a855f7',
+        epic: '#ec4899',
+        legendary: '#f59e0b',
+        celestial: '#06b6d4',
+        exotic: '#ef4444',
     };
     const rarityNames = {
         common: 'Обычный',
         uncommon: 'Необычный',
         rare: 'Редкий',
+        elite: 'Элитный',
         epic: 'Эпический',
         legendary: 'Легендарный',
+        celestial: 'Небесный',
+        exotic: 'Экзотический',
     };
 
     function updateState(state) {
