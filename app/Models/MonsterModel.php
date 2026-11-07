@@ -10,8 +10,5 @@ class MonsterModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = true;
-    protected $allowedFields = [
-        'name', 'level', 'hp', 'attack', 'defense',
-        'xp_reward', 'gold_min', 'gold_max', 'emoji',
-    ];
+    protected $allowedFields = ['name', 'emoji', 'min_level'];
 }

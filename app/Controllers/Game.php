@@ -81,9 +81,18 @@ class Game extends BaseController
 
         // 60% — встреча с монстром
         if ($roll <= 60) {
-            $monster = $this->randomMonster($character->level);
+            $monster = $this->spawnMonster($character->level);
             $this->session->set('battle', [
                 'monster_id' => $monster->id,
+                'name'       => $monster->name,
+                'emoji'      => $monster->emoji,
+                'level'      => $monster->level,
+                'max_hp'     => $monster->hp,
+                'attack'     => $monster->attack,
+                'defense'    => $monster->defense,
+                'xp_reward'  => $monster->xp_reward,
+                'gold_min'   => $monster->gold_min,
+                'gold_max'   => $monster->gold_max,
                 'monster_hp' => $monster->hp,
             ]);
 
@@ -152,11 +161,7 @@ class Game extends BaseController
             return redirect()->to('/')->with('info', 'Сейчас нет активного боя.');
         }
 
-        $monster = (new MonsterModel())->find($battle['monster_id']);
-        if (! $monster) {
-            $this->session->remove('battle');
-            return redirect()->to('/');
-        }
+        $monster = $this->getBattleMonster($battle);
 
         return view('game/battle', [
             'character'  => $character,
@@ -178,7 +183,7 @@ class Game extends BaseController
             return $this->response->setJSON(['success' => false, 'result' => 'no_battle', 'message' => 'Нет активного боя']);
         }
 
-        $monster   = (new MonsterModel())->find($battle['monster_id']);
+        $monster   = $this->getBattleMonster($battle);
         $monsterHp = (int) $battle['monster_hp'];
         $stats     = $this->effectiveStats($character);
 
@@ -255,7 +260,7 @@ class Game extends BaseController
             return $this->response->setJSON(['success' => false, 'result' => 'no_battle', 'message' => 'Нет активного боя']);
         }
 
-        $monster = (new MonsterModel())->find($battle['monster_id']);
+        $monster = $this->getBattleMonster($battle);
 
         if (random_int(1, 100) <= 50) {
             $this->logBattle($character->id, $monster->id, 'flee', 0, 0);
@@ -643,21 +648,45 @@ class Game extends BaseController
         return $character;
     }
 
-    private function randomMonster($playerLevel)
+    private function spawnMonster($playerLevel)
     {
-        $min = max(1, $playerLevel - 2);
-        $max = $playerLevel + 1;
-
         $monsters = (new MonsterModel())
-            ->where('level >=', $min)
-            ->where('level <=', $max)
+            ->where('min_level <=', $playerLevel)
             ->findAll();
 
         if (empty($monsters)) {
             $monsters = (new MonsterModel())->findAll();
         }
 
-        return $monsters[array_rand($monsters)];
+        $monster = $monsters[array_rand($monsters)];
+
+        // Динамические статы, зависящие от уровня
+        $level              = max(1, (int) $playerLevel + random_int(-1, 1));
+        $monster->level     = $level;
+        $monster->hp        = 15 + $level * 5;
+        $monster->attack    = 2 + (int) round($level * 1.5);
+        $monster->defense   = 1 + $level;
+        $monster->xp_reward = 5 + $level * 5;
+        $monster->gold_min  = 1 + $level;
+        $monster->gold_max  = 3 + $level * 2;
+
+        return $monster;
+    }
+
+    private function getBattleMonster($battle): object
+    {
+        return (object) [
+            'id'         => (int) $battle['monster_id'],
+            'name'       => $battle['name'],
+            'emoji'      => $battle['emoji'],
+            'level'      => (int) $battle['level'],
+            'hp'         => (int) $battle['max_hp'],
+            'attack'     => (int) $battle['attack'],
+            'defense'    => (int) $battle['defense'],
+            'xp_reward'  => (int) $battle['xp_reward'],
+            'gold_min'   => (int) $battle['gold_min'],
+            'gold_max'   => (int) $battle['gold_max'],
+        ];
     }
 
     private function calcDamage($attack, $defense): int
