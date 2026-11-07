@@ -15,12 +15,13 @@
             </div>
             <div class="text-right">
                 <p class="text-sm text-slate-400">Ключи</p>
-                <p class="text-sm leading-6">
-                    <span class="text-amber-700">🔑</span> <span id="st-bronze"><?= (int) $character->bronze_keys ?></span>
-                    &nbsp;
-                    <span class="text-slate-300">🔑</span> <span id="st-silver"><?= (int) $character->silver_keys ?></span>
-                    &nbsp;
-                    <span class="text-yellow-300">🔑</span> <span id="st-gold-keys"><?= (int) $character->gold_keys ?></span>
+                <p class="text-sm flex items-center gap-2">
+                    <img src="/img/keys/bronze.png" alt="Бронзовый ключ" class="inline-block w-5 h-5 object-contain">
+                    <span id="st-bronze" class="text-amber-700 font-semibold"><?= (int) $character->bronze_keys ?></span>
+                    <img src="/img/keys/silver.png" alt="Серебряный ключ" class="inline-block w-5 h-5 object-contain ml-2">
+                    <span id="st-silver" class="text-slate-300 font-semibold"><?= (int) $character->silver_keys ?></span>
+                    <img src="/img/keys/gold.png" alt="Золотой ключ" class="inline-block w-5 h-5 object-contain ml-2">
+                    <span id="st-gold-keys" class="text-yellow-300 font-semibold"><?= (int) $character->gold_keys ?></span>
                 </p>
             </div>
         </div>
