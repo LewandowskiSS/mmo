@@ -53,15 +53,15 @@
         </div>
         <button type="button" :disabled="busy" class="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-100 font-bold" @click="doAction('/game/flee')">💨 Сбежать</button>
     </div>
-</div>
 
-<div class="fixed inset-0 z-50 flex items-center justify-center" x-show="result" x-cloak>
+    <div class="fixed inset-0 z-50 flex items-center justify-center" x-show="result" x-cloak>
     <div class="absolute inset-0 bg-black/70" @click="result = null"></div>
     <div class="relative bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full mx-4 text-center space-y-4">
         <div class="text-5xl" x-text="result.emoji"></div>
         <h2 class="text-2xl font-bold" :class="result.cls" x-text="result.title"></h2>
         <p class="text-sm text-slate-300" x-text="result.message"></p>
         <a href="/" class="block w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold text-center">Продолжить</a>
+    </div>
     </div>
 </div>
 
