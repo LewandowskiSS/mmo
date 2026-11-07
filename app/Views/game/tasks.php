@@ -7,20 +7,21 @@
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 
-    <p class="text-xs text-slate-500">Задания обновляются каждый день.</p>
+    <p class="text-xs text-slate-500">Каждый день ты получаешь новые случайные задания. Награды растут с твоим уровнем.</p>
 
     <ul class="space-y-3">
         <?php foreach ($items as $it): ?>
-            <?php $t = $it['task']; $done = $it['progress'] >= (int) $t->target; ?>
+            <?php $t = $it['task']; $done = $it['progress'] >= $it['target']; ?>
             <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3" data-task="<?= (int) $t->id ?>">
+                <div class="text-2xl"><?= esc($t->emoji) ?></div>
                 <div class="flex-1">
                     <p class="font-semibold"><?= esc($t->name) ?></p>
                     <?php if ($t->description): ?><p class="text-xs text-slate-400"><?= esc($t->description) ?></p><?php endif; ?>
-                    <p class="text-xs text-slate-400 mt-1">Награда: <?= (int) $t->reward_gold ?> 🪙 + <?= (int) $t->reward_xp ?> XP</p>
+                    <p class="text-xs text-slate-400 mt-1">Награда: <?= (int) $it['reward_gold'] ?> 🪙 + <?= (int) $it['reward_xp'] ?> XP</p>
                     <div class="mt-2 h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500" style="width: <?= min(100, $it['progress'] / (int) $t->target * 100) ?>%"></div>
+                        <div class="h-full bg-emerald-500" style="width: <?= min(100, $it['progress'] / max(1, $it['target']) * 100) ?>%"></div>
                     </div>
-                    <p class="text-xs text-slate-500 mt-1"><?= $it['progress'] ?> / <?= (int) $t->target ?></p>
+                    <p class="text-xs text-slate-500 mt-1"><?= $it['progress'] ?> / <?= $it['target'] ?></p>
                 </div>
                 <?php if ($it['claimed']): ?>
                     <span class="text-emerald-400 text-xs font-semibold">✓ Получено</span>

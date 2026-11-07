@@ -10,5 +10,5 @@ class DailyTaskModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'description', 'type', 'target', 'reward_gold', 'reward_xp'];
+    protected $allowedFields = ['name', 'description', 'type', 'target', 'reward_gold', 'reward_xp', 'min_level', 'emoji'];
 }

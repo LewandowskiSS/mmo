@@ -516,22 +516,29 @@ class Game extends BaseController
             return redirect()->to('/login');
         }
 
+        $this->assignDailyTasks($character);
+
         $today = date('Y-m-d');
-        $tasks = (new DailyTaskModel())->findAll();
-        $charTaskModel = new CharacterTaskModel();
+        $rows  = (new CharacterTaskModel())
+            ->where('character_id', $character->id)
+            ->where('task_date', $today)
+            ->findAll();
 
+        $taskModel = new DailyTaskModel();
         $items = [];
-        foreach ($tasks as $task) {
-            $progress = $charTaskModel
-                ->where('character_id', $character->id)
-                ->where('task_id', $task->id)
-                ->where('task_date', $today)
-                ->first();
-
+        foreach ($rows as $row) {
+            $task = $taskModel->find($row->task_id);
+            if (! $task) {
+                continue;
+            }
             $items[] = [
-                'task'     => $task,
-                'progress' => $progress ? (int) $progress->progress : 0,
-                'claimed'  => $progress ? (bool) $progress->claimed : false,
+                'row'         => $row,
+                'task'        => $task,
+                'progress'    => (int) $row->progress,
+                'target'      => (int) $row->target,
+                'claimed'     => (bool) $row->claimed,
+                'reward_gold' => (int) $row->reward_gold,
+                'reward_xp'   => (int) $row->reward_xp,
             ];
         }
 
@@ -549,32 +556,30 @@ class Game extends BaseController
         }
 
         $taskId = (int) $this->request->getPost('task_id');
-        $task   = (new DailyTaskModel())->find($taskId);
+        $today  = date('Y-m-d');
 
-        if (! $task) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Задание не найдено']);
-        }
-
-        $today = date('Y-m-d');
-        $row   = (new CharacterTaskModel())
+        $row = (new CharacterTaskModel())
             ->where('character_id', $character->id)
-            ->where('task_id', $task->id)
+            ->where('task_id', $taskId)
             ->where('task_date', $today)
             ->first();
 
-        if (! $row || (int) $row->progress < (int) $task->target) {
+        if (! $row) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Задание не найдено']);
+        }
+        if ((int) $row->progress < (int) $row->target) {
             return $this->response->setJSON(['success' => false, 'message' => 'Задание ещё не выполнено']);
         }
         if ($row->claimed) {
             return $this->response->setJSON(['success' => false, 'message' => 'Награда уже получена']);
         }
 
-        $this->grantRewards($character, (int) $task->reward_xp, (int) $task->reward_gold);
+        $this->grantRewards($character, (int) $row->reward_xp, (int) $row->reward_gold);
         (new CharacterTaskModel())->update($row->id, ['claimed' => 1]);
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Награда получена: +{$task->reward_gold} 🪙, +{$task->reward_xp} XP",
+            'message' => "Награда получена: +{$row->reward_gold} 🪙, +{$row->reward_xp} XP",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -859,29 +864,83 @@ class Game extends BaseController
 
     private function progressTask($characterId, $type)
     {
+        $character = (new CharacterModel())->find($characterId);
+        if (! $character) {
+            return;
+        }
+
+        $this->assignDailyTasks($character);
+
         $today = date('Y-m-d');
         $charTaskModel = new CharacterTaskModel();
-        $tasks = (new DailyTaskModel())->where('type', $type)->findAll();
 
-        foreach ($tasks as $task) {
-            $row = $charTaskModel
-                ->where('character_id', $characterId)
-                ->where('task_id', $task->id)
-                ->where('task_date', $today)
-                ->first();
+        $rows = $charTaskModel
+            ->select('character_tasks.*')
+            ->join('daily_tasks', 'daily_tasks.id = character_tasks.task_id')
+            ->where('character_tasks.character_id', $characterId)
+            ->where('character_tasks.task_date', $today)
+            ->where('daily_tasks.type', $type)
+            ->findAll();
 
-            if (! $row) {
-                $charTaskModel->insert([
-                    'character_id' => $characterId,
-                    'task_id'      => $task->id,
-                    'progress'     => 1,
-                    'claimed'      => 0,
-                    'task_date'    => $today,
-                ]);
-            } elseif (! $row->claimed) {
-                $charTaskModel->update($row->id, ['progress' => $row->progress + 1]);
+        foreach ($rows as $row) {
+            if (! $row->claimed) {
+                $charTaskModel->update($row->id, ['progress' => (int) $row->progress + 1]);
             }
         }
+    }
+
+    private function assignDailyTasks($character): void
+    {
+        $today = date('Y-m-d');
+        $charTaskModel = new CharacterTaskModel();
+
+        $hasToday = $charTaskModel
+            ->where('character_id', $character->id)
+            ->where('task_date', $today)
+            ->countAllResults();
+
+        if ($hasToday > 0) {
+            return;
+        }
+
+        $pool = (new DailyTaskModel())
+            ->where('min_level <=', (int) $character->level)
+            ->findAll();
+
+        if (empty($pool)) {
+            return;
+        }
+
+        shuffle($pool);
+        $chosen = array_slice($pool, 0, 4);
+
+        foreach ($chosen as $task) {
+            $charTaskModel->insert([
+                'character_id' => $character->id,
+                'task_id'      => $task->id,
+                'progress'     => 0,
+                'claimed'      => 0,
+                'task_date'    => $today,
+                'target'       => $this->scaleTaskTarget((int) $task->target, (int) $character->level),
+                'reward_gold'  => $this->scaleTaskReward((int) $task->reward_gold, (int) $character->level),
+                'reward_xp'    => $this->scaleTaskXp((int) $task->reward_xp, (int) $character->level),
+            ]);
+        }
+    }
+
+    private function scaleTaskTarget($base, $level): int
+    {
+        return (int) $base + (int) floor(($level - 1) / 5);
+    }
+
+    private function scaleTaskReward($base, $level): int
+    {
+        return (int) $base + ($level - 1) * 5;
+    }
+
+    private function scaleTaskXp($base, $level): int
+    {
+        return (int) $base + ($level - 1) * 3;
     }
 
     private function rollRarity($chest): string
