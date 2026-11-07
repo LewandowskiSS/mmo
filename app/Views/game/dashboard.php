@@ -80,7 +80,7 @@ $rcMap = [
                 </div>
             </template>
             <template x-if="event.type !== 'monster'">
-                <p :class="eventClass()" x-text="event.message"></p>
+                <p x-ref="eventBox" :class="eventClass()" x-text="event.message"></p>
             </template>
         </div>
     </div>
@@ -146,6 +146,13 @@ $rcMap = [
         from { width: 0%; }
         to   { width: 100%; }
     }
+    .event-anim {
+        animation: fadeSlide .5s ease;
+    }
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 </style>
 
 <script>
@@ -168,6 +175,14 @@ function gameDashboard(initialEnergy) {
                 nothing: 'text-slate-400', text: 'text-slate-300',
             };
             return map[this.event.type] || 'text-slate-300';
+        },
+
+        animateEvent() {
+            const el = this.$refs.eventBox;
+            if (!el) return;
+            el.classList.remove('event-anim');
+            void el.offsetWidth; // reflow — перезапуск анимации
+            el.classList.add('event-anim');
         },
 
         startCooldown() {
@@ -194,6 +209,7 @@ function gameDashboard(initialEnergy) {
                     this.restVisible = data.state.hp < data.state.max_hp;
                 }
                 this.event = data;
+                this.animateEvent();
             } catch (e) {
                 Game.toast('Ошибка соединения', 'error');
             }
