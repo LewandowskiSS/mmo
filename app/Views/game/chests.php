@@ -20,7 +20,7 @@
                     &nbsp;
                     <span class="text-slate-300">🔑</span> <span id="st-silver"><?= (int) $character->silver_keys ?></span>
                     &nbsp;
-                    <span class="text-yellow-300">🔑</span> <span id="st-gold"><?= (int) $character->gold_keys ?></span>
+                    <span class="text-yellow-300">🔑</span> <span id="st-gold-keys"><?= (int) $character->gold_keys ?></span>
                 </p>
             </div>
         </div>
@@ -39,7 +39,13 @@
                         <p class="text-xs text-slate-400">Шанс выпадения:</p>
                     </div>
                     <div class="text-right space-y-1.5">
-                        <button type="button" data-action="buykey" class="block w-full px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-500 text-white text-sm font-semibold whitespace-nowrap">Купить ключ <?= (int) $chest->key_price ?> 🪙</button>
+                        <div class="flex items-stretch gap-1.5">
+                            <button type="button" data-action="buykey" class="flex-1 px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-500 text-white text-sm font-semibold whitespace-nowrap"><span class="buy-label">Купить 🗝️</span> <span class="buy-cost"><?= (int) $chest->key_price ?> 🪙</span></button>
+                            <div class="qty-selector flex rounded-md overflow-hidden border border-slate-600 shrink-0">
+                                <button type="button" data-qty="5" class="qty-btn px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-600">x5</button>
+                                <button type="button" data-qty="10" class="qty-btn px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-600 border-l border-slate-600">x10</button>
+                            </div>
+                        </div>
                         <button type="button" data-action="open" class="block w-full px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-bold whitespace-nowrap">Открыть 🔑</button>
                     </div>
                 </div>
@@ -97,7 +103,7 @@
         keys.gold = state.gold_keys;
         document.getElementById('st-bronze').textContent = keys.bronze;
         document.getElementById('st-silver').textContent = keys.silver;
-        document.getElementById('st-gold').textContent = keys.gold;
+        document.getElementById('st-gold-keys').textContent = keys.gold;
     }
 
     document.querySelectorAll('[data-action="open"]').forEach(function (btn) {
@@ -138,19 +144,65 @@
     });
 
     document.querySelectorAll('[data-action="buykey"]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-            const li = btn.closest('li');
-            const keyType = li.dataset.keyType;
-            const price = parseInt(li.dataset.keyPrice, 10);
+        const li = btn.closest('li');
+        const keyType = li.dataset.keyType;
+        const unitPrice = parseInt(li.dataset.keyPrice, 10);
+        const costLabel = btn.querySelector('.buy-cost');
+        const labelEl = btn.querySelector('.buy-label');
+        let selectedQty = 1;
 
-            if (gold < price) {
-                Game.toast('Не хватает золота', 'error');
+        function updateCost() {
+            costLabel.textContent = (unitPrice * selectedQty) + ' 🪙';
+        }
+
+        li.querySelectorAll('[data-qty]').forEach(function (qb) {
+            qb.addEventListener('click', function () {
+                selectedQty = parseInt(qb.dataset.qty, 10);
+                li.querySelectorAll('[data-qty]').forEach(function (b) { b.classList.remove('bg-slate-500'); });
+                qb.classList.add('bg-slate-500');
+                updateCost();
+            });
+        });
+
+        btn.addEventListener('click', async function () {
+            const total = unitPrice * selectedQty;
+
+            if (gold < total) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Нехватка средств',
+                    text: 'Не хватает золота для покупки.',
+                    background: '#1e293b',
+                    color: '#e2e8f0',
+                    confirmButtonText: 'Ок',
+                    confirmButtonColor: '#ef4444',
+                });
                 return;
             }
 
+            const confirmRes = await Swal.fire({
+                title: 'Вы уверены?',
+                text: 'Купить ' + selectedQty + ' ключ(ей) за ' + total + ' 🪙?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Да (' + total + ' 🪙)',
+                cancelButtonText: 'Нет',
+                background: '#1e293b',
+                color: '#e2e8f0',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+            });
+
+            if (!confirmRes.isConfirmed) return;
+
             btn.disabled = true;
+            btn.classList.add('opacity-50');
+            labelEl.textContent = 'Покупаем..';
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             try {
-                const data = await Game.post('/game/buyKey', { key_type: keyType });
+                const data = await Game.post('/game/buyKey', { key_type: keyType, quantity: selectedQty });
                 if (data.success) {
                     updateState(data.state);
                     Game.toast(data.message, 'success');
@@ -160,7 +212,11 @@
             } catch (e) {
                 Game.toast('Ошибка соединения', 'error');
             }
+
             btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            labelEl.textContent = 'Купить 🗝️';
+            updateCost();
         });
     });
 })();

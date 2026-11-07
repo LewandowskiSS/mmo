@@ -630,16 +630,20 @@ class Game extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
         }
 
-        $keyType = (string) $this->request->getPost('key_type');
-        $chest   = (new ChestModel())->where('key_type', $keyType)->first();
+        $keyType  = (string) $this->request->getPost('key_type');
+        $quantity = max(1, min(10, (int) ($this->request->getPost('quantity') ?: 1)));
+        $chest    = (new ChestModel())->where('key_type', $keyType)->first();
 
         if (! $chest) {
             return $this->response->setJSON(['success' => false, 'message' => 'Ключ не найден']);
         }
 
-        if ($character->gold < $chest->key_price) {
+        $total = (int) $chest->key_price * $quantity;
+
+        if ($character->gold < $total) {
             return $this->response->setJSON([
                 'success' => false,
+                'type'    => 'no_gold',
                 'message' => 'Не хватает золота',
                 'state'   => $this->characterState($character),
             ]);
@@ -647,14 +651,15 @@ class Game extends BaseController
 
         $keyField = $this->keyFieldFor($keyType);
         (new CharacterModel())->update($character->id, [
-            'gold'    => $character->gold - $chest->key_price,
-            $keyField => ((int) ($character->$keyField ?? 0)) + 1,
+            'gold'    => $character->gold - $total,
+            $keyField => ((int) ($character->$keyField ?? 0)) + $quantity,
         ]);
 
         return $this->response->setJSON([
-            'success' => true,
-            'message' => "Куплен ключ для {$chest->name}!",
-            'state'   => $this->characterState($character),
+            'success'  => true,
+            'message'  => "Куплено ключей: {$quantity} для {$chest->name}!",
+            'quantity' => $quantity,
+            'state'    => $this->characterState($character),
         ]);
     }
 
