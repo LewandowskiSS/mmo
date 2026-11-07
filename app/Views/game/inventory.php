@@ -104,7 +104,22 @@ $rarityHex = [
                     <?php elseif ($it->equipped): ?>
                         <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
                     <?php else: ?>
-                        <button type="button" data-action="equip" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold">Надеть</button>
+                        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                            <div class="flex rounded-lg overflow-hidden">
+                                <button type="button" data-action="equip" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold rounded-l-lg">Надеть</button>
+                                <button type="button" @click.stop="open = !open" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50">⌄</button>
+                            </div>
+                            <div x-show="open" x-cloak @click.stop class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10 py-1">
+                                <button type="button"
+                                    data-action="sell"
+                                    data-name="<?= esc($it->name) ?>"
+                                    data-price="<?= (int) ($it->price ?? 0) ?>"
+                                    data-rarity="<?= esc($it->rarity) ?>"
+                                    class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
+                                    💰 Продать за <span class="font-semibold">🪙 <?= (int) ($it->price ?? 0) ?></span>
+                                </button>
+                            </div>
+                        </div>
                     <?php endif; ?>
                 </li>
             <?php endforeach; ?>
@@ -139,18 +154,45 @@ function inventoryFilters() {
     };
 }
 
-// Действия (надеть/снять/использовать) — через общий Game.post
+// Действия (надеть/снять/использовать/продать) — через общий Game.post
 (function () {
+    const rarityColors = {
+        common: '#94a3b8', uncommon: '#22c55e', rare: '#3b82f6',
+        elite: '#a855f7', epic: '#ec4899', legendary: '#f59e0b',
+        celestial: '#06b6d4', exotic: '#ef4444',
+    };
+
+    const urls = { use: '/game/use', equip: '/game/equip', unequip: '/game/unequip', sell: '/game/sell' };
+
     document.querySelectorAll('[data-action]').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             const li = btn.closest('li');
             const invId = li.dataset.inv;
             const action = btn.dataset.action;
-            const url = action === 'use' ? '/game/use' : (action === 'equip' ? '/game/equip' : '/game/unequip');
+
+            if (action === 'sell') {
+                const name = btn.dataset.name || 'предмет';
+                const price = parseInt(btn.dataset.price || '0', 10);
+                const color = rarityColors[btn.dataset.rarity] || '#e2e8f0';
+
+                const c = await Swal.fire({
+                    title: 'Вы действительно хотите продать',
+                    html: '<span style="color:' + color + ';font-weight:700">' + name + '</span> за <b>🪙 ' + price + '</b>?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Да',
+                    cancelButtonText: 'Нет',
+                    background: '#1e293b',
+                    color: '#e2e8f0',
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                });
+                if (!c.isConfirmed) return;
+            }
 
             btn.disabled = true;
             try {
-                const data = await Game.post(url, { inv_id: invId });
+                const data = await Game.post(urls[action], { inv_id: invId });
                 Game.toast(data.message, data.success ? 'success' : 'error');
                 if (data.success) {
                     setTimeout(() => window.location.reload(), 600);

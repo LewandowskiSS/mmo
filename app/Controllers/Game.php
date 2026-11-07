@@ -340,7 +340,7 @@ class Game extends BaseController
         }
 
         $items = (new InventoryModel())
-            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.description, items.emoji, items.rarity')
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->orderBy('inventory.id', 'ASC')
@@ -482,6 +482,52 @@ class Game extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'message' => "Использовано: {$item->emoji} {$item->name}",
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
+
+    public function sell()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $invId = (int) $this->request->getPost('inv_id');
+        $inventory = new InventoryModel();
+        $inv = $inventory
+            ->where('id', $invId)
+            ->where('character_id', $character->id)
+            ->first();
+
+        if (! $inv) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден']);
+        }
+
+        if ((int) $inv->equipped === 1) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Сначала сними предмет']);
+        }
+
+        $item = (new ItemModel())->find($inv->item_id);
+        if (! $item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден']);
+        }
+
+        $price = max(0, (int) $item->price);
+        if ((int) $inv->quantity > 1) {
+            $inventory->update($inv->id, ['quantity' => (int) $inv->quantity - 1]);
+        } else {
+            $inventory->delete($inv->id);
+        }
+
+        (new CharacterModel())->update($character->id, [
+            'gold' => (int) $character->gold + $price,
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Продано: {$item->emoji} {$item->name} (+{$price} 🪙)",
             'state'   => $this->characterState($character),
         ]);
     }
