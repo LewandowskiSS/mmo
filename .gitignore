@@ -127,3 +127,6 @@ _modules/*
 
 # Open Server (OSPanel) — локальная конфигурация домена
 .osp/
+
+# Telegram-уведомления (содержит токен бота — не пушить)
+telegram_notify.py
