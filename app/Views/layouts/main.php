@@ -63,7 +63,7 @@
         </main>
 
         <footer class="text-center text-xs text-slate-600 py-6">
-            Учебный проект в духе браузерных MMO
+            ⚔️ Моя ММО · v<?= esc(trim((string) @file_get_contents(ROOTPATH . 'VERSION'))) ?>
         </footer>
     </div>
 
