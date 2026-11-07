@@ -106,7 +106,7 @@ $rcMap = [
         </div>
     </div>
 
-    <p id="energy-timer" class="text-xs text-slate-500 text-center">Энергия восстанавливается: 1 ⚡ в минуту.</p>
+    <p id="energy-timer" class="text-xs text-slate-500 text-center">Энергия восстанавливается: 1 ⚡ в 3 минуты.</p>
 
     <div>
         <h2 class="text-lg font-semibold mb-2">📜 Журнал событий</h2>

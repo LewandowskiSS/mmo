@@ -16,7 +16,7 @@ use App\Models\MonsterModel;
 class Game extends BaseController
 {
     // 1 энергия восстанавливается за это число секунд.
-    private const ENERGY_REGEN_SECONDS = 60;
+    private const ENERGY_REGEN_SECONDS = 180;
 
     public function index()
     {
