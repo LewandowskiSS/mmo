@@ -170,7 +170,8 @@ class Game extends BaseController
         }
 
         $battle = $this->session->get('battle');
-        if (! $battle) {
+        if (! $this->validBattle($battle)) {
+            $this->session->remove('battle');
             return redirect()->to('/')->with('info', 'Сейчас нет активного боя.');
         }
 
@@ -192,7 +193,8 @@ class Game extends BaseController
         }
 
         $battle = $this->session->get('battle');
-        if (! $battle) {
+        if (! $this->validBattle($battle)) {
+            $this->session->remove('battle');
             return $this->response->setJSON(['success' => false, 'result' => 'no_battle', 'message' => 'Нет активного боя']);
         }
 
@@ -278,7 +280,8 @@ class Game extends BaseController
         }
 
         $battle = $this->session->get('battle');
-        if (! $battle) {
+        if (! $this->validBattle($battle)) {
+            $this->session->remove('battle');
             return $this->response->setJSON(['success' => false, 'result' => 'no_battle', 'message' => 'Нет активного боя']);
         }
 
@@ -791,6 +794,23 @@ class Game extends BaseController
         $monster->gold_max  = 3 + $level * 2;
 
         return $monster;
+    }
+
+    private function validBattle($battle): bool
+    {
+        return is_array($battle)
+            && isset(
+                $battle['monster_id'],
+                $battle['name'],
+                $battle['emoji'],
+                $battle['max_hp'],
+                $battle['attack'],
+                $battle['defense'],
+                $battle['xp_reward'],
+                $battle['gold_min'],
+                $battle['gold_max'],
+                $battle['monster_hp']
+            );
     }
 
     private function getBattleMonster($battle): object
