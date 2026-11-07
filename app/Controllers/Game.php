@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Models\BattleLogModel;
 use App\Models\CharacterModel;
+use App\Models\CharacterTaskModel;
+use App\Models\DailyTaskModel;
 use App\Models\InventoryModel;
 use App\Models\ItemModel;
 use App\Models\MonsterModel;
@@ -73,6 +75,7 @@ class Game extends BaseController
             'last_step_at'   => date('Y-m-d H:i:s'),
         ]);
         $character->energy -= 1;
+        $this->progressTask($character->id, 'walk');
 
         $roll = random_int(1, 100);
 
@@ -127,6 +130,7 @@ class Game extends BaseController
         $items = (new ItemModel())->findAll();
         $item  = $items[array_rand($items)];
         $this->giveItem($character->id, $item->id);
+        $this->progressTask($character->id, 'item');
 
         return $this->response->setJSON([
             'success' => true,
@@ -187,6 +191,8 @@ class Game extends BaseController
             $gold     = random_int($monster->gold_min, $monster->gold_max);
             $newLevel = $this->grantRewards($character, $xp, $gold);
             $this->logBattle($character->id, $monster->id, 'win', $xp, $gold);
+            $this->progressTask($character->id, 'kill');
+            $this->progressTask($character->id, 'win');
             $this->session->remove('battle');
 
             $msg = "Победа! Ты одолел {$monster->emoji} {$monster->name}. +{$xp} XP, +{$gold} золота.";
@@ -497,6 +503,76 @@ class Game extends BaseController
         return view('game/leaderboard', ['top' => $top]);
     }
 
+    public function tasks()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        $today = date('Y-m-d');
+        $tasks = (new DailyTaskModel())->findAll();
+        $charTaskModel = new CharacterTaskModel();
+
+        $items = [];
+        foreach ($tasks as $task) {
+            $progress = $charTaskModel
+                ->where('character_id', $character->id)
+                ->where('task_id', $task->id)
+                ->where('task_date', $today)
+                ->first();
+
+            $items[] = [
+                'task'     => $task,
+                'progress' => $progress ? (int) $progress->progress : 0,
+                'claimed'  => $progress ? (bool) $progress->claimed : false,
+            ];
+        }
+
+        return view('game/tasks', [
+            'character' => $character,
+            'items'     => $items,
+        ]);
+    }
+
+    public function claimTask()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $taskId = (int) $this->request->getPost('task_id');
+        $task   = (new DailyTaskModel())->find($taskId);
+
+        if (! $task) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Задание не найдено']);
+        }
+
+        $today = date('Y-m-d');
+        $row   = (new CharacterTaskModel())
+            ->where('character_id', $character->id)
+            ->where('task_id', $task->id)
+            ->where('task_date', $today)
+            ->first();
+
+        if (! $row || (int) $row->progress < (int) $task->target) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Задание ещё не выполнено']);
+        }
+        if ($row->claimed) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Награда уже получена']);
+        }
+
+        $this->grantRewards($character, (int) $task->reward_xp, (int) $task->reward_gold);
+        (new CharacterTaskModel())->update($row->id, ['claimed' => 1]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Награда получена: +{$task->reward_gold} 🪙, +{$task->reward_xp} XP",
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
     // ---------- Приватные помощники ----------
 
     private function currentCharacter()
@@ -696,6 +772,33 @@ class Game extends BaseController
                 'quantity'     => 1,
                 'equipped'     => 0,
             ]);
+        }
+    }
+
+    private function progressTask($characterId, $type)
+    {
+        $today = date('Y-m-d');
+        $charTaskModel = new CharacterTaskModel();
+        $tasks = (new DailyTaskModel())->where('type', $type)->findAll();
+
+        foreach ($tasks as $task) {
+            $row = $charTaskModel
+                ->where('character_id', $characterId)
+                ->where('task_id', $task->id)
+                ->where('task_date', $today)
+                ->first();
+
+            if (! $row) {
+                $charTaskModel->insert([
+                    'character_id' => $characterId,
+                    'task_id'      => $task->id,
+                    'progress'     => 1,
+                    'claimed'      => 0,
+                    'task_date'    => $today,
+                ]);
+            } elseif (! $row->claimed) {
+                $charTaskModel->update($row->id, ['progress' => $row->progress + 1]);
+            }
         }
     }
 }

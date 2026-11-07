@@ -7,6 +7,7 @@
     <title>⚔️ Моя ММО</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/js/game.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
     <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0">
@@ -17,6 +18,7 @@
                     <a href="/" class="text-slate-300 hover:text-white">Игра</a>
                     <a href="/game/inventory" class="text-slate-300 hover:text-white">Инвентарь</a>
                     <a href="/game/shop" class="text-slate-300 hover:text-white">Магазин</a>
+                    <a href="/game/tasks" class="text-slate-300 hover:text-white">Задания</a>
                     <a href="/game/leaderboard" class="text-slate-300 hover:text-white">Топ</a>
                     <a href="/logout" class="text-slate-300 hover:text-white">Выйти</a>
                 <?php else: ?>

@@ -27,3 +27,5 @@ $routes->post('game/use', 'Game::useItem');
 $routes->get('game/shop', 'Game::shop');
 $routes->post('game/buy', 'Game::buy');
 $routes->get('game/leaderboard', 'Game::leaderboard');
+$routes->get('game/tasks', 'Game::tasks');
+$routes->post('game/claimTask', 'Game::claimTask');
