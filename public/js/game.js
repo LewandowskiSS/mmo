@@ -95,15 +95,23 @@
 // Общее состояние лейаута (сайдбар + профиль)
 function layout() {
     return {
-        sidebarCollapsed: false,
+        sidebarCollapsed: true,
         sidebarMobile: false,
         profileOpen: false,
+
+        init() {
+            const saved = localStorage.getItem('sidebarCollapsed');
+            if (saved !== null) {
+                this.sidebarCollapsed = saved === '1';
+            }
+        },
 
         toggleSidebar() {
             if (window.innerWidth < 768) {
                 this.sidebarMobile = !this.sidebarMobile;
             } else {
                 this.sidebarCollapsed = !this.sidebarCollapsed;
+                localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? '1' : '0');
             }
         },
     };
