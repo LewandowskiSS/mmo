@@ -47,7 +47,13 @@
                                 <button type="button" data-qty="10" class="qty-btn px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-600 border-l border-slate-600">x10</button>
                             </div>
                         </div>
-                        <button type="button" data-action="open" class="block w-full px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-bold whitespace-nowrap">Открыть 🔑</button>
+                        <div class="flex items-stretch gap-1.5">
+                            <button type="button" data-action="open" class="open-btn flex-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-bold whitespace-nowrap">Открыть 🔑</button>
+                            <div class="open-qty flex rounded-md overflow-hidden border border-slate-600 shrink-0">
+                                <button type="button" data-open-qty="10" class="open-qty-btn px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-600">x10</button>
+                                <button type="button" data-open-qty="0" class="open-qty-btn px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-600 border-l border-slate-600">Все</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <table class="w-full text-xs text-slate-300">
@@ -107,33 +113,82 @@
         document.getElementById('st-gold-keys').textContent = keys.gold;
     }
 
-    document.querySelectorAll('[data-action="open"]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-            const li = btn.closest('li');
-            const chestId = li.dataset.chest;
-            const keyType = li.dataset.keyType;
+    function showLoot(results) {
+        const grouped = {};
+        results.forEach(function (r) {
+            const k = r.name + '|' + r.rarity;
+            if (grouped[k]) {
+                grouped[k].count++;
+            } else {
+                grouped[k] = { name: r.name, emoji: r.emoji, rarity: r.rarity, count: 1 };
+            }
+        });
 
+        const lines = Object.values(grouped).map(function (g) {
+            const color = rarityColors[g.rarity] || '#94a3b8';
+            return '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' +
+                '<span>' + g.emoji + '</span>' +
+                '<span style="color:' + color + '">' + g.name + '</span>' +
+                (g.count > 1 ? '<span style="color:#94a3b8">×' + g.count + '</span>' : '') +
+                '</div>';
+        }).join('');
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Добыча (' + results.length + ' шт.)',
+            html: '<div style="text-align:left;max-height:300px;overflow-y:auto;">' + lines + '</div>',
+            background: '#1e293b',
+            color: '#e2e8f0',
+            confirmButtonColor: '#f59e0b',
+        });
+    }
+
+    document.querySelectorAll('[data-action="open"]').forEach(function (btn) {
+        const li = btn.closest('li');
+        const chestId = li.dataset.chest;
+        const keyType = li.dataset.keyType;
+        let openQty = 1;
+
+        li.querySelectorAll('[data-open-qty]').forEach(function (qb) {
+            qb.addEventListener('click', function () {
+                openQty = parseInt(qb.dataset.openQty, 10);
+                li.querySelectorAll('[data-open-qty]').forEach(function (b) { b.classList.remove('bg-slate-500'); });
+                qb.classList.add('bg-slate-500');
+            });
+        });
+
+        btn.addEventListener('click', async function () {
             if (keys[keyType] < 1) {
                 Game.toast('Нет ключа! Купи или найди ключ.', 'error');
                 return;
             }
 
+            let qty = openQty;
+            if (qty <= 0) qty = keys[keyType];
+            qty = Math.min(qty, keys[keyType]);
+
+            if (qty > 1) {
+                const confirmRes = await Swal.fire({
+                    title: 'Открыть сундуки?',
+                    text: 'Открыть ' + qty + ' сундук(ов)?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Да',
+                    cancelButtonText: 'Нет',
+                    background: '#1e293b',
+                    color: '#e2e8f0',
+                    confirmButtonColor: '#f59e0b',
+                    cancelButtonColor: '#64748b',
+                });
+                if (!confirmRes.isConfirmed) return;
+            }
+
             btn.disabled = true;
             try {
-                const data = await Game.post('/game/openChest', { chest_id: chestId });
+                const data = await Game.post('/game/openChest', { chest_id: chestId, quantity: qty });
                 if (data.success) {
                     updateState(data.state);
-
-                    const color = rarityColors[data.rarity] || '#94a3b8';
-                    const rname = rarityNames[data.rarity] || data.rarity;
-                    Swal.fire({
-                        icon: 'success',
-                        title: data.item.emoji + ' ' + data.item.name,
-                        html: 'Редкость: <b style="color:' + color + '">' + rname + '</b>',
-                        background: '#1e293b',
-                        color: '#e2e8f0',
-                        confirmButtonColor: '#f59e0b',
-                    });
+                    showLoot(data.results || []);
                 } else {
                     Game.toast(data.message, 'error');
                 }

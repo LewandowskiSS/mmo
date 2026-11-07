@@ -608,18 +608,33 @@ class Game extends BaseController
             ]);
         }
 
-        (new CharacterModel())->update($character->id, [$keyField => $keyCount - 1]);
+        $rawQty = $this->request->getPost('quantity');
+        if ($rawQty === null || $rawQty === '') {
+            $quantity = 1;
+        } else {
+            $quantity = (int) $rawQty;
+        }
 
-        $rarity = $this->rollRarity($chest);
-        $item   = $this->randomItemByRarity($rarity);
-        $this->giveItem($character->id, $item->id);
+        if ($quantity <= 0) {
+            $quantity = $keyCount; // 0 = открыть все
+        }
+        $quantity = max(1, min($quantity, $keyCount));
+
+        $results = [];
+        for ($i = 0; $i < $quantity; $i++) {
+            $rarity = $this->rollRarity($chest);
+            $item   = $this->randomItemByRarity($rarity);
+            $this->giveItem($character->id, $item->id);
+            $results[] = ['name' => $item->name, 'emoji' => $item->emoji, 'rarity' => $rarity];
+        }
+
+        (new CharacterModel())->update($character->id, [$keyField => $keyCount - $quantity]);
 
         return $this->response->setJSON([
-            'success' => true,
-            'message' => "Из сундука выпало: {$item->emoji} {$item->name}",
-            'rarity'  => $rarity,
-            'item'    => ['name' => $item->name, 'emoji' => $item->emoji, 'rarity' => $rarity],
-            'state'   => $this->characterState($character),
+            'success'  => true,
+            'quantity' => $quantity,
+            'results'  => $results,
+            'state'    => $this->characterState($character),
         ]);
     }
 
