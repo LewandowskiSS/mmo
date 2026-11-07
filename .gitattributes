@@ -1,0 +1,10 @@
+# Не нормализовать переводы строк в бинарных файлах (иначе git повреждает PNG/JPG)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
