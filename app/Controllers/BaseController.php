@@ -43,7 +43,28 @@ abstract class BaseController extends Controller
 
         // Сервисы/модели — после.
         $this->session = service('session');
+
+        // Данные персонажа для хедера/меню профиля в лейауте.
+        if ($this->session->get('character_id')) {
+            $character = (new \App\Models\CharacterModel())->find($this->session->get('character_id'));
+            if ($character) {
+                $xpNeeded = 50 + ((int) $character->level - 1) * 25;
+                self::$layoutData = [
+                    'characterName'      => $character->name,
+                    'characterLevel'     => (int) $character->level,
+                    'characterXpPercent' => min(100, (int) round($character->xp / $xpNeeded * 100)),
+                    'characterGold'      => (int) $character->gold,
+                    'characterEnergy'    => (int) $character->energy,
+                    'characterMaxEnergy' => (int) $character->max_energy,
+                    'characterHp'        => (int) $character->hp,
+                    'characterMaxHp'     => (int) $character->max_hp,
+                ];
+            }
+        }
     }
+
+    // Данные лейаута (доступны в шаблонах через статический вызов).
+    public static array $layoutData = [];
 
     protected function isLoggedIn(): bool
     {

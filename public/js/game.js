@@ -91,3 +91,20 @@
 
     window.Game = { csrfToken, post, get, toast, updateState, cooldownRemaining, COOLDOWN_MS };
 })();
+
+// Общее состояние лейаута (сайдбар + профиль)
+function layout() {
+    return {
+        sidebarCollapsed: false,
+        sidebarMobile: false,
+        profileOpen: false,
+
+        toggleSidebar() {
+            if (window.innerWidth < 768) {
+                this.sidebarMobile = !this.sidebarMobile;
+            } else {
+                this.sidebarCollapsed = !this.sidebarCollapsed;
+            }
+        },
+    };
+}
