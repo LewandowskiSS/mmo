@@ -603,7 +603,7 @@ class Game extends BaseController
             return redirect()->to('/login');
         }
 
-        $chests = (new ChestModel())->orderBy('price', 'ASC')->findAll();
+        $chests = (new ChestModel())->orderBy('key_price', 'ASC')->findAll();
 
         return view('game/chests', [
             'character' => $character,
