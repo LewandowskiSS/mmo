@@ -49,6 +49,12 @@
         <div class="bg-slate-800 rounded-lg p-3 flex justify-between"><span class="text-slate-400">🛡️ Защита</span><span id="st-defense" class="font-semibold"><?= esc($character->defense) ?></span></div>
     </div>
 
+    <div id="story-window" class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <div id="story-content" class="text-sm text-slate-300">
+            <p class="text-slate-500">Нажми «Прогулка», чтобы отправиться в путь.</p>
+        </div>
+    </div>
+
     <div class="space-y-3">
         <div class="relative">
             <button id="walk-btn" type="button" data-cooldown="0" <?= $character->energy < 1 ? 'disabled' : '' ?>
@@ -120,6 +126,47 @@
         }, COOLDOWN_MS);
     }
 
+    const storyContent = document.getElementById('story-content');
+
+    function renderEvent(data) {
+        if (data.type === 'monster' && data.battle) {
+            const b = data.battle;
+            const pct = Math.max(0, Math.min(100, (b.monster_hp / b.hp) * 100));
+            storyContent.innerHTML = `
+                <div class="text-center space-y-2">
+                    <div class="text-5xl">${b.emoji}</div>
+                    <p class="font-bold text-lg">${b.name}</p>
+                    <p class="text-xs text-slate-400">Уровень ${b.level}</p>
+                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-orange-500" style="width: ${pct}%"></div>
+                    </div>
+                    <p class="text-xs text-slate-500">${b.monster_hp} / ${b.hp}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <button id="attack-encounter-btn" type="button" class="py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">⚔️ Атаковать</button>
+                    <button id="skip-encounter-btn" type="button" class="py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold">⏭️ Пропустить</button>
+                </div>`;
+
+            document.getElementById('attack-encounter-btn').addEventListener('click', () => {
+                window.location.href = '/game/battle';
+            });
+            document.getElementById('skip-encounter-btn').addEventListener('click', doSkip);
+            return;
+        }
+
+        const colors = {
+            gold: 'text-amber-400', item: 'text-sky-300', key: 'text-yellow-300',
+            nothing: 'text-slate-400', text: 'text-slate-300',
+        };
+        const cls = colors[data.type] || 'text-slate-300';
+
+        storyContent.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = cls;
+        p.textContent = data.message || '';
+        storyContent.appendChild(p);
+    }
+
     async function doWalk() {
         startCooldown();
         try {
@@ -128,10 +175,21 @@
                 currentEnergy = data.state.energy;
                 Game.updateState(data.state);
             }
-            if (data.message) Game.toast(data.message, data.success === false ? 'error' : (data.type === 'nothing' ? 'info' : 'success'));
-            if (data.type === 'monster') {
-                setTimeout(() => { window.location.href = '/game/battle'; }, 800);
+            renderEvent(data);
+        } catch (e) {
+            Game.toast('Ошибка соединения', 'error');
+        }
+    }
+
+    async function doSkip() {
+        startCooldown();
+        try {
+            const data = await Game.post('/game/skip');
+            if (data.state) {
+                currentEnergy = data.state.energy;
+                Game.updateState(data.state);
             }
+            renderEvent(data);
         } catch (e) {
             Game.toast('Ошибка соединения', 'error');
         }

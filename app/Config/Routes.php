@@ -15,6 +15,7 @@ $routes->get('logout', 'Auth::logout');
 
 // Игровые действия
 $routes->post('game/walk', 'Game::walk');
+$routes->post('game/skip', 'Game::skip');
 $routes->get('game/battle', 'Game::battle');
 $routes->post('game/attack', 'Game::attack');
 $routes->post('game/flee', 'Game::flee');

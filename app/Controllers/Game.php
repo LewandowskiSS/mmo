@@ -69,95 +69,55 @@ class Game extends BaseController
             ]);
         }
 
-        $charModel = new CharacterModel();
-        $charModel->update($character->id, [
-            'energy'         => $character->energy - 1,
-            'last_energy_at' => date('Y-m-d H:i:s'),
-            'last_step_at'   => date('Y-m-d H:i:s'),
-        ]);
-        $character->energy -= 1;
+        $this->consumeStep($character);
         $this->progressTask($character->id, 'walk');
 
+        return $this->response->setJSON($this->walkEvent($character));
+    }
+
+    public function skip()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $character = $this->regenEnergy($character);
+
+        if ($character->energy < 1) {
+            return $this->response->setJSON([
+                'success' => false,
+                'type'    => 'no_energy',
+                'message' => 'Нет энергии! Подожди, пока она восстановится.',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        // Задержка между шагами (анти-бот)
+        if ($character->last_step_at && (time() - strtotime($character->last_step_at)) < 2) {
+            return $this->response->setJSON([
+                'success' => false,
+                'type'    => 'cooldown',
+                'message' => 'Не так быстро! Подожди пару секунд.',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        $this->consumeStep($character);
+
+        // Пропуск: 15% — новый монстр, 85% — просто текст (без наград)
         $roll = random_int(1, 100);
 
-        // 60% — встреча с монстром
-        if ($roll <= 60) {
-            $monster = $this->spawnMonster($character->level);
-            $this->session->set('battle', [
-                'monster_id' => $monster->id,
-                'name'       => $monster->name,
-                'emoji'      => $monster->emoji,
-                'level'      => $monster->level,
-                'max_hp'     => $monster->hp,
-                'attack'     => $monster->attack,
-                'defense'    => $monster->defense,
-                'xp_reward'  => $monster->xp_reward,
-                'gold_min'   => $monster->gold_min,
-                'gold_max'   => $monster->gold_max,
-                'monster_hp' => $monster->hp,
-            ]);
-
-            return $this->response->setJSON([
-                'success' => true,
-                'type'    => 'monster',
-                'message' => "Ты наткнулся на {$monster->emoji} {$monster->name}!",
-                'battle'  => [
-                    'monster_id' => (int) $monster->id,
-                    'name'       => $monster->name,
-                    'emoji'      => $monster->emoji,
-                    'level'      => (int) $monster->level,
-                    'hp'         => (int) $monster->hp,
-                    'monster_hp' => (int) $monster->hp,
-                ],
-                'state'   => $this->characterState($character),
-            ]);
+        if ($roll <= 15) {
+            return $this->response->setJSON($this->battleResponse($character, $this->spawnMonster($character->level)));
         }
 
-        // 20% — находка золота
-        if ($roll <= 80) {
-            $gold = random_int(1, 5) + $character->level;
-            $charModel->update($character->id, ['gold' => $character->gold + $gold]);
-
-            return $this->response->setJSON([
-                'success' => true,
-                'type'    => 'gold',
-                'message' => "Ты нашёл {$gold} золота! 💰",
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // 12% — ничего
-        if ($roll <= 92) {
-            return $this->response->setJSON([
-                'success' => true,
-                'type'    => 'nothing',
-                'message' => 'Ты прогулялся по округе, но ничего не нашёл.',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // 3% — бронзовый ключ
-        if ($roll <= 95) {
-            (new CharacterModel())->update($character->id, ['bronze_keys' => ((int) ($character->bronze_keys ?? 0)) + 1]);
-
-            return $this->response->setJSON([
-                'success' => true,
-                'type'    => 'key',
-                'message' => 'Ты нашёл бронзовый ключ! 🔑',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // 5% — случайный предмет
-        $items = (new ItemModel())->findAll();
-        $item  = $items[array_rand($items)];
-        $this->giveItem($character->id, $item->id);
-        $this->progressTask($character->id, 'item');
+        $texts = $this->flavorTexts();
 
         return $this->response->setJSON([
             'success' => true,
-            'type'    => 'item',
-            'message' => "Ты нашёл предмет: {$item->emoji} {$item->name}!",
+            'type'    => 'text',
+            'message' => $texts[array_rand($texts)],
             'state'   => $this->characterState($character),
         ]);
     }
@@ -1028,6 +988,149 @@ class Game extends BaseController
     private function keyFieldFor($keyType): string
     {
         return $keyType . '_keys';
+    }
+
+    private function consumeStep($character): void
+    {
+        (new CharacterModel())->update($character->id, [
+            'energy'         => $character->energy - 1,
+            'last_energy_at' => date('Y-m-d H:i:s'),
+            'last_step_at'   => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function flavorTexts(): array
+    {
+        return [
+            'Ты идёшь по тропинке и слышишь пение птиц.',
+            'Лёгкий ветерок шелестит листвой. На душе спокойно.',
+            'Ты находишь красивый цветок, но он не представляет ценности.',
+            'Мимо пробегает кролик и скрывается в кустах.',
+            'Ты переходишь ручей по скользким камням.',
+            'Вдалеке виднеется старая заброшенная башня.',
+            'Ты собираешь ягоды, но они оказались кислыми.',
+            'Старый странник кивает тебе и проходит мимо.',
+            'Ты любуешься закатом над лесом.',
+            'Под ногами хрустит сухая трава.',
+            'Ты замечаешь следы дикого зверя, но не решаешься идти по ним.',
+            'Ветер доносит запах дождя.',
+            'Ты отдыхаешь у большого дуба и смотришь на облака.',
+            'Где-то в лесу ухает сова.',
+            'Ты перебираешься через поваленное дерево.',
+            'Тропинка выводит тебя на поляну с полевыми цветами.',
+            'Ты находишь старую монету, но она совсем стёрлась.',
+            'Лягушка прыгает в воду, когда ты подходишь к пруду.',
+            'Ты слышишь далёкий звон колокольчиков.',
+            'На тропе лежит перо незнакомой птицы.',
+            'Солнце пробивается сквозь кроны деревьев.',
+            'Ты натыкаешься на муравейник и обходишь его стороной.',
+            'В кустах кто-то шуршит, но никто не показывается.',
+            'Ты делаешь глоток воды из фляги и продолжаешь путь.',
+            'Ветер качает верхушки высоких сосен.',
+            'Ты смотришь на карту, но понимаешь, что заблудился.',
+        ];
+    }
+
+    private function battleResponse($character, $monster): array
+    {
+        $this->session->set('battle', [
+            'monster_id' => $monster->id,
+            'name'       => $monster->name,
+            'emoji'      => $monster->emoji,
+            'level'      => $monster->level,
+            'max_hp'     => $monster->hp,
+            'attack'     => $monster->attack,
+            'defense'    => $monster->defense,
+            'xp_reward'  => $monster->xp_reward,
+            'gold_min'   => $monster->gold_min,
+            'gold_max'   => $monster->gold_max,
+            'monster_hp' => $monster->hp,
+        ]);
+
+        return [
+            'success' => true,
+            'type'    => 'monster',
+            'message' => "Ты наткнулся на {$monster->emoji} {$monster->name}!",
+            'battle'  => [
+                'monster_id' => (int) $monster->id,
+                'name'       => $monster->name,
+                'emoji'      => $monster->emoji,
+                'level'      => (int) $monster->level,
+                'hp'         => (int) $monster->hp,
+                'monster_hp' => (int) $monster->hp,
+            ],
+            'state'   => $this->characterState($character),
+        ];
+    }
+
+    private function walkEvent($character): array
+    {
+        $roll = random_int(1, 100);
+
+        // 40% — монстр
+        if ($roll <= 40) {
+            return $this->battleResponse($character, $this->spawnMonster($character->level));
+        }
+
+        // 35% — текст
+        if ($roll <= 75) {
+            $texts = $this->flavorTexts();
+
+            return [
+                'success' => true,
+                'type'    => 'text',
+                'message' => $texts[array_rand($texts)],
+                'state'   => $this->characterState($character),
+            ];
+        }
+
+        // 12% — золото
+        if ($roll <= 87) {
+            $gold = random_int(1, 5) + $character->level;
+            (new CharacterModel())->update($character->id, ['gold' => $character->gold + $gold]);
+
+            return [
+                'success' => true,
+                'type'    => 'gold',
+                'message' => "Ты нашёл {$gold} золота! 💰",
+                'state'   => $this->characterState($character),
+            ];
+        }
+
+        // 8% — предмет
+        if ($roll <= 95) {
+            $items = (new ItemModel())->findAll();
+            $item  = $items[array_rand($items)];
+            $this->giveItem($character->id, $item->id);
+            $this->progressTask($character->id, 'item');
+
+            return [
+                'success' => true,
+                'type'    => 'item',
+                'message' => "Ты нашёл предмет: {$item->emoji} {$item->name}!",
+                'state'   => $this->characterState($character),
+            ];
+        }
+
+        // 3% — ключ
+        if ($roll <= 98) {
+            (new CharacterModel())->update($character->id, ['bronze_keys' => ((int) ($character->bronze_keys ?? 0)) + 1]);
+
+            return [
+                'success' => true,
+                'type'    => 'key',
+                'message' => 'Ты нашёл бронзовый ключ! 🔑',
+                'state'   => $this->characterState($character),
+            ];
+        }
+
+        // 2% — ничего
+        return [
+            'success' => true,
+            'type'    => 'nothing',
+            'message' => 'Ты прогулялся по округе, но ничего не нашёл.',
+            'state'   => $this->characterState($character),
+        ];
     }
 
     private function rollRarity($chest): string

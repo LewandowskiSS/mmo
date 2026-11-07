@@ -72,11 +72,18 @@
     function startCooldown() {
         attackBtn.disabled = true;
         fleeBtn.disabled = true;
+        attackBtn.textContent = '⚔️ Атакуем..';
         attackCdRing.style.transition = 'none';
         attackCdRing.style.strokeDashoffset = '100';
         attackCdRing.getBoundingClientRect();
         attackCdRing.style.transition = 'stroke-dashoffset ' + COOLDOWN_MS + 'ms linear';
         attackCdRing.style.strokeDashoffset = '0';
+    }
+
+    function endCooldown() {
+        attackBtn.disabled = false;
+        fleeBtn.disabled = false;
+        attackBtn.textContent = '⚔️ Атаковать';
     }
 
     function setBar(id, cur, max) {
@@ -136,17 +143,13 @@
             if (data.result === 'continue') {
                 document.getElementById('st-monster-hp').textContent = data.monster_hp + ' / ' + maxMonsterHp;
                 setBar('bar-monster-hp', data.monster_hp, maxMonsterHp);
-                setTimeout(() => {
-                    attackBtn.disabled = false;
-                    fleeBtn.disabled = false;
-                }, COOLDOWN_MS);
+                setTimeout(endCooldown, COOLDOWN_MS);
             } else if (data.result === 'win' || data.result === 'lose' || data.result === 'flee') {
                 showResult(data.result, data.message);
             }
         } catch (e) {
             Game.toast('Ошибка соединения', 'error');
-            attackBtn.disabled = false;
-            fleeBtn.disabled = false;
+            endCooldown();
         }
     }
 
