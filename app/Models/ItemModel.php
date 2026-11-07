@@ -11,6 +11,6 @@ class ItemModel extends Model
     protected $returnType    = 'object';
     protected $useTimestamps = true;
     protected $allowedFields = [
-        'name', 'type', 'stat', 'value', 'price', 'description', 'emoji',
+        'name', 'type', 'stat', 'value', 'price', 'description', 'emoji', 'rarity',
     ];
 }

@@ -22,6 +22,7 @@
                 <a href="/game/tasks" class="block px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">📋 Задания</a>
                 <a href="/game/inventory" class="block px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">🎒 Инвентарь</a>
                 <a href="/game/shop" class="block px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">🏪 Магазин</a>
+                <a href="/game/chests" class="block px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">🎁 Сундуки</a>
                 <a href="/game/leaderboard" class="block px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">🏆 Топ</a>
                 <a href="/logout" class="block px-3 py-2 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200">🚪 Выйти</a>
             <?php else: ?>

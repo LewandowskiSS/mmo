@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\BattleLogModel;
 use App\Models\CharacterModel;
 use App\Models\CharacterTaskModel;
+use App\Models\ChestModel;
 use App\Models\DailyTaskModel;
 use App\Models\InventoryModel;
 use App\Models\ItemModel;
@@ -578,6 +579,58 @@ class Game extends BaseController
         ]);
     }
 
+    public function chests()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        $chests = (new ChestModel())->orderBy('price', 'ASC')->findAll();
+
+        return view('game/chests', [
+            'character' => $character,
+            'chests'    => $chests,
+        ]);
+    }
+
+    public function openChest()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $chestId = (int) $this->request->getPost('chest_id');
+        $chest   = (new ChestModel())->find($chestId);
+
+        if (! $chest) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Сундук не найден']);
+        }
+
+        if ($character->gold < $chest->price) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Не хватает золота',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        (new CharacterModel())->update($character->id, ['gold' => $character->gold - $chest->price]);
+
+        $rarity = $this->rollRarity($chest);
+        $item   = $this->randomItemByRarity($rarity);
+        $this->giveItem($character->id, $item->id);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Из сундука выпало: {$item->emoji} {$item->name}",
+            'rarity'  => $rarity,
+            'item'    => ['name' => $item->name, 'emoji' => $item->emoji, 'rarity' => $rarity],
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
     // ---------- Приватные помощники ----------
 
     private function currentCharacter()
@@ -829,5 +882,39 @@ class Game extends BaseController
                 $charTaskModel->update($row->id, ['progress' => $row->progress + 1]);
             }
         }
+    }
+
+    private function rollRarity($chest): string
+    {
+        $rates = [
+            'common'    => (float) $chest->common_rate,
+            'uncommon'  => (float) $chest->uncommon_rate,
+            'rare'      => (float) $chest->rare_rate,
+            'epic'      => (float) $chest->epic_rate,
+            'legendary' => (float) $chest->legendary_rate,
+        ];
+
+        $roll = mt_rand(0, 9999) / 100;
+        $cum  = 0.0;
+
+        foreach ($rates as $rarity => $rate) {
+            $cum += $rate;
+            if ($roll < $cum) {
+                return $rarity;
+            }
+        }
+
+        return 'common';
+    }
+
+    private function randomItemByRarity($rarity)
+    {
+        $items = (new ItemModel())->where('rarity', $rarity)->findAll();
+
+        if (empty($items)) {
+            $items = (new ItemModel())->where('rarity', 'common')->findAll();
+        }
+
+        return $items[array_rand($items)];
     }
 }
