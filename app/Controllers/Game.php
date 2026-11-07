@@ -1217,7 +1217,7 @@ class Game extends BaseController
         }
     }
 
-    private const TASK_LIMITS = ['daily' => 5, 'weekly' => 7, 'monthly' => 10];
+    private const TASK_LIMITS = ['daily' => 5, 'weekly' => 5, 'monthly' => 5];
     private const TASK_PERIODS = ['daily', 'weekly', 'monthly'];
 
     private function periodKey(string $period): string
