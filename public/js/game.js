@@ -5,7 +5,22 @@
         return el ? el.getAttribute('content') : '';
     }
 
+    // Глобальная задержка между игровыми действиями (анти-спам).
+    const COOLDOWN_MS = 3000;
+    let lastActionAt = 0;
+
+    function cooldownRemaining() {
+        const wait = lastActionAt + COOLDOWN_MS - Date.now();
+        return wait > 0 ? wait : 0;
+    }
+
     async function post(url, data = {}) {
+        const wait = cooldownRemaining();
+        if (wait > 0) {
+            await new Promise((resolve) => setTimeout(resolve, wait));
+        }
+        lastActionAt = Date.now();
+
         const fd = new FormData();
         Object.entries(data).forEach(([k, v]) => fd.append(k, v));
         const res = await fetch(url, {
@@ -74,5 +89,5 @@
         }
     }
 
-    window.Game = { csrfToken, post, get, toast, updateState };
+    window.Game = { csrfToken, post, get, toast, updateState, cooldownRemaining, COOLDOWN_MS };
 })();

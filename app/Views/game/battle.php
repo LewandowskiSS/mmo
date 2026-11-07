@@ -38,7 +38,15 @@
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-        <button id="attack-btn" type="button" class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold">⚔️ Атаковать</button>
+        <div class="relative">
+            <button id="attack-btn" type="button" class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold">⚔️ Атаковать</button>
+            <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <rect x="2" y="2" width="96" height="96" rx="14" fill="none"
+                      stroke="#f87171" stroke-width="2" vector-effect="non-scaling-stroke"
+                      pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"
+                      id="attack-cd-ring" />
+            </svg>
+        </div>
         <button id="flee-btn" type="button" class="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold">💨 Сбежать</button>
     </div>
 </div>
@@ -58,6 +66,18 @@
     const attackBtn = document.getElementById('attack-btn');
     const fleeBtn = document.getElementById('flee-btn');
     const maxMonsterHp = <?= (int) $monster->hp ?>;
+    const attackCdRing = document.getElementById('attack-cd-ring');
+    const COOLDOWN_MS = Game.COOLDOWN_MS || 3000;
+
+    function startCooldown() {
+        attackBtn.disabled = true;
+        fleeBtn.disabled = true;
+        attackCdRing.style.transition = 'none';
+        attackCdRing.style.strokeDashoffset = '100';
+        attackCdRing.getBoundingClientRect();
+        attackCdRing.style.transition = 'stroke-dashoffset ' + COOLDOWN_MS + 'ms linear';
+        attackCdRing.style.strokeDashoffset = '0';
+    }
 
     function setBar(id, cur, max) {
         const el = document.getElementById(id);
@@ -107,8 +127,7 @@
     brClose.addEventListener('click', () => { window.location.href = '/'; });
 
     async function doAction(url) {
-        attackBtn.disabled = true;
-        fleeBtn.disabled = true;
+        startCooldown();
         try {
             const data = await Game.post(url);
             applyState(data.state);
@@ -117,8 +136,10 @@
             if (data.result === 'continue') {
                 document.getElementById('st-monster-hp').textContent = data.monster_hp + ' / ' + maxMonsterHp;
                 setBar('bar-monster-hp', data.monster_hp, maxMonsterHp);
-                attackBtn.disabled = false;
-                fleeBtn.disabled = false;
+                setTimeout(() => {
+                    attackBtn.disabled = false;
+                    fleeBtn.disabled = false;
+                }, COOLDOWN_MS);
             } else if (data.result === 'win' || data.result === 'lose' || data.result === 'flee') {
                 showResult(data.result, data.message);
             }

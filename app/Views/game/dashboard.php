@@ -100,7 +100,7 @@
     const walkBtn = document.getElementById('walk-btn');
     const restBtn = document.getElementById('rest-btn');
     const cdRing = document.getElementById('walk-cd-ring');
-    const COOLDOWN_MS = 2000;
+    const COOLDOWN_MS = Game.COOLDOWN_MS || 3000;
     let currentEnergy = <?= (int) $character->energy ?>;
 
     function startCooldown() {
