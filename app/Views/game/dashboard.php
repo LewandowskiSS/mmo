@@ -92,8 +92,9 @@ $rcMap = [
                 @click="doAction('/game/walk')">
                 🚶 Прогулка <span class="text-sm font-normal">(-1 ⚡)</span>
             </button>
-            <div class="absolute pointer-events-none" style="top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px)"
-                 :style="walking ? 'opacity:1' : 'opacity:0'">
+            <div class="absolute pointer-events-none opacity-0 transition-opacity duration-300"
+                 :class="walking ? 'opacity-100' : 'opacity-0'"
+                 style="top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px)">
                 <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                     <rect x="3" y="3" width="94" height="94" rx="14" fill="none"
                           stroke="#34d399" stroke-width="2" vector-effect="non-scaling-stroke"
