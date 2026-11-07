@@ -487,6 +487,16 @@ class Game extends BaseController
         ]);
     }
 
+    public function leaderboard()
+    {
+        $top = (new CharacterModel())
+            ->orderBy('level', 'DESC')
+            ->orderBy('xp', 'DESC')
+            ->findAll(50);
+
+        return view('game/leaderboard', ['top' => $top]);
+    }
+
     // ---------- Приватные помощники ----------
 
     private function currentCharacter()
