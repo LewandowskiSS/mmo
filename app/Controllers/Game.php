@@ -627,12 +627,25 @@ class Game extends BaseController
             return redirect()->to('/login');
         }
 
-        $this->assignDailyTasks($character);
+        $this->assignTasks($character);
 
-        $today = date('Y-m-d');
-        $rows  = (new CharacterTaskModel())
+        $periods = [];
+        foreach (self::TASK_PERIODS as $period) {
+            $periods[$period] = $this->periodTasksData($character, $period);
+        }
+
+        return view('game/tasks', [
+            'character' => $character,
+            'periods'   => $periods,
+        ]);
+    }
+
+    private function periodTasksData($character, string $period): array
+    {
+        $rows = (new CharacterTaskModel())
             ->where('character_id', $character->id)
-            ->where('task_date', $today)
+            ->where('period', $period)
+            ->where('task_date', $this->periodKey($period))
             ->findAll();
 
         $taskModel = new DailyTaskModel();
@@ -653,7 +666,6 @@ class Game extends BaseController
             ];
         }
 
-        // Общий прогресс дня: сколько заданий выполнено из назначенных
         $total     = count($items);
         $completed = 0;
         foreach ($items as $it) {
@@ -663,8 +675,7 @@ class Game extends BaseController
         }
         $percent = $total > 0 ? (int) floor($completed / $total * 100) : 0;
 
-        // Пороги наград: 25/50/75/100% + иконка сундука
-        $milestones = $this->taskMilestones();
+        $milestones        = $this->taskMilestones($period);
         $claimedMilestones = [];
         if ($rows) {
             $claimedMilestones = array_filter(explode(',', (string) ($rows[0]->milestones_claimed ?? '')));
@@ -676,13 +687,110 @@ class Game extends BaseController
         }
         unset($m);
 
-        return view('game/tasks', [
-            'character'         => $character,
-            'items'             => $items,
-            'total'             => $total,
-            'completed'         => $completed,
-            'percent'           => $percent,
-            'milestones'        => $milestones,
+        // Первый неоткрытый порог — подпись «сундука выполнения»
+        $nextReward = '';
+        foreach ($milestones as $m) {
+            if (! $m['claimed']) {
+                $nextReward = $m['label'];
+                break;
+            }
+        }
+
+        return [
+            'items'       => $items,
+            'total'       => $total,
+            'completed'   => $completed,
+            'percent'     => $percent,
+            'milestones'  => $milestones,
+            'reset_in'    => $this->periodEndsIn($period),
+            'next_reward' => $nextReward,
+        ];
+    }
+
+    public function claimTask()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $taskId = (int) $this->request->getPost('task_id');
+        $row = (new CharacterTaskModel())
+            ->where('id', $taskId)
+            ->where('character_id', $character->id)
+            ->first();
+
+        if (! $row) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Задание не найдено']);
+        }
+
+        if ((bool) $row->claimed) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Награда уже получена']);
+        }
+
+        if ((int) $row->progress < (int) $row->target) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Задание ещё не выполнено']);
+        }
+
+        (new CharacterTaskModel())->update($row->id, ['claimed' => 1]);
+        $this->grantRewards($character, (int) $row->reward_xp, (int) $row->reward_gold);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Награда получена: +{$row->reward_gold} 🪙 +{$row->reward_xp} XP",
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
+    public function refreshTasks()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $period = (string) ($this->request->getPost('period') ?: 'daily');
+        if (! in_array($period, self::TASK_PERIODS, true)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Неизвестный период']);
+        }
+
+        $cost = 5;
+        if ((int) ($character->diamonds ?? 0) < $cost) {
+            return $this->response->setJSON(['success' => false, 'message' => "Не хватает алмазов (нужно {$cost} 💎)"]);
+        }
+
+        $rows = (new CharacterTaskModel())
+            ->where('character_id', $character->id)
+            ->where('period', $period)
+            ->where('task_date', $this->periodKey($period))
+            ->findAll();
+
+        if (empty($rows)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Нет заданий для обновления']);
+        }
+
+        foreach ($rows as $row) {
+            if ((bool) $row->claimed || (int) $row->progress > 0) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Нельзя обновить: по заданиям уже есть прогресс']);
+            }
+        }
+
+        (new CharacterTaskModel())
+            ->where('character_id', $character->id)
+            ->where('period', $period)
+            ->where('task_date', $this->periodKey($period))
+            ->delete();
+
+        (new CharacterModel())->update($character->id, [
+            'diamonds' => (int) ($character->diamonds ?? 0) - $cost,
+        ]);
+
+        $this->assignPeriodTasks($character, $period);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Задания обновлены (-{$cost} 💎)",
+            'state'   => $this->characterState($character),
         ]);
     }
 
@@ -698,14 +806,20 @@ class Game extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Неизвестная награда']);
         }
 
-        $today = date('Y-m-d');
-        $rows  = (new CharacterTaskModel())
+        $period = (string) ($this->request->getPost('period') ?: 'daily');
+        if (! in_array($period, self::TASK_PERIODS, true)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Неизвестный период']);
+        }
+
+        $key  = $this->periodKey($period);
+        $rows = (new CharacterTaskModel())
             ->where('character_id', $character->id)
-            ->where('task_date', $today)
+            ->where('period', $period)
+            ->where('task_date', $key)
             ->findAll();
 
         if (empty($rows)) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Нет заданий на сегодня']);
+            return $this->response->setJSON(['success' => false, 'message' => 'Нет заданий в этом периоде']);
         }
 
         // Проверка процента выполнения
@@ -730,11 +844,12 @@ class Game extends BaseController
         }
 
         // Выдаём награду по порогу
-        $rewards = $this->milestoneReward($percent, $character);
+        $rewards = $this->milestoneReward($percent, $character, $period);
         $claimedMilestones[] = (string) $percent;
         (new CharacterTaskModel())
             ->where('character_id', $character->id)
-            ->where('task_date', $today)
+            ->where('period', $period)
+            ->where('task_date', $key)
             ->set(['milestones_claimed' => implode(',', $claimedMilestones)])
             ->update();
 
@@ -1102,19 +1217,55 @@ class Game extends BaseController
         }
     }
 
-    private function taskMilestones(): array
+    private const TASK_LIMITS = ['daily' => 5, 'weekly' => 7, 'monthly' => 10];
+    private const TASK_PERIODS = ['daily', 'weekly', 'monthly'];
+
+    private function periodKey(string $period): string
     {
-        return [
-            ['percent' => 25,  'type' => 'gold',      'amount' => 100,  'label' => '100 золота'],
-            ['percent' => 50,  'type' => 'diamonds',  'amount' => 5,    'label' => '5 алмазов'],
-            ['percent' => 75,  'type' => 'gold_item', 'amount' => 200,  'item' => 3, 'label' => '200 золота + предмет'],
-            ['percent' => 100, 'type' => 'diamonds',  'amount' => 15,   'label' => '15 алмазов'],
-        ];
+        return match ($period) {
+            'weekly'  => date('Y-m-d', strtotime('monday this week')),
+            'monthly' => date('Y-m-01'),
+            default   => date('Y-m-d'),
+        };
     }
 
-    private function milestoneReward($percent, $character): string
+    private function periodEndsIn(string $period): int
     {
-        foreach ($this->taskMilestones() as $m) {
+        return match ($period) {
+            'weekly'  => max(0, strtotime('monday next week') - time()),
+            'monthly' => max(0, strtotime(date('Y-m-01', strtotime('+1 month'))) - time()),
+            default   => max(0, strtotime('tomorrow') - time()),
+        };
+    }
+
+    private function taskMilestones(string $period = 'daily'): array
+    {
+        $base = [
+            ['percent' => 25,  'type' => 'gold',      'amount' => 100,  'item' => null, 'label' => ''],
+            ['percent' => 50,  'type' => 'diamonds',  'amount' => 5,    'item' => null, 'label' => ''],
+            ['percent' => 75,  'type' => 'gold_item', 'amount' => 200,  'item' => 3,    'label' => ''],
+            ['percent' => 100, 'type' => 'diamonds',  'amount' => 15,   'item' => null, 'label' => ''],
+        ];
+
+        $mult = ['weekly' => 3, 'monthly' => 8][$period] ?? 1;
+
+        foreach ($base as &$m) {
+            $m['amount'] = (int) ($m['amount'] * $mult);
+            $m['label']  = match ($m['type']) {
+                'gold'      => "{$m['amount']} золота",
+                'diamonds'  => "{$m['amount']} алмазов",
+                'gold_item' => "{$m['amount']} золота + предмет",
+                default     => "{$m['amount']}",
+            };
+        }
+        unset($m);
+
+        return $base;
+    }
+
+    private function milestoneReward($percent, $character, string $period = 'daily'): string
+    {
+        foreach ($this->taskMilestones($period) as $m) {
             if ($m['percent'] !== $percent) {
                 continue;
             }
@@ -1150,42 +1301,53 @@ class Game extends BaseController
             return;
         }
 
-        $this->assignDailyTasks($character);
+        $this->assignTasks($character);
 
-        $today = date('Y-m-d');
         $charTaskModel = new CharacterTaskModel();
 
-        $rows = $charTaskModel
-            ->select('character_tasks.*')
-            ->join('daily_tasks', 'daily_tasks.id = character_tasks.task_id')
-            ->where('character_tasks.character_id', $characterId)
-            ->where('character_tasks.task_date', $today)
-            ->where('daily_tasks.type', $type)
-            ->findAll();
+        foreach (self::TASK_PERIODS as $period) {
+            $rows = $charTaskModel
+                ->select('character_tasks.*')
+                ->join('daily_tasks', 'daily_tasks.id = character_tasks.task_id')
+                ->where('character_tasks.character_id', $characterId)
+                ->where('character_tasks.period', $period)
+                ->where('character_tasks.task_date', $this->periodKey($period))
+                ->where('daily_tasks.type', $type)
+                ->findAll();
 
-        foreach ($rows as $row) {
-            if (! $row->claimed) {
-                $charTaskModel->update($row->id, ['progress' => (int) $row->progress + 1]);
+            foreach ($rows as $row) {
+                if (! $row->claimed) {
+                    $charTaskModel->update($row->id, ['progress' => (int) $row->progress + 1]);
+                }
             }
         }
     }
 
-    private function assignDailyTasks($character): void
+    private function assignTasks($character): void
     {
-        $today = date('Y-m-d');
+        foreach (self::TASK_PERIODS as $period) {
+            $this->assignPeriodTasks($character, $period);
+        }
+    }
+
+    private function assignPeriodTasks($character, string $period): void
+    {
+        $key = $this->periodKey($period);
         $charTaskModel = new CharacterTaskModel();
 
-        $hasToday = $charTaskModel
+        $has = $charTaskModel
             ->where('character_id', $character->id)
-            ->where('task_date', $today)
+            ->where('period', $period)
+            ->where('task_date', $key)
             ->countAllResults();
 
-        if ($hasToday > 0) {
+        if ($has > 0) {
             return;
         }
 
         $pool = (new DailyTaskModel())
             ->where('min_level <=', (int) $character->level)
+            ->where('period', $period)
             ->findAll();
 
         if (empty($pool)) {
@@ -1193,7 +1355,8 @@ class Game extends BaseController
         }
 
         shuffle($pool);
-        $chosen = array_slice($pool, 0, 4);
+        $limit = self::TASK_LIMITS[$period] ?? 5;
+        $chosen = array_slice($pool, 0, min($limit, count($pool)));
 
         foreach ($chosen as $task) {
             $charTaskModel->insert([
@@ -1201,7 +1364,8 @@ class Game extends BaseController
                 'task_id'      => $task->id,
                 'progress'     => 0,
                 'claimed'      => 0,
-                'task_date'    => $today,
+                'task_date'    => $key,
+                'period'       => $period,
                 'target'       => $this->scaleTaskTarget((int) $task->target, (int) $character->level),
                 'reward_gold'  => $this->scaleTaskReward((int) $task->reward_gold, (int) $character->level),
                 'reward_xp'    => $this->scaleTaskXp((int) $task->reward_xp, (int) $character->level),
