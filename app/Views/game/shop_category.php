@@ -18,19 +18,24 @@
 
     <ul class="divide-y divide-slate-700/60 bg-slate-900 rounded-lg overflow-hidden">
         <template x-for="item in pageItems()" :key="item.id">
-            <li class="px-4 py-3.5 flex items-center gap-3 hover:bg-slate-800/60 transition-colors">
-                <div class="text-2xl" x-text="item.emoji"></div>
-                <div class="flex-1">
-                    <p class="font-semibold" :class="rarityClass(item.rarity)" x-text="item.name"></p>
-                    <p class="text-xs text-slate-500">
-                        <span x-text="typeLabel(item)"></span>
-                        <template x-if="item.type !== 'consumable'">
-                            <span x-text="' +' + item.value + (item.stat === 'attack' ? ' str' : ' def')"></span>
-                        </template>
-                    </p>
-                </div>
-                <button type="button" @click="buy(item)" class="flex items-center gap-1 text-sm font-semibold text-amber-400 hover:text-amber-300">
-                    🪙 <span x-text="item.price"></span>
+            <li>
+                <button type="button" @click="buy(item)" class="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-slate-800/60 transition-colors text-left">
+                    <div class="text-2xl" x-text="item.emoji"></div>
+                    <div class="flex-1">
+                        <p class="font-semibold" :class="rarityClass(item.rarity)" x-text="item.name"></p>
+                        <p class="text-xs text-slate-500">
+                            <span x-text="typeLabel(item)"></span>
+                            <template x-if="item.type !== 'consumable'">
+                                <span x-text="' +' + item.value + (item.stat === 'attack' ? ' атаки' : ' защиты')"></span>
+                            </template>
+                            <template x-if="item.type === 'consumable'">
+                                <span x-text="' · восстанавливает ' + item.value + (item.stat === 'hp' ? ' HP' : ' энергии')"></span>
+                            </template>
+                        </p>
+                    </div>
+                    <span class="flex items-center gap-1 text-sm font-semibold text-amber-400">
+                        🪙 <span x-text="item.price"></span>
+                    </span>
                 </button>
             </li>
         </template>
