@@ -92,14 +92,8 @@ $rcMap = [
                 @click="doAction('/game/walk')">
                 🚶 Прогулка <span class="text-sm font-normal">(-1 ⚡)</span>
             </button>
-            <div class="absolute pointer-events-none opacity-0 transition-opacity duration-300"
-                 :class="walking ? 'opacity-100' : 'opacity-0'"
-                 style="top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px)">
-                <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    <rect class="ring-rect" x="3" y="3" width="94" height="94" rx="14" fill="none"
-                          stroke="#34d399" stroke-width="2" vector-effect="non-scaling-stroke"
-                          pathLength="100" stroke-dasharray="100" />
-                </svg>
+            <div x-show="walking" x-cloak class="h-1 rounded-lg bg-slate-700 overflow-hidden mt-1.5">
+                <div class="h-1 bg-emerald-400 rounded-lg ring-run"></div>
             </div>
         </div>
 
@@ -144,13 +138,13 @@ $rcMap = [
 </div>
 
 <style>
-    .ring-rect { stroke-dashoffset: 100; }
-    .ring-rect.ring-run {
-        animation: ringFill 3s linear forwards;
+    .ring-run {
+        animation: barFill 3s linear forwards;
+        width: 0%;
     }
-    @keyframes ringFill {
-        from { stroke-dashoffset: 100; }
-        to   { stroke-dashoffset: 0; }
+    @keyframes barFill {
+        from { width: 0%; }
+        to   { width: 100%; }
     }
 </style>
 
@@ -177,16 +171,13 @@ function gameDashboard(initialEnergy) {
         },
 
         startCooldown() {
-            this.walking = false;
-            this.$nextTick(() => {
-                const rect = document.querySelector('.ring-rect');
-                if (rect) {
-                    rect.classList.remove('ring-run');
-                    void rect.getBoundingClientRect(); // reflow — перезапуск анимации
-                    rect.classList.add('ring-run');
-                }
-                this.walking = true;
-            });
+            this.walking = true;
+            const bar = document.querySelector('.ring-run');
+            if (bar) {
+                bar.classList.remove('ring-run');
+                void bar.getBoundingClientRect(); // reflow — перезапуск анимации
+                bar.classList.add('ring-run');
+            }
             setTimeout(() => {
                 this.walking = false;
             }, 3000);

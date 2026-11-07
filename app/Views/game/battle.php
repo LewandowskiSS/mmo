@@ -36,21 +36,12 @@
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-        <div class="relative">
-            <button type="button" :disabled="busy"
-                class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold"
-                @click="doAction('/game/attack')">
-                <span x-show="!busy">⚔️ Атаковать</span>
-                <span x-show="busy" x-cloak>⚔️ Атакуем..</span>
-            </button>
-            <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="2" y="2" width="96" height="96" rx="14" fill="none"
-                      stroke="#f87171" stroke-width="2" vector-effect="non-scaling-stroke"
-                      pathLength="100" stroke-dasharray="100"
-                      :stroke-dashoffset="busy ? 0 : 100"
-                      :style="busy ? 'transition: stroke-dashoffset 3000ms linear' : 'transition: none'" />
-            </svg>
-        </div>
+        <button type="button" :disabled="busy"
+            class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold"
+            @click="doAction('/game/attack')">
+            <span x-show="!busy">⚔️ Атаковать</span>
+            <span x-show="busy" x-cloak>⚔️ Атакуем..</span>
+        </button>
         <button type="button" :disabled="busy" class="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-100 font-bold" @click="doAction('/game/flee')">💨 Сбежать</button>
     </div>
 
