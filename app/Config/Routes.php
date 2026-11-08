@@ -32,6 +32,7 @@ $routes->get('game/shop/(:segment)', 'Game::shopCategory/$1');
 $routes->post('game/buy', 'Game::buy');
 $routes->get('game/leaderboard', 'Game::leaderboard');
 $routes->get('game/tasks', 'Game::tasks');
+$routes->get('game/tasksState', 'Game::tasksState');
 $routes->post('game/claimTask', 'Game::claimTask');
 $routes->post('game/claimMilestone', 'Game::claimMilestone');
 $routes->post('game/refreshTasks', 'Game::refreshTasks');

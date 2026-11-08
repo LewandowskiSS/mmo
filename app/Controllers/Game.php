@@ -679,6 +679,23 @@ class Game extends BaseController
         ]);
     }
 
+    public function tasksState()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $this->assignTasks($character);
+
+        $periods = [];
+        foreach (self::TASK_PERIODS as $period) {
+            $periods[$period] = $this->periodTasksData($character, $period);
+        }
+
+        return $this->response->setJSON(['success' => true, 'periods' => $periods]);
+    }
+
     private function periodTasksData($character, string $period): array
     {
         $rows = (new CharacterTaskModel())
@@ -695,10 +712,11 @@ class Game extends BaseController
                 continue;
             }
             $items[] = [
-                'row'         => $row,
-                'task'        => $task,
+                'id'          => (int) $row->id,
+                'emoji'       => (string) $task->emoji,
                 'name'        => $this->taskDisplayText((string) $task->name, (int) $row->target),
                 'description' => $task->description ? $this->taskDisplayText((string) $task->description, (int) $row->target) : '',
+                'type'        => (string) $task->type,
                 'progress'    => (int) $row->progress,
                 'target'      => (int) $row->target,
                 'claimed'     => (bool) $row->claimed,
