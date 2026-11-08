@@ -116,7 +116,12 @@ $icon = function ($e): string {
                     <?php foreach ($feed as $f): ?>
                         <div class="flex items-center gap-3 px-4 py-3">
                             <?php if ($f->type === 'item'): ?>
-                                <span class="<?= $rcMap[$f->rarity] ?? 'text-slate-300' ?>"><?= esc($f->emoji) ?> <?= esc($f->message) ?></span>
+                                <span class="inline-flex items-center gap-1 <?= $rcMap[$f->rarity] ?? 'text-slate-300' ?>">
+                                    <?php if (str_starts_with((string) $f->emoji, '/')): ?>
+                                        <img src="<?= esc($f->emoji) ?>" class="w-4 h-4 object-contain" alt="">
+                                    <?php endif; ?>
+                                    <?= esc($f->message) ?>
+                                </span>
                             <?php else: ?>
                                 <span class="text-slate-300"><?= esc($f->message) ?></span>
                             <?php endif; ?>

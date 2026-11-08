@@ -119,7 +119,12 @@ foreach ($event_log as $e) {
                     :class="log.isNew ? 'log-enter' : ''">
                     <span class="truncate">
                         <template x-if="log.type === 'item'">
-                            <span :class="rc(log.rarity)" x-text="(log.emoji ? log.emoji + ' ' : '') + log.message"></span>
+                            <span class="inline-flex items-center gap-1">
+                                <template x-if="Game.isImage(log.emoji)">
+                                    <img :src="log.emoji" class="w-4 h-4 object-contain" alt="">
+                                </template>
+                                <span :class="rc(log.rarity)" x-text="log.message"></span>
+                            </span>
                         </template>
                         <template x-if="log.type === 'gold'">
                             <span class="text-slate-300" x-text="'💰 ' + log.message"></span>
