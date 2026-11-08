@@ -90,7 +90,7 @@ $icon = function ($e): string {
         </div>
 
         <div>
-            <p class="text-sm text-slate-400 mb-2">Bio <?php if ($isOwn): ?><button type="button" @click="bioEdit = !bioEdit" class="ml-2 text-slate-400 hover:text-white" title="Изменить bio">✏️</button><?php endif; ?></p>
+            <p class="text-sm text-slate-400 mb-2">Bio</p>
             <div class="bg-slate-800 rounded-lg p-4 text-sm text-slate-200 whitespace-pre-line">
                 <?= $character->bio !== '' ? esc($character->bio) : '—' ?>
             </div>
