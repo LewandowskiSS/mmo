@@ -51,7 +51,8 @@ foreach ($periods as $p => $d) {
                 <template x-for="m in periods[p].milestones" :key="m.percent">
                     <button type="button" @click="showMilestone(p, m)"
                         :class="m.claimable ? 'text-amber-400 hover:text-amber-300' : (m.claimed ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300')"
-                        class="flex flex-col items-center gap-0.5">
+                        class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg"
+                        :style="m.claimable ? 'box-shadow: 0 0 0 2px rgba(250,204,21,.45), 0 0 14px rgba(250,204,21,.25)' : ''">
                         <img :src="'/img/chests/' + m.icon + '.ico'" :alt="m.percent + '%'" class="w-6 h-6 object-contain">
                         <span x-text="m.percent + '%'"></span>
                     </button>
