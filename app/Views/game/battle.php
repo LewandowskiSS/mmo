@@ -73,7 +73,7 @@ function battleView(maxMonsterHpInit, monsterHpInit, hpInit, maxHpInit) {
             this.busy = true;
             setTimeout(() => {
                 this.busy = false;
-            }, 3000);
+            }, 1500);
         },
 
         addLog(text) {
@@ -89,7 +89,7 @@ function battleView(maxMonsterHpInit, monsterHpInit, hpInit, maxHpInit) {
             if (this.busy) return;
             this.startCooldown();
             try {
-                const data = await Game.post(url);
+                const data = await Game.post(url, {}, 1500);
                 if (data.state) {
                     this.hp = data.state.hp;
                     this.maxHp = data.state.max_hp;
@@ -98,7 +98,7 @@ function battleView(maxMonsterHpInit, monsterHpInit, hpInit, maxHpInit) {
 
                 if (data.result === 'continue') {
                     this.monsterHp = data.monster_hp;
-                    setTimeout(() => { this.busy = false; }, 3000);
+                    setTimeout(() => { this.busy = false; }, 1500);
                 } else if (data.result === 'win' || data.result === 'lose' || data.result === 'flee') {
                     const map = {
                         win:  { emoji: '🏆', title: 'Победа!', cls: 'text-emerald-400' },

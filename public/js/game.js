@@ -9,13 +9,8 @@
     const COOLDOWN_MS = 3000;
     let lastActionAt = 0;
 
-    function cooldownRemaining() {
-        const wait = lastActionAt + COOLDOWN_MS - Date.now();
-        return wait > 0 ? wait : 0;
-    }
-
-    async function post(url, data = {}) {
-        const wait = cooldownRemaining();
+    async function post(url, data = {}, cooldownMs = COOLDOWN_MS) {
+        const wait = lastActionAt + cooldownMs - Date.now();
         if (wait > 0) {
             await new Promise((resolve) => setTimeout(resolve, wait));
         }
@@ -89,7 +84,7 @@
         }
     }
 
-    window.Game = { csrfToken, post, get, toast, updateState, cooldownRemaining, COOLDOWN_MS };
+    window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS };
 })();
 
 // Общее состояние лейаута (сайдбар + профиль)
