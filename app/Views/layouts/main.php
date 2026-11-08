@@ -41,36 +41,62 @@
         </div>
 
         <nav class="p-2 md:p-3 space-y-1 text-sm flex-1 overflow-y-auto">
-            <?php if (session()->get('user_id')): ?>
-                <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">🏠</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Игра</span>
-                </a>
-                <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">📋</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Задания</span>
-                </a>
-                <a href="/game/inventory" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">🎒</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Инвентарь</span>
-                </a>
-                <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">🏪</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Магазин</span>
-                </a>
-                <a href="/game/chests" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">🎁</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Сундуки</span>
-                </a>
-                <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">🏆</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Топ</span>
-                </a>
+            <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Основное</p>
+
+            <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🏠</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Главная</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🗺️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Город (WIP)</span>
+            </a>
+            <a href="/game/inventory" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🎒</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Инвентарь</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">⚔️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Бой (WIP)</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">✅</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Квесты (WIP)</span>
+            </a>
+
+            <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Персонаж</p>
+
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">👤</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Мой персонаж (WIP)</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">💼</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Профессия (WIP)</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">✨</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Крафт (WIP)</span>
+            </a>
+            <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">📋</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Задания</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🗂️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Коллекции (WIP)</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">👥</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Гильдии (WIP)</span>
+            </a>
+
+            <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Игра</p>
+
+            <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🏪</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Магазин</span>
+            </a>
+            <a href="/game/chests" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🎁</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Сундуки</span>
+            </a>
+            <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <span class="text-xl shrink-0">🏆</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Топ игроков</span>
+            </a>
+
+            <div class="pt-2 mt-2 border-t border-slate-700/60">
                 <a href="/logout" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200">
                     <span class="text-xl shrink-0">🚪</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Выйти</span>
                 </a>
-            <?php else: ?>
-                <a href="/login" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                    <span class="text-xl shrink-0">🔑</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Войти</span>
-                </a>
-                <a href="/register" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-emerald-400 hover:text-emerald-300">
-                    <span class="text-xl shrink-0">📝</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Регистрация</span>
-                </a>
-            <?php endif; ?>
+            </div>
         </nav>
     </aside>
     <?php endif; ?>
@@ -89,6 +115,14 @@
             <div class="px-4 py-2.5 flex items-center gap-3">
                 <?php if (session()->get('user_id')): ?>
                 <button type="button" class="text-slate-300 hover:text-white text-xl leading-none" @click="toggleSidebar()" aria-label="Меню">☰</button>
+
+                <!-- Верхние кнопки как в SMMO -->
+                <div class="hidden md:flex items-center gap-1 text-sm ml-2">
+                    <a href="/" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">🚶 Travel</a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">💎 Алмазный магазин <span class="text-xs text-slate-500">(WIP)</span></a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">🛠 Поддержка <span class="text-xs text-slate-500">(WIP)</span></a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">👥 Сообщество <span class="text-xs text-slate-500">(WIP)</span></a>
+                </div>
                 <?php endif; ?>
 
                 <div class="flex-1"></div>
