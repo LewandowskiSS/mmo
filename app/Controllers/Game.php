@@ -172,11 +172,18 @@ class Game extends BaseController
 
         $monster = $this->getBattleMonster($battle);
 
+        // Куда вернуться после боя — на страницу, с которой пришёл игрок
+        $back = (string) $this->request->getServer('HTTP_REFERER');
+        if ($back === '' || strpos($back, 'mmo.local') === false) {
+            $back = '/walk';
+        }
+
         return view('game/battle', [
             'character'  => $character,
             'monster'    => $monster,
             'monster_hp' => (int) $battle['monster_hp'],
             'log'        => $this->session->getFlashdata('battle_log') ?? [],
+            'back'       => $back,
         ]);
     }
 

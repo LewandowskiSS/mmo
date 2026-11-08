@@ -52,7 +52,7 @@
             <div class="text-5xl" x-text="result.emoji"></div>
             <h2 class="text-2xl font-bold" :class="result.cls" x-text="result.title"></h2>
             <p class="text-sm text-slate-300" x-text="result.message"></p>
-            <a href="/" class="block w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold text-center">Продолжить</a>
+            <a href="<?= esc($back) ?>" class="block w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold text-center">Продолжить</a>
         </div>
     </div>
     </template>
