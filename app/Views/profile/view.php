@@ -90,7 +90,7 @@ $icon = function ($e): string {
         </div>
 
         <div>
-            <p class="text-sm text-slate-400 mb-2">Bio</p>
+            <p class="text-sm text-slate-400 mb-2">Bio <?php if ($isOwn): ?><button type="button" @click="bioEdit = !bioEdit" class="ml-2 text-slate-400 hover:text-white" title="Изменить bio">✏️</button><?php endif; ?></p>
             <div class="bg-slate-800 rounded-lg p-4 text-sm text-slate-200 whitespace-pre-line">
                 <?= $character->bio !== '' ? esc($character->bio) : '—' ?>
             </div>
@@ -297,6 +297,32 @@ document.getElementById('send-comment')?.addEventListener('click', async functio
 
 <script>
 function profileComments(profileId) {
+    return {
+        async init() {
+            window.commentsApi = {
+                reload: async function () {
+                    const data = await Game.get('/view/' + profileId + '/comments');
+                    return (data && data.comments) || [];
+                },
+                render: (comments) => window.drawComments(document.getElementById('comments-list'), comments, profileId),
+            };
+            await this.refresh();
+            window.addEventListener('comments-updated', () => this.refresh());
+        },
+        async refresh() {
+            try {
+                const comments = await window.commentsApi.reload();
+                window.commentsApi.render(comments);
+            } catch (e) {
+                const list = document.getElementById('comments-list');
+                if (list) list.innerHTML = '<p class="text-center py-6 text-slate-500 text-sm">Не удалось загрузить комментарии.</p>';
+            }
+        },
+    };
+}
+
+window.drawComments = function (list, comments, profileId) {
+    if (!list) return;
     const avatar = (g) => g === 'female' ? '👩' : '🧔';
     function timeAgo(dateStr) {
         const sec = Math.floor((Date.now() - new Date(dateStr.replace(' ', 'T'))) / 1000);
@@ -306,19 +332,6 @@ function profileComments(profileId) {
         if (sec < 2592000) return Math.floor(sec / 86400) + ' дн назад';
         return dateStr;
     }
-    window.commentsApi = {
-        reload: async function () {
-            const data = await Game.get('/view/' + profileId + '/comments');
-            return (data && data.comments) || [];
-        },
-        render: function (comments) {
-            window.drawComments(document.getElementById('comments-list'), comments, profileId);
-        },
-    };
-}
-
-window.drawComments = function (list, comments, profileId) {
-    if (!list) return;
     list.innerHTML = '';
     if (!comments.length) {
         list.innerHTML = '<p class="text-center py-6 text-slate-500 text-sm">Комментариев пока нет. Будь первым!</p>';
