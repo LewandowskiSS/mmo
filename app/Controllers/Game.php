@@ -391,13 +391,23 @@ class Game extends BaseController
         ];
         $orderSql = $sortMap[$orderCol] ?? 'inventory.id';
 
+        // Пагинация: 25 предметов на страницу
+        $perPage = 25;
+        $total   = (new InventoryModel())
+            ->where('character_id', $character->id)
+            ->countAllResults();
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $page       = max(1, (int) ($this->request->getGet('page') ?: 1));
+        $page       = min($page, $totalPages);
+        $offset     = ($page - 1) * $perPage;
+
         $items = (new InventoryModel())
             ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->orderBy($orderSql, $order)
             ->orderBy('inventory.id', 'ASC')
-            ->findAll();
+            ->findAll($perPage, $offset);
 
         // Заполненность инвентаря
         $used = (int) ((new InventoryModel())
@@ -442,19 +452,28 @@ class Game extends BaseController
             }
         }
 
+        // Счётчики редкости — по всему инвентарю, а не по текущей странице
         $counts = [];
-        foreach ($items as $it) {
-            $counts[$it->rarity] = ($counts[$it->rarity] ?? 0) + 1;
+        $rarityRows = (new InventoryModel())
+            ->select('items.rarity AS rarity')
+            ->join('items', 'items.id = inventory.item_id')
+            ->where('inventory.character_id', $character->id)
+            ->findAll();
+        foreach ($rarityRows as $r) {
+            $counts[$r->rarity] = ($counts[$r->rarity] ?? 0) + 1;
         }
 
         return view('game/inventory', [
-            'character' => $character,
-            'items'     => $items,
-            'counts'    => $counts,
-            'order_col' => $orderCol,
-            'order'     => $order,
-            'used'      => $used,
-            'limit'     => self::INVENTORY_CAPACITY,
+            'character'  => $character,
+            'items'      => $items,
+            'counts'     => $counts,
+            'order_col'  => $orderCol,
+            'order'      => $order,
+            'page'       => $page,
+            'total'      => $total,
+            'totalPages' => $totalPages,
+            'used'       => $used,
+            'limit'      => self::INVENTORY_CAPACITY,
         ]);
     }
 

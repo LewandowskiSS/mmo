@@ -39,7 +39,14 @@ $sortLink = function (string $key, string $label) use ($order_col, $order): stri
     }
     $nextOrder = ($order_col === $key && $order === 'asc') ? 'desc' : 'asc';
     $cls = $order_col === $key ? 'text-sky-300' : 'text-indigo-300 hover:text-sky-300';
-    return '<a href="?order_col=' . $key . '&order=' . $nextOrder . '" class="' . $cls . '">' . $label . $arrow . '</a>';
+    return '<a href="?page=1&order_col=' . $key . '&order=' . $nextOrder . '" class="' . $cls . '">' . $label . $arrow . '</a>';
+};
+$pageLink = function (int $p) use ($order_col, $order): string {
+    $q = '?page=' . $p;
+    if ($order_col !== '') {
+        $q .= '&order_col=' . urlencode($order_col) . '&order=' . $order;
+    }
+    return $q;
 };
 $sellableIds = [];
 foreach ($items as $i) {
@@ -179,6 +186,16 @@ foreach ($items as $i) {
             <?php endforeach; ?>
             </tbody>
         </table>
+
+        <?php if ($totalPages > 1): ?>
+        <div class="flex items-center justify-center gap-3 text-sm">
+            <a href="<?= $pageLink(max(1, $page - 1)) ?>"
+                class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 <?= $page <= 1 ? 'opacity-40 pointer-events-none' : '' ?>">◀ Назад</a>
+            <span class="text-slate-400">Страница <?= $page ?> / <?= $totalPages ?></span>
+            <a href="<?= $pageLink(min($totalPages, $page + 1)) ?>"
+                class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 <?= $page >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>">Вперёд ▶</a>
+        </div>
+        <?php endif; ?>
 
         <p class="hidden text-center py-8 text-slate-500" x-show="!anyVisible()">Ничего не найдено.</p>
     <?php endif; ?>
