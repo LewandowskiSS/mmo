@@ -122,18 +122,36 @@
                 <?php if (session()->get('user_id')): ?>
                 <button type="button" class="text-slate-300 hover:text-white text-xl leading-none" @click="toggleSidebar()" aria-label="Меню">☰</button>
 
-                <!-- Верхние кнопки как в SMMO -->
+                <!-- Верхняя панель как в SMMO -->
                 <div class="hidden md:flex items-center gap-1 text-sm ml-2">
-                    <a href="/walk" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">🚶 Travel</a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">💎 Алмазный магазин <span class="text-xs text-slate-500">(WIP)</span></a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">🛠 Поддержка <span class="text-xs text-slate-500">(WIP)</span></a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">👥 Сообщество <span class="text-xs text-slate-500">(WIP)</span></a>
+                    <a href="/walk" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+                        Travel
+                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-white/50 text-xs leading-none">→</span>
+                    </a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2">
+                        Diamond Store
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold leading-none">Sale</span>
+                    </a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800">Support</a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800">Community</a>
                 </div>
                 <?php endif; ?>
 
                 <div class="flex-1"></div>
 
                 <?php if (session()->get('user_id')): ?>
+                    <!-- Иконки справа: поиск, друзья, чат, уведомления (пока заглушки) -->
+                    <div class="hidden md:flex items-center gap-1">
+                        <div class="relative mr-2">
+                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
+                            <input type="text" placeholder="Поиск"
+                                class="w-40 lg:w-56 pl-8 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Друзья">👥</a>
+                        <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Чат">💬</a>
+                        <a href="#" class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Уведомления">🔔<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span></a>
+                    </div>
+
                     <div class="relative">
                         <button type="button" @click="toggleProfile()" class="flex items-center gap-2 hover:opacity-80">
                             <span class="text-2xl">👤</span>
