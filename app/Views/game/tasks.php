@@ -19,7 +19,12 @@ foreach ($periods as $p => $d) {
         <template x-for="p in periodKeys" :key="p">
             <button type="button" @click="tab = p"
                 :class="tab === p ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
-                class="px-4 py-2 rounded-lg text-sm transition-colors" x-text="periodTitles[p]"></button>
+                class="relative px-4 py-2 rounded-lg text-sm transition-colors">
+                <span x-text="periodTitles[p]"></span>
+                <span x-show="hasClaimable(p)" x-cloak
+                    class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse ring-2 ring-slate-900"
+                    :title="'Доступны награды в разделе ' + periodTitles[p]"></span>
+            </button>
         </template>
     </div>
 
@@ -125,6 +130,19 @@ function tasks(seed, resetIn) {
             const m = Math.floor((s % 3600) / 60);
             const sec = s % 60;
             return h + ' ч ' + m + ' мин ' + sec + ' с';
+        },
+
+        // Есть ли доступные награды в периоде (задание выполнено / сундук достигнут)
+        hasClaimable(p) {
+            const d = this.periods[p];
+            if (!d) return false;
+            for (const it of d.items) {
+                if (!it.claimed && it.progress >= it.target) return true;
+            }
+            for (const m of d.milestones) {
+                if (m.claimable) return true;
+            }
+            return false;
         },
 
         // Перезапросить состояние заданий с сервера (без перезагрузки страницы)
