@@ -15,6 +15,6 @@ class CharacterModel extends Model
         'hp', 'max_hp', 'attack', 'defense',
         'energy', 'max_energy', 'last_energy_at', 'last_step_at',
         'bronze_keys', 'silver_keys', 'gold_keys', 'diamonds',
-        'steps_total', 'npc_kills', 'boss_kills', 'quests_done', 'player_kills',
+        'steps_total', 'npc_kills', 'boss_kills', 'quests_done', 'player_kills', 'chests_opened',
     ];
 }

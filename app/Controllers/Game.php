@@ -106,6 +106,7 @@ class Game extends BaseController
 
         $this->consumeStep($character);
         $this->progressTask($character->id, 'walk');
+        $this->incrementCounter($character->id, 'steps_total');
 
         return $this->response->setJSON($this->walkEvent($character));
     }
@@ -217,6 +218,7 @@ class Game extends BaseController
             $this->logEvent($character->id, 'battle', "Победа над {$monster->name}", null, $monster->emoji);
             $this->progressTask($character->id, 'kill');
             $this->progressTask($character->id, 'win');
+            $this->incrementCounter($character->id, 'npc_kills');
             $this->session->remove('battle');
 
             $msg = "Победа! Ты одолел {$monster->emoji} {$monster->name}. +{$xp} XP, +{$gold} золота.";
@@ -893,6 +895,7 @@ class Game extends BaseController
 
         (new CharacterTaskModel())->update($row->id, ['claimed' => 1]);
         $this->grantRewards($character, (int) $row->reward_xp, (int) $row->reward_gold);
+        $this->incrementCounter($character->id, 'quests_done');
 
         return $this->response->setJSON([
             'success' => true,
@@ -1080,6 +1083,7 @@ class Game extends BaseController
         }
 
         (new CharacterModel())->update($character->id, [$keyField => $keyCount - $quantity]);
+        $this->incrementCounter($character->id, 'chests_opened', $quantity);
 
         return $this->response->setJSON([
             'success'  => true,
@@ -1152,6 +1156,12 @@ class Game extends BaseController
             'gold_keys'      => (int) ($character->gold_keys ?? 0),
             'diamonds'       => (int) ($character->diamonds ?? 0),
             'next_energy_in' => $this->secondsUntilNextEnergy($character),
+            'walks'          => (int) ($character->steps_total ?? 0),
+            'npc_kills'      => (int) ($character->npc_kills ?? 0),
+            'boss_kills'     => (int) ($character->boss_kills ?? 0),
+            'quests_done'    => (int) ($character->quests_done ?? 0),
+            'player_kills'   => (int) ($character->player_kills ?? 0),
+            'chests_opened'  => (int) ($character->chests_opened ?? 0),
         ];
     }
 
@@ -1342,6 +1352,18 @@ class Game extends BaseController
             'xp_gained'    => $xp,
             'gold_gained'  => $gold,
         ]);
+    }
+
+    private function incrementCounter($characterId, string $field, int $amount = 1): void
+    {
+        if ($amount === 0) {
+            return;
+        }
+        $char = (new CharacterModel())->find($characterId);
+        if (! $char) {
+            return;
+        }
+        (new CharacterModel())->update($characterId, [$field => (int) ($char->$field ?? 0) + $amount]);
     }
 
     private function giveItem($characterId, $itemId): void

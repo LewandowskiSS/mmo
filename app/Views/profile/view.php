@@ -173,12 +173,12 @@ $icon = function ($e): string {
         <div class="bg-slate-800 rounded-lg divide-y divide-slate-700/60 text-sm">
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🪙 Золото</span><span class="font-semibold text-amber-400" id="pf-gold"><?= number_format((int) $character->gold, 0, ',', ' ') ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">💎 Алмазы</span><span class="font-semibold" id="pf-diamonds"><?= (int) ($character->diamonds ?? 0) ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👟 Пройдено шагов</span><span class="font-semibold"><?= number_format((int) ($character->steps_total ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🗝️ Ключи (бронза/серебро/золото)</span><span class="font-semibold" id="pf-keys"><?= (int) $character->bronze_keys ?>/<?= (int) $character->silver_keys ?>/<?= (int) $character->gold_keys ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">✅ Выполнено заданий</span><span class="font-semibold"><?= number_format((int) ($character->quests_done ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🧟 Убито монстров</span><span class="font-semibold"><?= number_format((int) ($character->npc_kills ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👑 Убито боссов</span><span class="font-semibold"><?= number_format((int) ($character->boss_kills ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">⚔️ Побед над игроками</span><span class="font-semibold"><?= number_format((int) ($character->player_kills ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👟 Прогулок</span><span class="font-semibold" id="pf-walks"><?= number_format((int) ($character->steps_total ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">📦 Сундуков открыто</span><span class="font-semibold" id="pf-chests"><?= number_format((int) ($character->chests_opened ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">✅ Выполнено заданий</span><span class="font-semibold" id="pf-quests"><?= number_format((int) ($character->quests_done ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🧟 Убито монстров</span><span class="font-semibold" id="pf-kills"><?= number_format((int) ($character->npc_kills ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👑 Убито боссов</span><span class="font-semibold" id="pf-bosskills"><?= number_format((int) ($character->boss_kills ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">⚔️ Побед над игроками</span><span class="font-semibold" id="pf-playerkills"><?= number_format((int) ($character->player_kills ?? 0), 0, ',', ' ') ?></span></div>
         </div>
     </div>
 
@@ -456,7 +456,12 @@ window.drawComments = function (list, comments, profileId) {
         bar('pf-hpbar', s.max_hp ? (s.hp / s.max_hp * 100) : 0);
         set('pf-gold', fmt(s.gold));
         set('pf-diamonds', s.diamonds);
-        set('pf-keys', s.bronze_keys + '/' + s.silver_keys + '/' + s.gold_keys);
+        set('pf-walks', fmt(s.walks));
+        set('pf-chests', fmt(s.chests_opened));
+        set('pf-quests', fmt(s.quests_done));
+        set('pf-kills', fmt(s.npc_kills));
+        set('pf-bosskills', fmt(s.boss_kills));
+        set('pf-playerkills', fmt(s.player_kills));
     }
 
     async function poll() {
