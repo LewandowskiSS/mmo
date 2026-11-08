@@ -3,7 +3,7 @@
 
 <?php
 $periodTitles = ['daily' => 'Ежедневные', 'weekly' => 'Еженедельные', 'monthly' => 'Ежемесячные'];
-$goMap = ['walk' => '/', 'kill' => '/', 'win' => '/', 'item' => '/game/chests'];
+$goMap = ['walk' => '/walk', 'kill' => '/walk', 'win' => '/walk', 'item' => '/walk'];
 $resetIn = [];
 foreach ($periods as $p => $d) {
     $resetIn[$p] = $d['reset_in'];
