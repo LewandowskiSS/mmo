@@ -9,6 +9,10 @@ $routes->get('walk', 'Game::walkPage');
 
 $routes->get('view/(:num)', 'Profile::view/$1');
 $routes->post('view/(:num)/comment', 'Profile::addComment/$1');
+$routes->post('view/(:num)/comment/(:num)/like', 'Profile::toggleLike/$1/$2');
+$routes->post('view/(:num)/comment/(:num)/pin', 'Profile::pinComment/$1/$2');
+$routes->post('view/(:num)/comment/(:num)/delete', 'Profile::deleteComment/$1/$2');
+$routes->get('view/(:num)/comments', 'Profile::comments/$1');
 $routes->post('profile/bio', 'Profile::saveBio');
 
 // Авторизация

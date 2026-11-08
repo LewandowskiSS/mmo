@@ -25,7 +25,7 @@ $icon = function ($e): string {
 
 <div class="space-y-6" x-data="{ tab: 'profile', bioEdit: false }">
     <div class="flex flex-wrap gap-1 text-sm">
-        <?php foreach (['profile' => 'Профиль', 'stats' => 'Статистика', 'interaction' => 'Комментарии', 'equipped' => 'Экипировано', 'awards' => 'Награды (WIP)', 'showcase' => 'Витрина (WIP)'] as $key => $title): ?>
+        <?php foreach (['profile' => 'Профиль', 'stats' => 'Статистика', 'equipped' => 'Экипировано', 'awards' => 'Награды (WIP)', 'showcase' => 'Витрина (WIP)'] as $key => $title): ?>
             <button type="button" @click="tab = '<?= $key ?>'"
                 :class="tab === '<?= $key ?>' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
                 class="px-4 py-2 rounded-lg transition-colors"><?= esc($title) ?></button>
@@ -106,31 +106,40 @@ $icon = function ($e): string {
             <div class="bg-slate-800 rounded-lg p-6 text-center text-slate-400 text-sm">Travel Party (WIP)</div>
         </div>
 
-        <!-- Комментарии внизу профиля -->
+        <!-- Feed -->
         <div>
-            <p class="text-sm text-slate-400 mb-2">💬 Комментарии</p>
+            <p class="text-sm text-slate-400 mb-2">📰 Лента</p>
+            <?php if (empty($feed)): ?>
+                <div class="bg-slate-800 rounded-lg p-6 text-center text-slate-500 text-sm">Лента пуста.</div>
+            <?php else: ?>
+                <div class="bg-slate-800 rounded-lg divide-y divide-slate-700/60 text-sm">
+                    <?php foreach ($feed as $f): ?>
+                        <div class="flex items-center gap-3 px-4 py-3">
+                            <?php if ($f->type === 'item'): ?>
+                                <span class="<?= $rcMap[$f->rarity] ?? 'text-slate-300' ?>"><?= esc($f->emoji) ?> <?= esc($f->message) ?></span>
+                            <?php else: ?>
+                                <span class="text-slate-300"><?= esc($f->message) ?></span>
+                            <?php endif; ?>
+                            <span class="ml-auto text-xs text-slate-500 shrink-0"><?= esc($f->created_at) ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Комментарии внизу профиля -->
+        <div x-data="profileComments(<?= (int) $character->id ?>)">
+            <p class="text-sm text-slate-400 mb-2">💬 Комментарии профиля</p>
             <?php if ($me): ?>
-            <div class="bg-slate-800 rounded-lg p-4 space-y-3 mb-3">
+            <div class="bg-slate-800 rounded-lg p-4 space-y-3 mb-4">
                 <textarea id="comment-input" maxlength="500" rows="3"
                     class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm"
-                    placeholder="Текст комментария…"></textarea>
+                    placeholder="Напиши комментарий…"></textarea>
                 <button type="button" id="send-comment" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold text-sm">Отправить</button>
             </div>
             <?php endif; ?>
             <div id="comments-list" class="space-y-3">
-                <?php if (empty($comments)): ?>
-                    <p class="text-center py-6 text-slate-500 text-sm">Комментариев пока нет.</p>
-                <?php else: ?>
-                    <?php foreach ($comments as $c): ?>
-                        <div class="bg-slate-800 rounded-lg px-4 py-3 flex items-start gap-3">
-                            <a href="/view/<?= (int) $c->author_id ?>" class="text-sm font-semibold text-sky-400 hover:text-sky-300 shrink-0">
-                                <?= esc($c->author_name) ?>#<?= esc($c->author_tag) ?>
-                            </a>
-                            <p class="flex-1 text-sm text-slate-200 break-words"><?= esc($c->message) ?></p>
-                            <span class="text-xs text-slate-500 shrink-0"><?= esc($c->created_at) ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                <p class="text-center py-6 text-slate-500 text-sm">Загрузка комментариев…</p>
             </div>
         </div>
     </div>
@@ -261,7 +270,7 @@ document.getElementById('send-comment')?.addEventListener('click', async functio
     btn.disabled = false;
 });
 
-// Комментарий (AJAX, без перезагрузки)
+// Комментарий (AJAX) — после добавления перерисовываем список
 document.getElementById('send-comment')?.addEventListener('click', async function () {
     const btn = this;
     const input = document.getElementById('comment-input');
@@ -277,27 +286,7 @@ document.getElementById('send-comment')?.addEventListener('click', async functio
         }
         input.value = '';
         Game.toast(data.message, 'success');
-
-        // Вставляем комментарий сверху без перезагрузки
-        const list = document.getElementById('comments-list');
-        const empty = list.querySelector('p');
-        if (empty) empty.remove();
-
-        const wrap = document.createElement('div');
-        wrap.className = 'bg-slate-800 rounded-lg px-4 py-3 flex items-start gap-3 log-enter';
-        const a = document.createElement('a');
-        a.className = 'text-sm font-semibold text-sky-400 hover:text-sky-300 shrink-0';
-        a.href = '<?= base_url('view/' . (int) $me->id) ?>';
-        a.textContent = '<?= esc($me->name) ?>#<?= esc($me->tag) ?>';
-        const p = document.createElement('p');
-        p.className = 'flex-1 text-sm text-slate-200 break-words';
-        p.textContent = text;
-        const ts = document.createElement('span');
-        ts.className = 'text-xs text-slate-500 shrink-0';
-        const now = new Date();
-        ts.textContent = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-        wrap.append(a, p, ts);
-        list.prepend(wrap);
+        window.dispatchEvent(new Event('comments-updated'));
     } catch (e) {
         Game.toast('Ошибка соединения', 'error');
     }
@@ -305,5 +294,152 @@ document.getElementById('send-comment')?.addEventListener('click', async functio
 });
 </script>
 <?php endif; ?>
+
+<script>
+function profileComments(profileId) {
+    const avatar = (g) => g === 'female' ? '👩' : '🧔';
+    function timeAgo(dateStr) {
+        const sec = Math.floor((Date.now() - new Date(dateStr.replace(' ', 'T'))) / 1000);
+        if (sec < 60) return sec + ' сек назад';
+        if (sec < 3600) return Math.floor(sec / 60) + ' мин назад';
+        if (sec < 86400) return Math.floor(sec / 3600) + ' ч назад';
+        if (sec < 2592000) return Math.floor(sec / 86400) + ' дн назад';
+        return dateStr;
+    }
+    window.commentsApi = {
+        reload: async function () {
+            const data = await Game.get('/view/' + profileId + '/comments');
+            return (data && data.comments) || [];
+        },
+        render: function (comments) {
+            window.drawComments(document.getElementById('comments-list'), comments, profileId);
+        },
+    };
+}
+
+window.drawComments = function (list, comments, profileId) {
+    if (!list) return;
+    list.innerHTML = '';
+    if (!comments.length) {
+        list.innerHTML = '<p class="text-center py-6 text-slate-500 text-sm">Комментариев пока нет. Будь первым!</p>';
+        return;
+    }
+    const roots = comments.filter((c) => c.parent_id === null);
+    const repliesOf = (id) => comments.filter((c) => c.parent_id === id);
+
+    function likeBlock(c, small) {
+        const wrap = document.createElement('button');
+        wrap.className = 'flex items-center border rounded-lg overflow-hidden ' + (small ? 'text-xs' : 'text-sm');
+        wrap.style.borderColor = c.liked_by_me ? '#10b981' : '#475569';
+        wrap.style.color = c.liked_by_me ? '#34d399' : '#cbd5e1';
+        const heart = document.createElement('span');
+        heart.textContent = '💚';
+        heart.style.padding = small ? '2px 8px' : '4px 10px';
+        const num = document.createElement('span');
+        num.textContent = c.likes;
+        num.style.padding = small ? '2px 8px' : '4px 10px';
+        num.style.borderLeft = '1px solid ' + (c.liked_by_me ? '#10b98166' : '#475569');
+        wrap.append(heart, num);
+        wrap.addEventListener('click', async () => {
+            const d = await Game.post('/view/' + profileId + '/comment/' + c.id + '/like', {});
+            if (d.success) { c.likes = d.likes; c.liked_by_me = d.liked; window.dispatchEvent(new Event('comments-updated')); }
+        });
+        return wrap;
+    }
+
+    function actionBtn(label, onClick, danger) {
+        const b = document.createElement('button');
+        b.textContent = label;
+        b.className = 'px-3 py-1.5 rounded-lg border text-sm text-slate-200 hover:bg-slate-700';
+        b.style.borderColor = '#475569';
+        if (danger) {
+            b.addEventListener('mouseenter', () => { b.style.borderColor = '#ef4444'; b.style.background = 'rgba(127,29,29,.5)'; });
+            b.addEventListener('mouseleave', () => { b.style.borderColor = '#475569'; b.style.background = ''; });
+        }
+        b.addEventListener('click', onClick);
+        return b;
+    }
+    function commentCard(c, isReply) {
+        const card = document.createElement('div');
+        card.className = isReply ? 'ml-10 bg-slate-900/60 rounded-lg p-3 space-y-2' : 'bg-slate-800 rounded-lg p-4 space-y-3';
+        if (c.pinned) {
+            const pin = document.createElement('p');
+            pin.className = 'text-xs text-amber-400';
+            pin.textContent = '📌 Закреплён';
+            card.append(pin);
+        }
+
+        const row = document.createElement('div');
+        row.className = 'flex items-start gap-3';
+        const av = document.createElement('div');
+        av.className = (isReply ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-lg') + ' rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center shrink-0';
+        av.textContent = avatar(c.author.gender);
+        const body = document.createElement('div');
+        body.className = 'flex-1 min-w-0';
+        const link = document.createElement('a');
+        link.href = '/view/' + c.author.id;
+        link.className = 'font-semibold text-sky-400 hover:text-sky-300' + (isReply ? ' text-sm' : '');
+        link.textContent = c.author.name;
+        const tag = document.createElement('span');
+        tag.className = 'text-slate-500 text-xs';
+        tag.textContent = ' #' + c.author.tag;
+        const meta = document.createElement('p');
+        meta.className = 'text-xs text-slate-400';
+        meta.textContent = 'Уровень ' + c.author.level + ' • ' + timeAgo(c.created_at);
+        const msg = document.createElement('p');
+        msg.className = 'text-sm text-slate-200 break-words mt-1';
+        msg.textContent = c.message;
+        body.append(link, tag, meta, msg);
+        row.append(av, body);
+        card.append(row);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center justify-between gap-2 flex-wrap';
+        actions.append(likeBlock(c, isReply));
+        const btns = document.createElement('div');
+        btns.className = 'flex gap-2';
+        btns.append(actionBtn('Ответить', () => {
+            const existing = card.querySelector('.reply-box');
+            if (existing) { existing.remove(); return; }
+            const box = document.createElement('div');
+            box.className = 'reply-box mt-2 space-y-2';
+            const ta = document.createElement('textarea');
+            ta.rows = 2; ta.maxLength = 500;
+            ta.placeholder = 'Ответ…';
+            ta.className = 'w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm';
+            const send = document.createElement('button');
+            send.textContent = 'Ответить';
+            send.className = 'px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold text-sm';
+            send.addEventListener('click', async () => {
+                const t = ta.value.trim();
+                if (!t) return;
+                const d = await Game.post('/view/' + profileId + '/comment', { message: t, parent_id: c.id });
+                if (d.success) { Game.toast(d.message, 'success'); window.dispatchEvent(new Event('comments-updated')); }
+                else Game.toast(d.message, 'error');
+            });
+            box.append(ta, send);
+            card.append(box);
+            ta.focus();
+        }, false));
+        if (c.can_pin) btns.append(actionBtn('📌 Закрепить', async () => {
+            const d = await Game.post('/view/' + profileId + '/comment/' + c.id + '/pin', {});
+            if (d.success) { Game.toast(d.message, 'success'); window.dispatchEvent(new Event('comments-updated')); }
+        }, false));
+        if (c.can_delete) btns.append(actionBtn('Удалить', async () => {
+            const res = await Swal.fire({ title: 'Удалить комментарий?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Удалить', cancelButtonText: 'Отмена', background: '#1e293b', color: '#e2e8f0', confirmButtonColor: '#ef4444', cancelButtonColor: '#64748b' });
+            if (!res.isConfirmed) return;
+            const d = await Game.post('/view/' + profileId + '/comment/' + c.id + '/delete', {});
+            if (d.success) { Game.toast(d.message, 'success'); window.dispatchEvent(new Event('comments-updated')); }
+        }, true));
+        actions.append(btns);
+        card.append(actions);
+
+        repliesOf(c.id).forEach((r) => card.append(commentCard(r, true)));
+        return card;
+    }
+
+    roots.forEach((c) => list.append(commentCard(c, false)));
+};
+</script>
 
 <?= $this->endSection() ?>

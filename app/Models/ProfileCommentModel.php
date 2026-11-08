@@ -10,5 +10,5 @@ class ProfileCommentModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = true;
-    protected $allowedFields = ['character_id', 'author_id', 'message'];
+    protected $allowedFields = ['character_id', 'author_id', 'parent_id', 'message', 'likes', 'pinned'];
 }
