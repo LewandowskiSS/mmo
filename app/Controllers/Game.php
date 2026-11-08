@@ -1131,18 +1131,6 @@ class Game extends BaseController
 
     // ---------- Приватные помощники ----------
 
-    private function currentCharacter()
-    {
-        if (! $this->session->get('user_id')) {
-            return null;
-        }
-        $id = $this->session->get('character_id');
-        if (! $id) {
-            return null;
-        }
-        return (new CharacterModel())->find($id);
-    }
-
     private function characterState($character): array
     {
         $character = (new CharacterModel())->find($character->id);
