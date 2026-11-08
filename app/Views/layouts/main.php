@@ -22,6 +22,8 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen app-shell" x-data="layout(<?= htmlspecialchars(json_encode([
     'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',
+    'tag'       => \App\Controllers\BaseController::$layoutData['characterTag'] ?? '0000',
+    'gender'    => \App\Controllers\BaseController::$layoutData['characterGender'] ?? 'male',
     'level'     => (int) (\App\Controllers\BaseController::$layoutData['characterLevel'] ?? 1),
     'xpPercent' => (int) (\App\Controllers\BaseController::$layoutData['characterXpPercent'] ?? 0),
     'gold'      => (int) (\App\Controllers\BaseController::$layoutData['characterGold'] ?? 0),
@@ -162,7 +164,7 @@
                             <div class="p-4 border-b border-slate-700 flex items-center gap-3">
                                 <span class="text-3xl">👤</span>
                                 <div class="flex-1">
-                                    <p class="font-bold text-emerald-400" x-text="st.name"></p>
+                                    <p class="font-bold text-emerald-400" x-text="st.name + '#' + st.tag"></p>
                                     <p class="text-xs text-slate-400">Уровень <span x-text="st.level"></span></p>
                                     <div class="mt-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                         <div class="h-full bg-purple-500 transition-all duration-300" :style="'width:' + st.xpPercent + '%'"></div>

@@ -11,7 +11,7 @@ class CharacterModel extends Model
     protected $returnType    = 'object';
     protected $useTimestamps = true;
     protected $allowedFields = [
-        'user_id', 'name', 'level', 'xp', 'gold',
+        'user_id', 'name', 'tag', 'gender', 'level', 'xp', 'gold',
         'hp', 'max_hp', 'attack', 'defense',
         'energy', 'max_energy', 'last_energy_at', 'last_step_at',
         'bronze_keys', 'silver_keys', 'gold_keys', 'diamonds',

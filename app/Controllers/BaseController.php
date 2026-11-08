@@ -51,6 +51,8 @@ abstract class BaseController extends Controller
                 $xpNeeded = 50 + ((int) $character->level - 1) * 25;
                 self::$layoutData = [
                     'characterName'      => $character->name,
+                    'characterTag'       => $character->tag ?? '0000',
+                    'characterGender'    => $character->gender ?? 'male',
                     'characterLevel'     => (int) $character->level,
                     'characterXpPercent' => min(100, (int) round($character->xp / $xpNeeded * 100)),
                     'characterGold'      => (int) $character->gold,

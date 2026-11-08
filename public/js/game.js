@@ -102,6 +102,8 @@ function layout(seed = {}) {
         // Живые данные профиля (обновляются с /game/state при каждом открытии меню)
         st: {
             name: seed.name || 'Игрок',
+            tag: seed.tag || '0000',
+            gender: seed.gender || 'male',
             level: seed.level || 1,
             xpPercent: seed.xpPercent || 0,
             gold: seed.gold || 0,
