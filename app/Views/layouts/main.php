@@ -164,7 +164,7 @@
                             <div class="p-4 border-b border-slate-700 flex items-center gap-3">
                                 <span class="text-3xl">👤</span>
                                 <div class="flex-1">
-                                    <p class="font-bold text-emerald-400" x-text="st.name + '#' + st.tag"></p>
+                                    <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="font-bold text-emerald-400 hover:text-emerald-300" x-text="st.name + '#' + st.tag"></a>
                                     <p class="text-xs text-slate-400">Уровень <span x-text="st.level"></span></p>
                                     <div class="mt-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                         <div class="h-full bg-purple-500 transition-all duration-300" :style="'width:' + st.xpPercent + '%'"></div>

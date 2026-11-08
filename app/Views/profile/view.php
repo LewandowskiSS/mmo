@@ -105,6 +105,34 @@ $icon = function ($e): string {
             <p class="text-sm text-slate-400 mb-2">Travel Party</p>
             <div class="bg-slate-800 rounded-lg p-6 text-center text-slate-400 text-sm">Travel Party (WIP)</div>
         </div>
+
+        <!-- Комментарии внизу профиля -->
+        <div>
+            <p class="text-sm text-slate-400 mb-2">💬 Комментарии</p>
+            <?php if ($me): ?>
+            <div class="bg-slate-800 rounded-lg p-4 space-y-3 mb-3">
+                <textarea id="comment-input" maxlength="500" rows="3"
+                    class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm"
+                    placeholder="Текст комментария…"></textarea>
+                <button type="button" id="send-comment" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold text-sm">Отправить</button>
+            </div>
+            <?php endif; ?>
+            <div id="comments-list" class="space-y-3">
+                <?php if (empty($comments)): ?>
+                    <p class="text-center py-6 text-slate-500 text-sm">Комментариев пока нет.</p>
+                <?php else: ?>
+                    <?php foreach ($comments as $c): ?>
+                        <div class="bg-slate-800 rounded-lg px-4 py-3 flex items-start gap-3">
+                            <a href="/view/<?= (int) $c->author_id ?>" class="text-sm font-semibold text-sky-400 hover:text-sky-300 shrink-0">
+                                <?= esc($c->author_name) ?>#<?= esc($c->author_tag) ?>
+                            </a>
+                            <p class="flex-1 text-sm text-slate-200 break-words"><?= esc($c->message) ?></p>
+                            <span class="text-xs text-slate-500 shrink-0"><?= esc($c->created_at) ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
     <!-- ВКЛАДКА STATS -->
@@ -145,32 +173,10 @@ $icon = function ($e): string {
         </div>
     </div>
 
-    <!-- ВКЛАДКА INTERACTION (комментарии) -->
+    <!-- ВКЛАДКА INTERACTION — комментарии живут внизу вкладки «Профиль» -->
     <div x-show="tab === 'interaction'" x-cloak class="space-y-6">
-        <?php if (isset($me) || session()->get('character_id')): ?>
-        <div class="bg-slate-800 rounded-lg p-4 space-y-3">
-            <label class="block text-xs text-slate-400">Оставить комментарий (до 500 символов)</label>
-            <textarea id="comment-input" maxlength="500" rows="3"
-                class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm"
-                placeholder="Текст комментария…"></textarea>
-            <button type="button" id="send-comment" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold text-sm">Отправить</button>
-        </div>
-        <?php endif; ?>
-
-        <div id="comments-list" class="space-y-3">
-            <?php if (empty($comments)): ?>
-                <p class="text-center py-8 text-slate-500 text-sm">Комментариев пока нет.</p>
-            <?php else: ?>
-                <?php foreach ($comments as $c): ?>
-                    <div class="bg-slate-800 rounded-lg px-4 py-3 flex items-start gap-3">
-                        <a href="/view/<?= (int) $c->author_id ?>" class="text-sm font-semibold text-sky-400 hover:text-sky-300 shrink-0">
-                            <?= esc($c->author_name) ?>#<?= esc($c->author_tag) ?>
-                        </a>
-                        <p class="flex-1 text-sm text-slate-200 break-words"><?= esc($c->message) ?></p>
-                        <span class="text-xs text-slate-500 shrink-0"><?= esc($c->created_at) ?></span>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+        <div class="bg-slate-800 rounded-lg p-4 text-sm text-slate-400">
+            Комментарии находятся в конце вкладки «Профиль» — пролистай вниз.
         </div>
     </div>
 
