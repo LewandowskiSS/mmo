@@ -9,7 +9,10 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/game.js"></script>
-    <style>[x-cloak]{display:none!important}</style>
+    <style>[x-cloak]{display:none!important}
+    /* Скрываем скроллбар страницы, прокрутка остаётся */
+    html { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar { display: none; }</style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen" x-data="layout(<?= htmlspecialchars(json_encode([
     'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',
