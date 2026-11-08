@@ -29,14 +29,31 @@ class Game extends BaseController
 
         $xpNeeded = $this->xpNeeded($character->level);
 
+        // Карточки на главной: выполненные задания сегодня и суммарные ключи
+        $taskRows = (new CharacterTaskModel())
+            ->where('character_id', $character->id)
+            ->where('period', 'daily')
+            ->where('task_date', date('Y-m-d'))
+            ->findAll();
+        $tasksCompleted = 0;
+        foreach ($taskRows as $r) {
+            if ((bool) $r->claimed || (int) $r->progress >= (int) $r->target) {
+                $tasksCompleted++;
+            }
+        }
+        $keysTotal = (int) ($character->bronze_keys ?? 0) + (int) ($character->silver_keys ?? 0) + (int) ($character->gold_keys ?? 0);
+
         return view('game/dashboard', [
-            'character'      => $character,
-            'xp_needed'      => $xpNeeded,
-            'xp_percent'     => min(100, (int) round($character->xp / $xpNeeded * 100)),
-            'hp_percent'     => (int) round($character->hp / $character->max_hp * 100),
-            'energy_percent' => (int) round($character->energy / $character->max_energy * 100),
-            'rest_cost'      => max(1, $character->max_hp - $character->hp),
-            'event_log'      => (new EventLogModel())
+            'character'       => $character,
+            'xp_needed'       => $xpNeeded,
+            'xp_percent'      => min(100, (int) round($character->xp / $xpNeeded * 100)),
+            'hp_percent'      => (int) round($character->hp / $character->max_hp * 100),
+            'energy_percent'  => (int) round($character->energy / $character->max_energy * 100),
+            'rest_cost'       => max(1, $character->max_hp - $character->hp),
+            'tasks_completed' => $tasksCompleted,
+            'tasks_total'     => count($taskRows),
+            'keys_total'      => $keysTotal,
+            'event_log'       => (new EventLogModel())
                 ->where('character_id', $character->id)
                 ->orderBy('id', 'DESC')
                 ->findAll(5),

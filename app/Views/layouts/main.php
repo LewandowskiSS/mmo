@@ -12,7 +12,10 @@
     <style>[x-cloak]{display:none!important}
     /* Скрываем скроллбар страницы, прокрутка остаётся */
     html { scrollbar-width: none; -ms-overflow-style: none; }
-    html::-webkit-scrollbar { display: none; }</style>
+    html::-webkit-scrollbar { display: none; }
+    /* Утилита для внутренних скролл-областей (сайдбар) */
+    .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }</style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen" x-data="layout(<?= htmlspecialchars(json_encode([
     'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',
@@ -40,7 +43,7 @@
             <button type="button" class="text-slate-400 hover:text-white md:hidden" @click="sidebarMobile = false">✕</button>
         </div>
 
-        <nav class="p-2 md:p-3 space-y-1 text-sm flex-1 overflow-y-auto">
+        <nav class="no-scrollbar p-2 md:p-3 space-y-1 text-sm flex-1 overflow-y-auto">
             <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Основное</p>
 
             <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
