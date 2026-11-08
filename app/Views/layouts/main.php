@@ -15,9 +15,12 @@
     html::-webkit-scrollbar { display: none; }
     /* Утилита для внутренних скролл-областей (сайдбар) */
     .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }</style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    /* Скрываем оболочку до готовности Alpine — убирает рывки рендера */
+    .app-shell { opacity: 0; }
+    .app-shell.app-ready { opacity: 1; transition: opacity .25s ease; }</style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen" x-data="layout(<?= htmlspecialchars(json_encode([
+<body class="bg-slate-900 text-slate-100 min-h-screen app-shell" x-data="layout(<?= htmlspecialchars(json_encode([
     'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',
     'level'     => (int) (\App\Controllers\BaseController::$layoutData['characterLevel'] ?? 1),
     'xpPercent' => (int) (\App\Controllers\BaseController::$layoutData['characterXpPercent'] ?? 0),

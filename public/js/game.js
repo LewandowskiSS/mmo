@@ -87,6 +87,9 @@
     window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS };
 })();
 
+// Фолбэк: если Alpine по какой-то причине не поднялся — показываем приложение
+setTimeout(function () { document.body.classList.add('app-ready'); }, 1000);
+
 // Общее состояние лейаута (сайдбар + профиль)
 function layout(seed = {}) {
     return {
@@ -110,8 +113,11 @@ function layout(seed = {}) {
         },
 
         init() {
-            // Пере-рендер уже прошёл — теперь можно включать плавные переходы
-            this.$nextTick(() => { this.ready = true; });
+            // Пере-рендер уже прошёл — теперь можно показывать и включать плавные переходы
+            this.$nextTick(() => {
+                this.ready = true;
+                document.body.classList.add('app-ready');
+            });
         },
 
         toggleSidebar() {
