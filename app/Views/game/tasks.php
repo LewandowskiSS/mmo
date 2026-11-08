@@ -58,8 +58,8 @@ foreach ($periods as $p => $d) {
             <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3">
                 <div class="text-2xl"><?= esc($t->emoji) ?></div>
                 <div class="flex-1">
-                    <p class="font-semibold"><?= esc($t->name) ?></p>
-                    <?php if ($t->description): ?><p class="text-xs text-slate-400"><?= esc($t->description) ?></p><?php endif; ?>
+                    <p class="font-semibold"><?= esc($it['name']) ?></p>
+                    <?php if ($it['description']): ?><p class="text-xs text-slate-400"><?= esc($it['description']) ?></p><?php endif; ?>
                     <div class="mt-2 h-2 bg-slate-700 rounded-full overflow-hidden">
                         <div class="h-full bg-emerald-500" style="width: <?= min(100, $it['progress'] / max(1, $it['target']) * 100) ?>%"></div>
                     </div>

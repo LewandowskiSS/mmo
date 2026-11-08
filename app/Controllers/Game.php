@@ -697,6 +697,8 @@ class Game extends BaseController
             $items[] = [
                 'row'         => $row,
                 'task'        => $task,
+                'name'        => $this->taskDisplayText((string) $task->name, (int) $row->target),
+                'description' => $task->description ? $this->taskDisplayText((string) $task->description, (int) $row->target) : '',
                 'progress'    => (int) $row->progress,
                 'target'      => (int) $row->target,
                 'claimed'     => (bool) $row->claimed,
@@ -1414,8 +1416,13 @@ class Game extends BaseController
 
     private function scaleTaskTarget($base, $level): int
     {
-        // target не масштабируется по уровню: число зафиксировано в названии задания
-        return (int) $base;
+        return (int) $base + (int) floor(((int) $level - 1) / 5);
+    }
+
+    // Подставляет фактический target вместо числа в названии/описании задания
+    private function taskDisplayText(string $text, int $target): string
+    {
+        return preg_replace('/\d+/', (string) $target, $text, 1);
     }
 
     private function scaleTaskReward($base, $level): int
