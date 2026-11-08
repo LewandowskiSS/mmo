@@ -225,7 +225,7 @@ function gameDashboard(initialEnergy, initialLogs = []) {
 
             const entry = { type: data.type, message: data.message, emoji: emoji, rarity: rarity, created_at: ts, isNew: true };
             this.logs.unshift(entry);
-            if (this.logs.length > 10) this.logs.pop();
+            if (this.logs.length > 5) this.logs.pop();
             setTimeout(() => { entry.isNew = false; }, 600);
         },
 
