@@ -122,7 +122,7 @@
                                     <div><p class="text-slate-400">Энергия</p><p class="font-semibold" x-text="st.energy + '/' + st.maxEnergy"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-lg">❤️</span>
+                                    <img src="/img/misc/Heart.png" alt="❤" class="w-5 h-5 object-contain">
                                     <div><p class="text-slate-400">Здоровье</p><p class="font-semibold" x-text="st.hp + '/' + st.maxHp"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">

@@ -50,7 +50,7 @@ foreach ($event_log as $e) {
     <div class="grid grid-cols-2 gap-4">
         <div>
             <div class="flex justify-between text-xs text-slate-400 mb-1">
-                <span>❤️ Здоровье</span>
+                <span class="inline-flex items-center gap-1"><img src="/img/misc/Heart.png" alt="❤" class="w-3.5 h-3.5 object-contain">Здоровье</span>
                 <span id="st-hp"><?= esc($character->hp) ?> / <?= esc($character->max_hp) ?></span>
             </div>
             <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
