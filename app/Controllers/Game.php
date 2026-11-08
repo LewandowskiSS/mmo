@@ -17,6 +17,7 @@ class Game extends BaseController
 {
     // 1 энергия восстанавливается за это число секунд.
     private const ENERGY_REGEN_SECONDS = 180;
+    private const INVENTORY_CAPACITY = 10000;
 
     public function index()
     {
@@ -378,12 +379,31 @@ class Game extends BaseController
             return redirect()->to('/login');
         }
 
+        $orderCol = (string) ($this->request->getGet('order_col') ?: '');
+        $order    = strtolower((string) ($this->request->getGet('order') ?: 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        $sortMap = [
+            'qty'   => 'inventory.quantity',
+            'name'  => 'items.name',
+            'price' => 'items.price',
+            'type'  => 'items.type',
+            'stat'  => 'items.value',
+        ];
+        $orderSql = $sortMap[$orderCol] ?? 'inventory.id';
+
         $items = (new InventoryModel())
             ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
+            ->orderBy($orderSql, $order)
             ->orderBy('inventory.id', 'ASC')
             ->findAll();
+
+        // Заполненность инвентаря
+        $used = (int) ((new InventoryModel())
+            ->selectSum('quantity')
+            ->where('character_id', $character->id)
+            ->first()->quantity ?? 0);
 
         // Значения надетой экипировки по типам (для сравнения)
         $equippedRows = (new InventoryModel())
@@ -431,6 +451,10 @@ class Game extends BaseController
             'character' => $character,
             'items'     => $items,
             'counts'    => $counts,
+            'order_col' => $orderCol,
+            'order'     => $order,
+            'used'      => $used,
+            'limit'     => self::INVENTORY_CAPACITY,
         ]);
     }
 
@@ -572,6 +596,58 @@ class Game extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'message' => "Продано: {$item->emoji} {$item->name} (+{$price} 🪙)",
+            'state'   => $this->characterState($character),
+        ]);
+    }
+
+    public function sellSelected()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $raw = (string) $this->request->getPost('ids');
+        $ids = array_values(array_filter(array_map('intval', explode(',', $raw))));
+        if (empty($ids)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Ничего не выбрано']);
+        }
+
+        $inventory = new InventoryModel();
+        $gold = 0;
+        $sold = 0;
+
+        foreach ($ids as $id) {
+            $inv = $inventory
+                ->where('id', $id)
+                ->where('character_id', $character->id)
+                ->first();
+
+            if (! $inv || (int) $inv->equipped === 1) {
+                continue;
+            }
+
+            $item = (new ItemModel())->find($inv->item_id);
+            if (! $item) {
+                continue;
+            }
+
+            $gold += max(0, (int) $item->price) * (int) $inv->quantity;
+            $sold += (int) $inv->quantity;
+            $inventory->delete($inv->id);
+        }
+
+        if ($sold === 0) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Нечего продавать (надетые пропущены)']);
+        }
+
+        (new CharacterModel())->update($character->id, [
+            'gold' => (int) $character->gold + $gold,
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Продано предметов: {$sold} (+{$gold} 🪙)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -1259,6 +1335,16 @@ class Game extends BaseController
     private function giveItem($characterId, $itemId): void
     {
         $inventory = new InventoryModel();
+
+        // Лимит вместимости инвентаря
+        $used = (int) (($inventory
+            ->selectSum('quantity')
+            ->where('character_id', $characterId)
+            ->first()->quantity ?? 0));
+        if ($used >= self::INVENTORY_CAPACITY) {
+            return;
+        }
+
         $existing  = $inventory
             ->where('character_id', $characterId)
             ->where('item_id', $itemId)

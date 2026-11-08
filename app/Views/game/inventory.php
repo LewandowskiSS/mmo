@@ -32,9 +32,24 @@ $rarityHex = [
     'celestial' => '#06b6d4',
     'exotic'    => '#ef4444',
 ];
+$sortLink = function (string $key, string $label) use ($order_col, $order): string {
+    $arrow = '';
+    if ($order_col === $key) {
+        $arrow = $order === 'asc' ? ' ▲' : ' ▼';
+    }
+    $nextOrder = ($order_col === $key && $order === 'asc') ? 'desc' : 'asc';
+    $cls = $order_col === $key ? 'text-sky-300' : 'text-indigo-300 hover:text-sky-300';
+    return '<a href="?order_col=' . $key . '&order=' . $nextOrder . '" class="' . $cls . '">' . $label . $arrow . '</a>';
+};
+$sellableIds = [];
+foreach ($items as $i) {
+    if (! $i->equipped) {
+        $sellableIds[] = (int) $i->inv_id;
+    }
+}
 ?>
 
-<div class="space-y-6" x-data="inventoryFilters()">
+<div class="space-y-6" x-data="inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">🎒 Инвентарь</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
@@ -68,74 +83,167 @@ $rarityHex = [
             <?php endforeach; ?>
         </div>
 
-        <ul class="space-y-3">
+        <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+            <span>Предметы</span>
+            <span>Вы имеете <span class="text-slate-300"><?= (int) $used ?></span> / <?= (int) $limit ?> предметов</span>
+        </div>
+
+        <div x-show="selected.length > 0" x-cloak class="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm">
+            <span class="text-slate-300">Выбрано: <span class="font-bold" x-text="selected.length"></span></span>
+            <button type="button" @click="clearSelection()" class="text-slate-400 hover:text-white text-xs">Снять выбор</button>
+            <button type="button" @click="sellSelected()" class="ml-auto px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-semibold">💰 Продать выбранное</button>
+        </div>
+
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-slate-300 border-b border-slate-700">
+                    <th class="py-2 pr-2 w-8">
+                        <input type="checkbox" class="accent-emerald-500 cursor-pointer"
+                            :checked="allSelected()" @change="toggleAll()" title="Выбрать всё">
+                    </th>
+                    <th class="py-2 pr-2 text-left w-16"><?= $sortLink('qty', 'Кол-во') ?></th>
+                    <th class="py-2 pr-2 text-left"><?= $sortLink('name', 'Имя') ?></th>
+                    <th class="py-2 pr-2 text-left w-20">Уровень</th>
+                    <th class="py-2 pr-2 text-right w-28"><?= $sortLink('price', 'Ценность') ?></th>
+                    <th class="py-2 pr-2 text-left w-28"><?= $sortLink('type', 'Тип') ?></th>
+                    <th class="py-2 pr-2 text-left w-40"><?= $sortLink('stat', 'Статы') ?></th>
+                    <th class="py-2 w-36"></th>
+                </tr>
+            </thead>
+            <tbody>
             <?php foreach ($items as $it): ?>
                 <?php $rc = $rarityColorMap[$it->rarity] ?? 'text-slate-300'; ?>
-                <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3"
+                <tr class="border-b border-slate-800"
                     data-inv="<?= (int) $it->inv_id ?>"
                     data-type="<?= esc($it->type) ?>"
                     data-rarity="<?= esc($it->rarity) ?>"
                     x-show="matches('<?= esc($it->type) ?>', '<?= esc($it->rarity) ?>', '<?= esc($it->name) ?>')">
-                    <div class="text-3xl"><?= esc($it->emoji) ?></div>
-                    <div class="flex-1">
-                        <p class="font-semibold <?= $rc ?>">
-                            <?= esc($it->name) ?>
-                            <?php if ($it->equipped): ?><span class="text-xs text-emerald-400 ml-1">✓ надето</span><?php endif; ?>
-                        </p>
-                        <p class="text-xs text-slate-400">
-                            <?= $it->type === 'weapon' ? 'Оружие' : ($it->type === 'armor' ? 'Броня' : 'Расходник') ?>
-                            <?php if ($it->type !== 'consumable'): ?>
-                                · +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? 'атаки' : 'защиты' ?>
-                                <?php if ($it->cmp === 'up'): ?>
-                                    <span class="text-emerald-400 font-bold">▲</span>
-                                <?php elseif ($it->cmp === 'down'): ?>
-                                    <span class="text-red-400 font-bold">▼</span>
-                                <?php elseif ($it->cmp === 'equal'): ?>
-                                    <span class="text-slate-500 font-bold">=</span>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                · восстанавливает <?= (int) $it->value ?> <?= $it->stat === 'hp' ? 'HP' : 'энергии' ?>
+                    <td class="py-2.5 pr-2">
+                        <input type="checkbox" class="accent-emerald-500 cursor-pointer" <?= $it->equipped ? 'disabled' : '' ?>
+                            :checked="selected.includes(<?= (int) $it->inv_id ?>)"
+                            @change="toggle(<?= (int) $it->inv_id ?>)">
+                    </td>
+                    <td class="py-2.5 pr-2">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="text-xl"><?= esc($it->emoji) ?></span>
+                            <span class="text-xs bg-slate-700 rounded px-1.5 py-0.5 text-slate-300">x<?= (int) $it->quantity ?></span>
+                        </span>
+                    </td>
+                    <td class="py-2.5 pr-2">
+                        <span class="font-semibold <?= $rc ?>"><?= esc($it->name) ?></span>
+                        <?php if ($it->equipped): ?><span class="text-xs text-emerald-400 ml-1">✓ надето</span><?php endif; ?>
+                    </td>
+                    <td class="py-2.5 pr-2 text-slate-500">—</td>
+                    <td class="py-2.5 pr-2 text-right text-amber-400">🪙 <?= (int) ($it->price ?? 0) ?></td>
+                    <td class="py-2.5 pr-2 text-indigo-300"><?= $it->type === 'weapon' ? 'Оружие' : ($it->type === 'armor' ? 'Броня' : 'Расходник') ?></td>
+                    <td class="py-2.5 pr-2 text-slate-300">
+                        <?php if ($it->type !== 'consumable'): ?>
+                            +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
+                            <?php if ($it->cmp === 'up'): ?>
+                                <span class="text-emerald-400 font-bold">▲</span>
+                            <?php elseif ($it->cmp === 'down'): ?>
+                                <span class="text-red-400 font-bold">▼</span>
+                            <?php elseif ($it->cmp === 'equal'): ?>
+                                <span class="text-slate-500 font-bold">=</span>
                             <?php endif; ?>
-                            <?php if ($it->quantity > 1): ?> · x<?= (int) $it->quantity ?><?php endif; ?>
-                        </p>
-                    </div>
-                    <?php if ($it->type === 'consumable'): ?>
-                        <button type="button" data-action="use" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold">Использовать</button>
-                    <?php elseif ($it->equipped): ?>
-                        <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
-                    <?php else: ?>
-                        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                            <div class="flex rounded-lg overflow-hidden">
-                                <button type="button" data-action="equip" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold rounded-l-lg">Надеть</button>
-                                <button type="button" @click.stop="open = !open" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50">⌄</button>
+                        <?php else: ?>
+                            +<?= (int) $it->value ?> <?= $it->stat === 'hp' ? 'HP' : 'энергии' ?>
+                        <?php endif; ?>
+                    </td>
+                    <td class="py-2.5 text-right">
+                        <?php if ($it->type === 'consumable'): ?>
+                            <button type="button" data-action="use" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold">Использовать</button>
+                        <?php elseif ($it->equipped): ?>
+                            <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
+                        <?php else: ?>
+                            <div class="relative inline-block" x-data="{ open: false }" @click.outside="open = false">
+                                <div class="flex rounded-lg overflow-hidden">
+                                    <button type="button" data-action="equip" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold rounded-l-lg">Надеть</button>
+                                    <button type="button" @click.stop="open = !open" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50">⌄</button>
+                                </div>
+                                <div x-show="open" x-cloak @click.stop class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10 py-1">
+                                    <button type="button"
+                                        data-action="sell"
+                                        data-name="<?= esc($it->name) ?>"
+                                        data-price="<?= (int) ($it->price ?? 0) ?>"
+                                        data-rarity="<?= esc($it->rarity) ?>"
+                                        data-qty="<?= (int) $it->quantity ?>"
+                                        class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
+                                        💰 Продать за <span class="font-semibold">🪙 <?= (int) ($it->price ?? 0) ?></span>
+                                    </button>
+                                </div>
                             </div>
-                            <div x-show="open" x-cloak @click.stop class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10 py-1">
-                                <button type="button"
-                                    data-action="sell"
-                                    data-name="<?= esc($it->name) ?>"
-                                    data-price="<?= (int) ($it->price ?? 0) ?>"
-                                    data-rarity="<?= esc($it->rarity) ?>"
-                                    data-qty="<?= (int) $it->quantity ?>"
-                                    class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
-                                    💰 Продать за <span class="font-semibold">🪙 <?= (int) ($it->price ?? 0) ?></span>
-                                </button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </li>
+                        <?php endif; ?>
+                    </td>
+                </tr>
             <?php endforeach; ?>
-        </ul>
+            </tbody>
+        </table>
 
         <p class="hidden text-center py-8 text-slate-500" x-show="!anyVisible()">Ничего не найдено.</p>
     <?php endif; ?>
 </div>
 
 <script>
-function inventoryFilters() {
+function inventoryFilters(sellableIds = []) {
     return {
         tab: 'all',
         search: '',
         rarities: [],
+        sellableIds: sellableIds,
+        selected: [],
+
+        allSelected() {
+            return this.sellableIds.length > 0 && this.sellableIds.every((id) => this.selected.includes(id));
+        },
+
+        toggleAll() {
+            if (this.allSelected()) {
+                this.selected = [];
+            } else {
+                this.selected = [...this.sellableIds];
+            }
+        },
+
+        toggle(id) {
+            const i = this.selected.indexOf(id);
+            if (i >= 0) this.selected.splice(i, 1);
+            else this.selected.push(id);
+        },
+
+        clearSelection() {
+            this.selected = [];
+        },
+
+        async sellSelected() {
+            if (this.selected.length === 0) return;
+
+            const c = await Swal.fire({
+                title: 'Продать выбранное?',
+                text: 'Позиций: ' + this.selected.length + '. Надетые предметы будут пропущены.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Продать',
+                cancelButtonText: 'Отмена',
+                background: '#1e293b',
+                color: '#e2e8f0',
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#64748b',
+            });
+            if (!c.isConfirmed) return;
+
+            try {
+                const data = await Game.post('/game/sellSelected', { ids: this.selected.join(',') });
+                Game.toast(data.message, data.success ? 'success' : 'error');
+                if (data.success) {
+                    this.selected = [];
+                    setTimeout(() => window.location.reload(), 600);
+                }
+            } catch (e) {
+                Game.toast('Ошибка соединения', 'error');
+            }
+        },
+
         toggleRarity(r) {
             const i = this.rarities.indexOf(r);
             if (i >= 0) this.rarities.splice(i, 1);

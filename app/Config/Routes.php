@@ -27,6 +27,7 @@ $routes->post('game/equip', 'Game::equip');
 $routes->post('game/unequip', 'Game::unequip');
 $routes->post('game/use', 'Game::useItem');
 $routes->post('game/sell', 'Game::sell');
+$routes->post('game/sellSelected', 'Game::sellSelected');
 $routes->get('game/shop', 'Game::shop');
 $routes->get('game/shop/(:segment)', 'Game::shopCategory/$1');
 $routes->post('game/buy', 'Game::buy');
