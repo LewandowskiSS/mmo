@@ -212,7 +212,7 @@ $icon = function ($e): string {
                             <span class="font-semibold <?= $rcMap[$it->rarity] ?? 'text-slate-300' ?>"><?= esc($it->name) ?></span>
                         </span>
                     </td>
-                    <td class="py-2.5 pr-2 text-slate-300"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
+                    <td class="py-2.5 pr-2 font-semibold <?= $rcMap[$it->rarity] ?? 'text-slate-300' ?>"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
                     <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 text-slate-300">
                         <span class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">+<?= (int) $it->value ?> <?= $it->stat === 'attack' ? 'атаки' : ($it->stat === 'defense' ? 'защиты' : ($it->stat === 'hp' ? 'HP' : 'энергии')) ?></span>
