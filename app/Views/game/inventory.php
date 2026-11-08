@@ -261,6 +261,7 @@ foreach ($items as $i) {
 <script>
 function inventoryFilters(sellableIds = []) {
     return {
+        view: 'bag',
         tab: 'all',
         search: '',
         rarities: [],
