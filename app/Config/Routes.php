@@ -5,6 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 // Главная — панель игры
 $routes->get('/', 'Game::index');
+$routes->get('walk', 'Game::walkPage');
 
 // Авторизация
 $routes->get('login', 'Auth::login');

@@ -121,7 +121,7 @@
 
                 <!-- Верхние кнопки как в SMMO -->
                 <div class="hidden md:flex items-center gap-1 text-sm ml-2">
-                    <a href="/" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">🚶 Travel</a>
+                    <a href="/walk" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">🚶 Travel</a>
                     <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">💎 Алмазный магазин <span class="text-xs text-slate-500">(WIP)</span></a>
                     <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">🛠 Поддержка <span class="text-xs text-slate-500">(WIP)</span></a>
                     <a href="#" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">👥 Сообщество <span class="text-xs text-slate-500">(WIP)</span></a>
