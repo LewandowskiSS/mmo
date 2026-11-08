@@ -23,7 +23,8 @@
     'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
 ]), ENT_QUOTES, 'UTF-8') ?>)">
 
-    <!-- Сайдбар: расширенный (десктоп) / полоса иконок (свернут) / оверлей (мобайл) -->
+    <!-- Сайдбар: расширенный (десктоп) / полоса иконок (свернут) / оверлей (мобайл). Только для авторизованных -->
+    <?php if (session()->get('user_id')): ?>
     <aside class="fixed inset-y-0 left-0 z-40 bg-slate-800 border-r border-slate-700 transition-all duration-200 flex flex-col"
         :class="[
             sidebarMobile ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0',
@@ -68,18 +69,23 @@
             <?php endif; ?>
         </nav>
     </aside>
+    <?php endif; ?>
 
+    <?php if (session()->get('user_id')): ?>
     <!-- Мобильный оверлей -->
     <div class="fixed inset-0 z-30 bg-black/60 md:hidden" x-show="sidebarMobile" x-cloak @click="sidebarMobile = false"></div>
+    <?php endif; ?>
 
-    <!-- Контент: отступ слева под сайдбар -->
+    <!-- Контент: отступ слева под сайдбар (только для авторизованных) -->
     <div class="flex flex-col min-h-screen transition-all duration-200"
-        :class="sidebarCollapsed ? 'md:pl-16' : 'md:pl-64'">
+        :class="<?= session()->get('user_id') ? "(sidebarCollapsed ? 'md:pl-16' : 'md:pl-64')" : "''" ?>">
 
         <!-- Хедер: бургер + меню профиля -->
         <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20">
             <div class="px-4 py-2.5 flex items-center gap-3">
+                <?php if (session()->get('user_id')): ?>
                 <button type="button" class="text-slate-300 hover:text-white text-xl leading-none" @click="toggleSidebar()" aria-label="Меню">☰</button>
+                <?php endif; ?>
 
                 <div class="flex-1"></div>
 
