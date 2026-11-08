@@ -155,7 +155,7 @@
                     </div>
 
                     <div class="relative">
-                        <button type="button" @click="toggleProfile()" class="flex items-center gap-2 hover:opacity-80">
+                        <button type="button" @click="toggleProfile()" class="flex items-center gap-2 hover:opacity-80" title="Мой профиль">
                             <span class="text-2xl">👤</span>
                         </button>
                         <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false"
@@ -192,7 +192,8 @@
                             </div>
 
                             <nav class="p-2 space-y-0.5 text-sm">
-                                <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">👤</span> Профиль</a>
+                                <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">👤</span> Мой профиль</a>
+                                <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">🏠</span> Главная</a>
                                 <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">⭐</span> Задания</a>
                                 <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">💰</span> Магазин</a>
                                 <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">🏆</span> Топ игроков</a>

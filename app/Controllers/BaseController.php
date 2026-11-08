@@ -73,4 +73,16 @@ abstract class BaseController extends Controller
     {
         return (bool) $this->session->get('user_id');
     }
+
+    protected function currentCharacter()
+    {
+        if (! $this->session->get('user_id')) {
+            return null;
+        }
+        $id = $this->session->get('character_id');
+        if (! $id) {
+            return null;
+        }
+        return (new \App\Models\CharacterModel())->find($id);
+    }
 }

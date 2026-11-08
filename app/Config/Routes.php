@@ -7,6 +7,10 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Game::index');
 $routes->get('walk', 'Game::walkPage');
 
+$routes->get('view/(:num)', 'Profile::view/$1');
+$routes->post('view/(:num)/comment', 'Profile::addComment/$1');
+$routes->post('profile/bio', 'Profile::saveBio');
+
 // Авторизация
 $routes->get('login', 'Auth::login');
 $routes->post('login', 'Auth::login');
