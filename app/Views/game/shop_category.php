@@ -20,7 +20,12 @@
         <template x-for="item in pageItems()" :key="item.id">
             <li>
                 <button type="button" @click="buy(item)" class="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-slate-800/60 transition-colors text-left">
-                    <div class="text-2xl" x-text="item.emoji"></div>
+                    <template x-if="Game.isImage(item.emoji)">
+                        <img :src="item.emoji" class="w-8 h-8 object-contain shrink-0" alt="">
+                    </template>
+                    <template x-if="!Game.isImage(item.emoji)">
+                        <div class="text-2xl shrink-0" x-text="item.emoji"></div>
+                    </template>
                     <div class="flex-1">
                         <p class="font-semibold" :class="rarityClass(item.rarity)" x-text="item.name"></p>
                         <p class="text-xs text-slate-500">

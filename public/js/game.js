@@ -84,7 +84,7 @@
         }
     }
 
-    window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS };
+    window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS, isImage: (e) => typeof e === 'string' && e.startsWith('/') };
 })();
 
 // Фолбэк: если Alpine по какой-то причине не поднялся — показываем приложение

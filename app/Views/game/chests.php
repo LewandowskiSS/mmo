@@ -162,7 +162,10 @@ function chestsPage(goldInit, bronzeInit, silverInit, goldInit) {
             });
             const lines = Object.values(grouped).map((g) => {
                 const color = rarityColors[g.rarity] || '#94a3b8';
-                return '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;"><span>' + g.emoji + '</span><span style="color:' + color + '">' + g.name + '</span>' + (g.count > 1 ? '<span style="color:#94a3b8">×' + g.count + '</span>' : '') + '</div>';
+                const icon = (typeof g.emoji === 'string' && g.emoji.startsWith('/'))
+                    ? '<img src="' + g.emoji + '" style="width:20px;height:20px;object-fit:contain;">'
+                    : '<span>' + g.emoji + '</span>';
+                return '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' + icon + '<span style="color:' + color + '">' + g.name + '</span>' + (g.count > 1 ? '<span style="color:#94a3b8">×' + g.count + '</span>' : '') + '</div>';
             }).join('');
             Swal.fire({ icon: 'success', title: 'Добыча (' + results.length + ' шт.)', html: '<div class="no-scrollbar" style="text-align:left;max-height:300px;overflow-y:auto;">' + lines + '</div>', background: '#1e293b', color: '#e2e8f0', confirmButtonColor: '#f59e0b' });
         },

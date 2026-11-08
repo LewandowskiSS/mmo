@@ -54,6 +54,13 @@ foreach ($items as $i) {
         $sellableIds[] = (int) $i->inv_id;
     }
 }
+$icon = function ($e): string {
+    $e = (string) $e;
+    if (str_starts_with($e, '/')) {
+        return '<img src="' . esc($e) . '" class="w-6 h-6 object-contain" alt="">';
+    }
+    return '<span class="text-xl">' . esc($e) . '</span>';
+};
 ?>
 
 <div class="space-y-6" x-data="inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>)">
@@ -146,7 +153,7 @@ foreach ($items as $i) {
                     </td>
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-1">
-                            <span class="text-xl"><?= esc($it->emoji) ?></span>
+                            <?= $icon($it->emoji) ?>
                             <span class="text-xs bg-slate-700 rounded px-1.5 py-0.5 text-slate-300">x<?= (int) $it->quantity ?></span>
                         </span>
                     </td>
@@ -237,7 +244,7 @@ foreach ($items as $i) {
                 <tr class="border-b border-slate-800" data-inv="<?= (int) $it->inv_id ?>">
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-1">
-                            <span class="text-xl"><?= esc($it->emoji) ?></span>
+                            <?= $icon($it->emoji) ?>
                             <span class="font-semibold <?= $rc ?>"><?= esc($it->name) ?></span>
                         </span>
                     </td>
