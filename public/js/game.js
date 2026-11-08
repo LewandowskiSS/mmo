@@ -1,4 +1,9 @@
 // Общие хелперы игры (AJAX)
+// Отключаем компенсацию скроллбара в SweetAlert2 (иначе фон сдвигается при открытии модалок)
+if (window.Swal && Swal.defaults) {
+    Swal.defaults.scrollbarPadding = false;
+}
+
 (function () {
     function csrfToken() {
         const el = document.querySelector('meta[name="csrf-token"]');
