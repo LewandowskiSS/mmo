@@ -42,9 +42,9 @@ $icon = function ($e): string {
                 </div>
                 <div>
                     <p class="text-xl font-bold text-emerald-400"><?= esc($character->name) ?> <span class="text-slate-400 font-mono text-base">#<?= esc($character->tag) ?></span></p>
-                    <p class="text-sm text-slate-300 mt-1">Уровень <?= (int) $character->level ?> · Опыт: <?= (int) $character->xp ?>/<?= $xpNeeded ?></p>
+                    <p class="text-sm text-slate-300 mt-1">Уровень <span id="pf-level"><?= (int) $character->level ?></span> · Опыт: <span id="pf-xp"><?= (int) $character->xp ?>/<?= $xpNeeded ?></span></p>
                     <div class="mt-1 h-1.5 w-56 bg-slate-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-purple-500" style="width: <?= min(100, (int) round($character->xp / max(1, $xpNeeded) * 100)) ?>%"></div>
+                        <div id="pf-xpbar" class="h-full bg-purple-500" style="width: <?= min(100, (int) round($character->xp / max(1, $xpNeeded) * 100)) ?>%"></div>
                     </div>
                 </div>
             </div>
@@ -80,11 +80,11 @@ $icon = function ($e): string {
             <p class="text-sm text-slate-400 mb-2">Здоровье</p>
             <div class="bg-slate-800 rounded-lg p-4">
                 <div class="flex justify-between text-sm mb-2">
-                    <span class="font-bold"><?= (int) $character->hp ?> <span class="text-slate-500">/ <?= (int) $character->max_hp ?></span></span>
-                    <span class="font-bold"><?= $hpPct ?>%</span>
+                    <span class="font-bold"><span id="pf-hp"><?= (int) $character->hp ?></span> <span class="text-slate-500">/ <span id="pf-maxhp"><?= (int) $character->max_hp ?></span></span></span>
+                    <span class="font-bold" id="pf-hppct"><?= $hpPct ?>%</span>
                 </div>
                 <div class="h-2.5 bg-slate-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-red-500" style="width: <?= $hpPct ?>%"></div>
+                    <div id="pf-hpbar" class="h-full bg-red-500" style="width: <?= $hpPct ?>%"></div>
                 </div>
             </div>
         </div>
@@ -171,10 +171,10 @@ $icon = function ($e): string {
         </div>
 
         <div class="bg-slate-800 rounded-lg divide-y divide-slate-700/60 text-sm">
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🪙 Золото</span><span class="font-semibold text-amber-400"><?= number_format((int) $character->gold, 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">💎 Алмазы</span><span class="font-semibold"><?= (int) ($character->diamonds ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🪙 Золото</span><span class="font-semibold text-amber-400" id="pf-gold"><?= number_format((int) $character->gold, 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">💎 Алмазы</span><span class="font-semibold" id="pf-diamonds"><?= (int) ($character->diamonds ?? 0) ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👟 Пройдено шагов</span><span class="font-semibold"><?= number_format((int) ($character->steps_total ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🗝️ Ключи (бронза/серебро/золото)</span><span class="font-semibold"><?= (int) $character->bronze_keys ?>/<?= (int) $character->silver_keys ?>/<?= (int) $character->gold_keys ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🗝️ Ключи (бронза/серебро/золото)</span><span class="font-semibold" id="pf-keys"><?= (int) $character->bronze_keys ?>/<?= (int) $character->silver_keys ?>/<?= (int) $character->gold_keys ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">✅ Выполнено заданий</span><span class="font-semibold"><?= number_format((int) ($character->quests_done ?? 0), 0, ',', ' ') ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🧟 Убито монстров</span><span class="font-semibold"><?= number_format((int) ($character->npc_kills ?? 0), 0, ',', ' ') ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👑 Убито боссов</span><span class="font-semibold"><?= number_format((int) ($character->boss_kills ?? 0), 0, ',', ' ') ?></span></div>
@@ -454,5 +454,37 @@ window.drawComments = function (list, comments, profileId) {
     roots.forEach((c) => list.append(commentCard(c, false)));
 };
 </script>
+
+<?php if ($isOwn): ?>
+<script>
+(function () {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    const bar = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
+    const fmt = (n) => Number(n).toLocaleString('ru-RU');
+
+    function update(s) {
+        if (!s) return;
+        set('pf-level', s.level);
+        set('pf-xp', s.xp + ' / ' + s.xp_needed);
+        bar('pf-xpbar', s.xp_needed ? (s.xp / s.xp_needed * 100) : 0);
+        set('pf-hp', s.hp);
+        set('pf-maxhp', s.max_hp);
+        set('pf-hppct', (s.max_hp ? Math.round(s.hp / s.max_hp * 100) : 0) + '%');
+        bar('pf-hpbar', s.max_hp ? (s.hp / s.max_hp * 100) : 0);
+        set('pf-gold', fmt(s.gold));
+        set('pf-diamonds', s.diamonds);
+        set('pf-keys', s.bronze_keys + '/' + s.silver_keys + '/' + s.gold_keys);
+    }
+
+    async function poll() {
+        if (document.hidden) return;
+        try { update(await Game.get('/game/state')); } catch (e) {}
+    }
+
+    setInterval(poll, 30000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+})();
+</script>
+<?php endif; ?>
 
 <?= $this->endSection() ?>
