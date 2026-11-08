@@ -253,23 +253,6 @@ document.getElementById('save-bio')?.addEventListener('click', async function ()
     btn.disabled = false;
 });
 
-// Комментарий (AJAX, без перезагрузки)
-document.getElementById('send-comment')?.addEventListener('click', async function () {
-    const btn = this;
-    btn.disabled = true;
-    try {
-        const data = await Game.post('/profile/bio', {
-            motto: document.getElementById('motto-input').value,
-            bio: document.getElementById('bio-input').value,
-        });
-        Game.toast(data.message, data.success ? 'success' : 'error');
-        if (data.success) setTimeout(() => window.location.reload(), 600);
-    } catch (e) {
-        Game.toast('Ошибка соединения', 'error');
-    }
-    btn.disabled = false;
-});
-
 // Комментарий (AJAX) — после добавления перерисовываем список
 document.getElementById('send-comment')?.addEventListener('click', async function () {
     const btn = this;
