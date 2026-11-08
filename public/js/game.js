@@ -95,9 +95,11 @@
 // Общее состояние лейаута (сайдбар + профиль)
 function layout(seed = {}) {
     return {
-        sidebarCollapsed: true,
+        // Читаем сохранённое состояние сразу, чтобы первая отрисовка была финальной (без прыжка)
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') !== '0',
         sidebarMobile: false,
         profileOpen: false,
+        ready: false,
 
         // Живые данные профиля (обновляются с /game/state при каждом открытии меню)
         st: {
@@ -113,10 +115,8 @@ function layout(seed = {}) {
         },
 
         init() {
-            const saved = localStorage.getItem('sidebarCollapsed');
-            if (saved !== null) {
-                this.sidebarCollapsed = saved === '1';
-            }
+            // Пере-рендер уже прошёл — теперь можно включать плавные переходы
+            this.$nextTick(() => { this.ready = true; });
         },
 
         toggleSidebar() {

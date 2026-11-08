@@ -25,10 +25,11 @@
 
     <!-- Сайдбар: расширенный (десктоп) / полоса иконок (свернут) / оверлей (мобайл). Только для авторизованных -->
     <?php if (session()->get('user_id')): ?>
-    <aside class="fixed inset-y-0 left-0 z-40 bg-slate-800 border-r border-slate-700 transition-all duration-200 flex flex-col"
+    <aside class="fixed inset-y-0 left-0 z-40 bg-slate-800 border-r border-slate-700 flex flex-col -translate-x-full md:translate-x-0 md:w-16"
         :class="[
             sidebarMobile ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0',
-            sidebarCollapsed ? 'md:w-16' : 'md:w-64'
+            sidebarCollapsed ? 'md:w-16' : 'md:w-64',
+            ready ? 'transition-all duration-200' : ''
         ]">
 
         <div class="p-4 border-b border-slate-700 flex items-center justify-between overflow-hidden" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>
@@ -77,8 +78,8 @@
     <?php endif; ?>
 
     <!-- Контент: отступ слева под сайдбар (только для авторизованных) -->
-    <div class="flex flex-col min-h-screen transition-all duration-200"
-        :class="<?= session()->get('user_id') ? "(sidebarCollapsed ? 'md:pl-16' : 'md:pl-64')" : "''" ?>">
+    <div class="flex flex-col min-h-screen<?= session()->get('user_id') ? ' md:pl-16' : '' ?>"
+        :class="[<?= session()->get('user_id') ? "(sidebarCollapsed ? 'md:pl-16' : 'md:pl-64')" : "''" ?>, ready ? 'transition-all duration-200' : '']">
 
         <!-- Хедер: бургер + меню профиля -->
         <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20">
