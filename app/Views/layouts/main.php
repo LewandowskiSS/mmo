@@ -80,6 +80,9 @@
             </a>
             <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
                 <span class="text-xl shrink-0">📋</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Задания</span>
+                <?php if (! empty(\App\Controllers\BaseController::$layoutData['hasClaimableTasks'])): ?>
+                <span class="ml-auto w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shrink-0" title="Доступны награды за задания"></span>
+                <?php endif; ?>
             </a>
             <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
                 <span class="text-xl shrink-0">🗂️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Коллекции (WIP)</span>

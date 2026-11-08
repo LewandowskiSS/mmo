@@ -49,6 +49,41 @@ abstract class BaseController extends Controller
             $character = (new \App\Models\CharacterModel())->find($this->session->get('character_id'));
             if ($character) {
                 $xpNeeded = 50 + ((int) $character->level - 1) * 25;
+
+                // Есть ли доступные награды по заданиям (для кружка в сайдбаре)
+                $hasClaimableTasks = false;
+                $taskKeys = [date('Y-m-d'), date('Y-m-d', strtotime('monday this week')), date('Y-m-01')];
+                $taskRows = (new \App\Models\CharacterTaskModel())
+                    ->where('character_id', $character->id)
+                    ->whereIn('task_date', $taskKeys)
+                    ->findAll();
+                $byPeriod = [];
+                foreach ($taskRows as $r) {
+                    $byPeriod[$r->period][] = $r;
+                    if ((int) $r->progress >= (int) $r->target && ! (bool) $r->claimed) {
+                        $hasClaimableTasks = true;
+                    }
+                }
+                if (! $hasClaimableTasks) {
+                    foreach ($byPeriod as $list) {
+                        $total = count($list);
+                        $done  = 0;
+                        foreach ($list as $r) {
+                            if ((bool) $r->claimed || (int) $r->progress >= (int) $r->target) {
+                                $done++;
+                            }
+                        }
+                        $percent = $total > 0 ? (int) floor($done / $total * 100) : 0;
+                        $claimed = array_filter(explode(',', (string) ($list[0]->milestones_claimed ?? '')));
+                        foreach ([25, 50, 75, 100] as $p) {
+                            if ($percent >= $p && ! in_array((string) $p, $claimed, true)) {
+                                $hasClaimableTasks = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+
                 self::$layoutData = [
                     'characterName'      => $character->name,
                     'characterTag'       => $character->tag ?? '0000',
@@ -61,6 +96,7 @@ abstract class BaseController extends Controller
                     'characterHp'        => (int) $character->hp,
                     'characterMaxHp'     => (int) $character->max_hp,
                     'characterDiamonds'  => (int) ($character->diamonds ?? 0),
+                    'hasClaimableTasks'  => $hasClaimableTasks,
                 ];
             }
         }
