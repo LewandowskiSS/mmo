@@ -391,10 +391,11 @@ class Game extends BaseController
         ];
         $orderSql = $sortMap[$orderCol] ?? 'inventory.id';
 
-        // Пагинация: 25 предметов на страницу
+        // Пагинация: 25 предметов на страницу (сумка — без надетых)
         $perPage = 25;
         $total   = (new InventoryModel())
             ->where('character_id', $character->id)
+            ->where('inventory.equipped', 0)
             ->countAllResults();
         $totalPages = max(1, (int) ceil($total / $perPage));
         $page       = max(1, (int) ($this->request->getGet('page') ?: 1));
@@ -405,26 +406,29 @@ class Game extends BaseController
             ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
+            ->where('inventory.equipped', 0)
             ->orderBy($orderSql, $order)
             ->orderBy('inventory.id', 'ASC')
             ->findAll($perPage, $offset);
 
-        // Заполненность инвентаря
+        // Заполненность инвентаря (сумка)
         $used = (int) ((new InventoryModel())
             ->selectSum('quantity')
             ->where('character_id', $character->id)
+            ->where('inventory.equipped', 0)
             ->first()->quantity ?? 0);
 
-        // Значения надетой экипировки по типам (для сравнения)
-        $equippedRows = (new InventoryModel())
-            ->select('items.type AS type, items.value AS value')
+        // Надетые предметы (подвкладка «Экипировано»)
+        $equippedItems = (new InventoryModel())
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->where('inventory.equipped', 1)
+            ->orderBy('inventory.id', 'ASC')
             ->findAll();
 
         $equippedValue = [];
-        foreach ($equippedRows as $eq) {
+        foreach ($equippedItems as $eq) {
             $equippedValue[$eq->type] = (int) $eq->value;
         }
 
@@ -464,16 +468,17 @@ class Game extends BaseController
         }
 
         return view('game/inventory', [
-            'character'  => $character,
-            'items'      => $items,
-            'counts'     => $counts,
-            'order_col'  => $orderCol,
-            'order'      => $order,
-            'page'       => $page,
-            'total'      => $total,
-            'totalPages' => $totalPages,
-            'used'       => $used,
-            'limit'      => self::INVENTORY_CAPACITY,
+            'character'     => $character,
+            'items'         => $items,
+            'equippedItems' => $equippedItems,
+            'counts'        => $counts,
+            'order_col'     => $orderCol,
+            'order'         => $order,
+            'page'          => $page,
+            'total'         => $total,
+            'totalPages'    => $totalPages,
+            'used'          => $used,
+            'limit'         => self::INVENTORY_CAPACITY,
         ]);
     }
 

@@ -62,12 +62,26 @@ foreach ($items as $i) {
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 
-    <?php if (empty($items)): ?>
+    <div class="flex gap-2 text-sm">
+        <button type="button" @click="view = 'bag'"
+            :class="view === 'bag' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+            class="px-4 py-2 rounded-lg transition-colors">🎒 Инвентарь</button>
+        <button type="button" @click="view = 'equipped'"
+            :class="view === 'equipped' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+            class="px-4 py-2 rounded-lg transition-colors">🛡️ Экипировано</button>
+        <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700">🗄 Хранилище (WIP)</a>
+        <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700">🖼 Витрина (WIP)</a>
+    </div>
+
+    <?php if (empty($items) && empty($equippedItems)): ?>
         <div class="text-center py-10 text-slate-500">
             <p class="text-4xl mb-2">🫙</p>
             <p>Инвентарь пуст. Гуляй — предметы выпадают случайно!</p>
         </div>
     <?php else: ?>
+
+    <!-- Подвкладка «Инвентарь» (сумка) -->
+    <div x-show="view === 'bag'" class="space-y-6">
 
         <div class="flex gap-2 text-sm">
             <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">Все</button>
@@ -198,6 +212,49 @@ foreach ($items as $i) {
         <?php endif; ?>
 
         <p class="hidden text-center py-8 text-slate-500" x-show="!anyVisible()">Ничего не найдено.</p>
+
+    </div>
+
+    <!-- Подвкладка «Экипировано» -->
+    <div x-show="view === 'equipped'" x-cloak class="space-y-6">
+        <p class="text-sm text-slate-400">Экипированные предметы числятся на тебе и не занимают место в сумке.</p>
+        <?php if (empty($equippedItems)): ?>
+            <p class="text-center py-8 text-slate-500">Ничего не надето.</p>
+        <?php else: ?>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-slate-300 border-b border-slate-700">
+                    <th class="py-2 pr-2 text-left">Предмет</th>
+                    <th class="py-2 pr-2 text-left w-32">Редкость</th>
+                    <th class="py-2 pr-2 text-left w-28">Тип</th>
+                    <th class="py-2 pr-2 text-left">Статы</th>
+                    <th class="py-2 w-28"></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($equippedItems as $it): ?>
+                <?php $rc = $rarityColorMap[$it->rarity] ?? 'text-slate-300'; ?>
+                <tr class="border-b border-slate-800" data-inv="<?= (int) $it->inv_id ?>">
+                    <td class="py-2.5 pr-2">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="text-xl"><?= esc($it->emoji) ?></span>
+                            <span class="font-semibold <?= $rc ?>"><?= esc($it->name) ?></span>
+                        </span>
+                    </td>
+                    <td class="py-2.5 pr-2 text-slate-300"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
+                    <td class="py-2.5 pr-2 text-indigo-300"><?= $it->type === 'weapon' ? 'Оружие' : 'Броня' ?></td>
+                    <td class="py-2.5 pr-2 text-slate-300">
+                        +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
+                    </td>
+                    <td class="py-2.5 text-right">
+                        <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
 </div>
 
@@ -292,7 +349,7 @@ function inventoryFilters(sellableIds = []) {
 
     document.querySelectorAll('[data-action]').forEach(function (btn) {
         btn.addEventListener('click', async function () {
-            const li = btn.closest('li');
+            const li = btn.closest('[data-inv]');
             const invId = li.dataset.inv;
             const action = btn.dataset.action;
 
