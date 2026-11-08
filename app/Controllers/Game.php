@@ -1414,7 +1414,8 @@ class Game extends BaseController
 
     private function scaleTaskTarget($base, $level): int
     {
-        return (int) $base + (int) floor(($level - 1) / 5);
+        // target не масштабируется по уровню: число зафиксировано в названии задания
+        return (int) $base;
     }
 
     private function scaleTaskReward($base, $level): int
