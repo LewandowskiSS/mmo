@@ -40,6 +40,7 @@
     'hp'        => (int) (\App\Controllers\BaseController::$layoutData['characterHp'] ?? 0),
     'maxHp'     => (int) (\App\Controllers\BaseController::$layoutData['characterMaxHp'] ?? 50),
     'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
+    'walks'     => (int) (\App\Controllers\BaseController::$layoutData['characterWalks'] ?? 0),
 ]), ENT_QUOTES, 'UTF-8') ?>)">
 
     <!-- Сайдбар: расширенный (десктоп) / полоса иконок (свернут) / оверлей (мобайл). Только для авторизованных -->
@@ -199,16 +200,37 @@
                                     <div><p class="text-slate-400">Золото</p><p class="font-semibold" x-text="st.gold"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-lg">⚡</span>
-                                    <div><p class="text-slate-400">Энергия</p><p class="font-semibold" x-text="st.energy + '/' + st.maxEnergy"></p></div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <img src="/img/misc/Heart.png" alt="❤" class="w-5 h-5 object-contain">
-                                    <div><p class="text-slate-400">Здоровье</p><p class="font-semibold" x-text="st.hp + '/' + st.maxHp"></p></div>
+                                    <span class="text-lg">🏦</span>
+                                    <div><p class="text-slate-400">Банк <span class="text-slate-600">(WIP)</span></p><p class="font-semibold">0</p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">💎</span>
                                     <div><p class="text-slate-400">Алмазы</p><p class="font-semibold" x-text="st.diamonds"></p></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">👟</span>
+                                    <div><p class="text-slate-400">Прогулок</p><p class="font-semibold" x-text="st.walks"></p></div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 border-b border-slate-700 space-y-3 text-xs">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">❤️ Здоровье</span>
+                                        <span class="text-slate-400" x-text="st.hp + ' из ' + st.maxHp"></span>
+                                    </div>
+                                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                        <div class="h-full bg-red-500 transition-all duration-300" :style="'width:' + (st.maxHp ? st.hp / st.maxHp * 100 : 0) + '%'"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-slate-300">⚡ Энергия <span class="text-indigo-400 cursor-not-allowed" title="WIP">Пополнить</span></span>
+                                        <span class="text-slate-400" x-text="st.energy + ' из ' + st.maxEnergy"></span>
+                                    </div>
+                                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                        <div class="h-full bg-amber-500 transition-all duration-300" :style="'width:' + (st.maxEnergy ? st.energy / st.maxEnergy * 100 : 0) + '%'"></div>
+                                    </div>
                                 </div>
                             </div>
 

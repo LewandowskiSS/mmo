@@ -96,6 +96,7 @@ abstract class BaseController extends Controller
                     'characterHp'        => (int) $character->hp,
                     'characterMaxHp'     => (int) $character->max_hp,
                     'characterDiamonds'  => (int) ($character->diamonds ?? 0),
+                    'characterWalks'     => (int) ($character->steps_total ?? 0),
                     'hasClaimableTasks'  => $hasClaimableTasks,
                 ];
             }

@@ -1,21 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<?php
-$initialLogs = [];
-foreach ($event_log as $e) {
-    $initialLogs[] = [
-        'type'       => $e->type,
-        'message'    => $e->message,
-        'emoji'      => $e->emoji,
-        'rarity'     => $e->rarity,
-        'created_at' => $e->created_at,
-        'isNew'      => false,
-    ];
-}
-?>
-
-<div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>, <?= htmlspecialchars(json_encode($initialLogs, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
+<div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>)">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold"><?= esc($character->name) ?></h1>
@@ -88,58 +74,16 @@ foreach ($event_log as $e) {
 
     <div class="space-y-3">
         <div class="relative">
-            <button type="button" :disabled="walking || energy < 1"
+            <button type="button" :disabled="walking"
                 class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 font-bold text-lg"
                 @click="doAction('/game/walk')">
-                <span x-show="!walking">🚶 Прогулка <span class="text-sm font-normal">(-1 ⚡)</span></span>
+                <span x-show="!walking">🚶 Прогулка</span>
                 <span x-show="walking" x-cloak>Идём…</span>
             </button>
             <div x-show="walking" x-cloak class="h-1 rounded-lg bg-slate-700 overflow-hidden mt-1.5">
                 <div class="h-1 bg-emerald-400 rounded-lg ring-run"></div>
             </div>
         </div>
-
-        <div id="rest-block" x-show="restVisible">
-            <button type="button"
-                class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-semibold"
-                @click="doRest()">
-                😴 Отдохнуть <span class="text-sm text-slate-400">(<?= esc($rest_cost) ?> 🪙)</span>
-            </button>
-        </div>
-    </div>
-
-    <p id="energy-timer" class="text-xs text-slate-500 text-center">Энергия восстанавливается: 1 ⚡ в 3 минуты.</p>
-
-    <div>
-        <h2 class="text-lg font-semibold mb-2">📜 Журнал событий</h2>
-        <p class="text-sm text-slate-500" x-show="logs.length === 0" x-cloak>Пока нет записей. Отправься на прогулку!</p>
-        <ul class="space-y-2">
-            <template x-for="log in logs" :key="log.created_at + '|' + log.message">
-                <li class="text-sm bg-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2"
-                    :class="log.isNew ? 'log-enter' : ''">
-                    <span class="truncate">
-                        <template x-if="log.type === 'item'">
-                            <span class="inline-flex items-center gap-1">
-                                <template x-if="Game.isImage(log.emoji)">
-                                    <img :src="log.emoji" class="w-4 h-4 object-contain" alt="">
-                                </template>
-                                <span :class="rc(log.rarity)" x-text="log.message"></span>
-                            </span>
-                        </template>
-                        <template x-if="log.type === 'gold'">
-                            <span class="text-slate-300" x-text="'💰 ' + log.message"></span>
-                        </template>
-                        <template x-if="log.type === 'key'">
-                            <span class="text-slate-300" x-text="'🔑 ' + log.message"></span>
-                        </template>
-                        <template x-if="log.type !== 'item' && log.type !== 'gold' && log.type !== 'key'">
-                            <span class="text-slate-300" x-text="'🚶 ' + log.message"></span>
-                        </template>
-                    </span>
-                    <span class="text-slate-400 text-xs shrink-0" x-text="log.created_at"></span>
-                </li>
-            </template>
-        </ul>
     </div>
 
 </div>
@@ -165,13 +109,11 @@ foreach ($event_log as $e) {
     }
 </style>
 <script>
-function gameDashboard(initialEnergy, initialLogs = []) {
+function gameDashboard(initialEnergy) {
     return {
         energy: initialEnergy,
         walking: false,
         event: { type: 'text', message: 'Нажми «Прогулка», чтобы отправиться в путь.' },
-        restVisible: <?= $character->hp < $character->max_hp ? 'true' : 'false' ?>,
-        logs: initialLogs,
 
         monsterPct() {
             const b = this.event.battle;
@@ -195,34 +137,6 @@ function gameDashboard(initialEnergy, initialLogs = []) {
             el.classList.add('event-anim');
         },
 
-        rc(r) {
-            const map = {
-                common: 'text-slate-400', uncommon: 'text-emerald-400', rare: 'text-sky-400',
-                elite: 'text-violet-400', epic: 'text-pink-400', legendary: 'text-amber-400',
-                celestial: 'text-cyan-400', exotic: 'text-red-400',
-            };
-            return map[r] || 'text-slate-300';
-        },
-        prependLog(data) {
-            if (!data || !data.type || data.type === 'monster' || !data.message) return;
-
-            let emoji = '🚶';
-            let rarity = null;
-            if (data.type === 'gold') emoji = '💰';
-            else if (data.type === 'key') emoji = '🔑';
-            else if (data.type === 'item') { emoji = data.emoji || '🎒'; rarity = data.rarity || null; }
-
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
-                ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
-
-            const entry = { type: data.type, message: data.message, emoji: emoji, rarity: rarity, created_at: ts, isNew: true };
-            this.logs.unshift(entry);
-            if (this.logs.length > 5) this.logs.pop();
-            setTimeout(() => { entry.isNew = false; }, 600);
-        },
-
         startCooldown() {
             this.walking = true;
             const bar = document.querySelector('.ring-run');
@@ -244,24 +158,9 @@ function gameDashboard(initialEnergy, initialLogs = []) {
                 if (data.state) {
                     this.energy = data.state.energy;
                     Game.updateState(data.state);
-                    this.restVisible = data.state.hp < data.state.max_hp;
                 }
                 this.event = data;
                 this.animateEvent();
-                this.prependLog(data);
-            } catch (e) {
-                Game.toast('Ошибка соединения', 'error');
-            }
-        },
-
-        async doRest() {
-            try {
-                const data = await Game.post('/game/rest');
-                if (data.state) {
-                    Game.updateState(data.state);
-                    this.restVisible = data.state.hp < data.state.max_hp;
-                }
-                if (data.message) Game.toast(data.message, data.success ? 'success' : 'error');
             } catch (e) {
                 Game.toast('Ошибка соединения', 'error');
             }
@@ -272,7 +171,6 @@ function gameDashboard(initialEnergy, initialLogs = []) {
             Game.get('/game/state').then((state) => {
                 this.energy = state.energy;
                 Game.updateState(state);
-                this.restVisible = state.hp < state.max_hp;
             }).catch(() => {});
         },
 

@@ -83,18 +83,7 @@ class Game extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
         }
 
-        $character = $this->regenEnergy($character);
-
-        if ($character->energy < 1) {
-            return $this->response->setJSON([
-                'success' => false,
-                'type'    => 'no_energy',
-                'message' => 'Нет энергии! Подожди, пока она восстановится.',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // Задержка между шагами (анти-бот)
+        // Прогулка не требует энергии. Анти-бот задержка:
         if ($character->last_step_at && (time() - strtotime($character->last_step_at)) < 2) {
             return $this->response->setJSON([
                 'success' => false,
@@ -104,7 +93,7 @@ class Game extends BaseController
             ]);
         }
 
-        $this->consumeStep($character);
+        (new CharacterModel())->update($character->id, ['last_step_at' => date('Y-m-d H:i:s')]);
         $this->progressTask($character->id, 'walk');
         $this->incrementCounter($character->id, 'steps_total');
 
@@ -118,18 +107,7 @@ class Game extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
         }
 
-        $character = $this->regenEnergy($character);
-
-        if ($character->energy < 1) {
-            return $this->response->setJSON([
-                'success' => false,
-                'type'    => 'no_energy',
-                'message' => 'Нет энергии! Подожди, пока она восстановится.',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // Задержка между шагами (анти-бот)
+        // Пропуск боя энергии не требует (только анти-бот задержка)
         if ($character->last_step_at && (time() - strtotime($character->last_step_at)) < 2) {
             return $this->response->setJSON([
                 'success' => false,
@@ -139,7 +117,7 @@ class Game extends BaseController
             ]);
         }
 
-        $this->consumeStep($character);
+        (new CharacterModel())->update($character->id, ['last_step_at' => date('Y-m-d H:i:s')]);
 
         // Пропуск: 15% — новый монстр, 85% — просто текст (без наград)
         $roll = random_int(1, 100);
@@ -205,6 +183,17 @@ class Game extends BaseController
         $monster   = $this->getBattleMonster($battle);
         $monsterHp = (int) $battle['monster_hp'];
         $stats     = $this->effectiveStats($character);
+
+        // Атака требует 1 энергии
+        if ((int) $character->energy < 1) {
+            return $this->response->setJSON([
+                'success' => false,
+                'type'    => 'no_energy',
+                'message' => 'Нет энергии для атаки! Подожди, пока она восстановится.',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+        (new CharacterModel())->update($character->id, ['energy' => (int) $character->energy - 1]);
 
         // Игрок бьёт монстра
         $dmg       = $this->calcDamage($stats['attack'], $monster->defense);

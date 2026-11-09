@@ -118,6 +118,7 @@ function layout(seed = {}) {
             hp: seed.hp || 0,
             maxHp: seed.maxHp || 50,
             diamonds: seed.diamonds || 0,
+            walks: seed.walks || 0,
         },
 
         init() {
@@ -164,6 +165,7 @@ function layout(seed = {}) {
                 this.st.hp = s.hp;
                 this.st.maxHp = s.max_hp;
                 this.st.diamonds = s.diamonds;
+                this.st.walks = s.walks || 0;
             } catch (e) {
                 // Тихо: при ошибке показываем последние известные значения
             }
