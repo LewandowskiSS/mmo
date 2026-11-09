@@ -16,6 +16,14 @@
     /* Утилита для внутренних скролл-областей (сайдбар) */
     .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
+    /* Развёрнутый сайдбар на узких экранах: убираем Diamond Store/Support, остаётся Travel + Community */
+    @media (min-width: 768px) and (max-width: 1399px) {
+        body:not(.sidebar-wide) .extra-link { display: none; }
+    }
+    /* На планшетах иконки друзей/чата прячем, остаются поиск+уведомления */
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .icons-wide { display: none; }
+    }
     /* Скрываем оболочку до готовности Alpine — убирает рывки рендера */
     .app-shell { opacity: 0; }
     .app-shell.app-ready { opacity: 1; transition: opacity .25s ease; }</style>
@@ -127,31 +135,41 @@
                 <?php if (session()->get('user_id')): ?>
                 <button type="button" class="text-slate-300 hover:text-white text-xl leading-none" @click="toggleSidebar()" aria-label="Меню">☰</button>
 
-                <!-- Верхняя панель как в SMMO -->
+                <!-- Верхняя панель как в SMMO (адаптивная) -->
                 <div class="hidden md:flex items-center gap-1 text-sm ml-2">
-                    <a href="/walk" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+                    <a href="/walk" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shrink-0">
                         Travel
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-white/50 text-xs leading-none">→</span>
                     </a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2">
+                    <!-- Развёрнутый сайдбар: только Travel + Community -->
+                    <a href="#" class="community-link px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800">Community</a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2 extra-link">
                         Diamond Store
                         <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold leading-none">Sale</span>
                     </a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800">Support</a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800">Community</a>
+                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 extra-link">Support</a>
                 </div>
                 <?php endif; ?>
 
                 <div class="flex-1"></div>
 
                 <?php if (session()->get('user_id')): ?>
-                    <!-- Иконки справа: поиск, друзья, чат, уведомления (пока заглушки) -->
+                    <!-- Поиск + иконки (адаптивно) -->
                     <div class="hidden md:flex items-center gap-1">
-                        <div class="relative mr-2">
-                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
-                            <input type="text" placeholder="Поиск"
-                                class="w-40 lg:w-56 pl-8 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        <div class="relative mr-1">
+                            <input x-show="searchOpen" x-cloak x-ref="searchInput"
+                                type="text" placeholder="Поиск"
+                                class="w-44 pl-3 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                            <button type="button" @click="searchOpen = !searchOpen"
+                                class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Поиск">🔍</button>
                         </div>
+                        <div class="hidden lg:flex items-center gap-1">
+                            <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Друзья">👥</a>
+                            <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Чат">💬</a>
+                            <a href="#" class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Уведомления">🔔<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span></a>
+                        </div>
+                    </div>
+                    <div class="flex md:hidden items-center gap-1">
                         <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Друзья">👥</a>
                         <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Чат">💬</a>
                         <a href="#" class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Уведомления">🔔<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span></a>

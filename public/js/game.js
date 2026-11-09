@@ -102,6 +102,7 @@ function layout(seed = {}) {
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') !== '0',
         sidebarMobile: false,
         profileOpen: false,
+        searchOpen: false,
         ready: false,
 
         // Живые данные профиля (обновляются с /game/state при каждом открытии меню)
@@ -125,6 +126,14 @@ function layout(seed = {}) {
                 this.ready = true;
                 document.body.classList.add('app-ready');
             });
+            // Синхронизация класса body для адаптивных правил хедера
+            const syncWide = () => {
+                document.body.classList.toggle('sidebar-wide', !this.sidebarCollapsed);
+            };
+            syncWide();
+            this.$watch('sidebarCollapsed', syncWide);
+            // Поиск: скрыт по умолчанию, открывается по кнопке-лупе
+            this.searchOpen = false;
         },
 
         toggleSidebar() {
