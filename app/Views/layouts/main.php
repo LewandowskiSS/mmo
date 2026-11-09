@@ -16,9 +16,9 @@
     /* Утилита для внутренних скролл-областей (сайдбар) */
     .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    /* Развёрнутый сайдбар на узких экранах: убираем Diamond Store/Support, остаётся Travel + Community */
+    /* Развёрнутый сайдбар: убираем Diamond Store/Support, остаётся Travel + Community */
     @media (min-width: 768px) and (max-width: 1399px) {
-        body:not(.sidebar-wide) .extra-link { display: none; }
+        body.sidebar-wide .extra-link { display: none; }
     }
     /* На планшетах иконки друзей/чата прячем, остаются поиск+уведомления */
     @media (min-width: 768px) and (max-width: 1023px) {
