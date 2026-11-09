@@ -3,15 +3,18 @@
 
 <?php
 $rarityColorMap = [
-    'common'    => 'text-slate-400',
-    'uncommon'  => 'text-emerald-400',
-    'rare'      => 'text-sky-400',
-    'elite'     => 'text-violet-400',
-    'epic'      => 'text-pink-400',
-    'legendary' => 'text-amber-400',
-    'celestial' => 'text-cyan-400',
-    'exotic'    => 'text-red-400',
+    'common'    => 'rarity-common',
+    'uncommon'  => 'rarity-uncommon',
+    'rare'      => 'rarity-rare',
+    'elite'     => 'rarity-elite',
+    'epic'      => 'rarity-epic',
+    'legendary' => 'rarity-legendary',
+    'celestial' => 'rarity-celestial',
+    'exotic'    => 'rarity-exotic',
+    'mythic'    => 'rarity-mythic',
+    'ancient'   => 'rarity-ancient',
 ];
+$typeNames = \App\Models\ItemModel::TYPE_NAMES;
 $rarityNames = [
     'common'    => 'Обычный',
     'uncommon'  => 'Необычный',
@@ -21,16 +24,20 @@ $rarityNames = [
     'legendary' => 'Легендарный',
     'celestial' => 'Небесный',
     'exotic'    => 'Экзотический',
+    'mythic'    => 'Мифический',
+    'ancient'   => 'Древний',
 ];
 $rarityHex = [
-    'common'    => '#94a3b8',
-    'uncommon'  => '#22c55e',
-    'rare'      => '#3b82f6',
-    'elite'     => '#a855f7',
-    'epic'      => '#ec4899',
-    'legendary' => '#f59e0b',
-    'celestial' => '#06b6d4',
-    'exotic'    => '#ef4444',
+    'common'    => '#cbd5e1',
+    'uncommon'  => '#86efac',
+    'rare'      => '#7dd3fc',
+    'elite'     => '#9146ff',
+    'epic'      => '#ff69ff',
+    'legendary' => '#fbbf24',
+    'celestial' => '#b1eb34',
+    'exotic'    => '#b1eb34',
+    'mythic'    => '#ff9e00',
+    'ancient'   => '#ff007b',
 ];
 $sortLink = function (string $key, string $label) use ($order_col, $order): string {
     $arrow = '';
@@ -93,7 +100,10 @@ $icon = function ($e): string {
         <div class="flex gap-2 text-sm">
             <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">Все</button>
             <button type="button" @click="tab = 'weapon'" :class="tab === 'weapon' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">⚔️ Оружие</button>
-            <button type="button" @click="tab = 'armor'" :class="tab === 'armor' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">🛡️ Броня</button>
+            <?php foreach ($typeNames as $type => $label): ?>
+                <?php if (in_array($type, ['weapon', 'consumable'], true)) continue; ?>
+                <button type="button" @click="tab = '<?= esc($type) ?>'" :class="tab === '<?= esc($type) ?>' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg"><?= esc($label) ?></button>
+            <?php endforeach; ?>
             <button type="button" @click="tab = 'consumable'" :class="tab === 'consumable' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">🧪 Расходники</button>
         </div>
 
@@ -163,7 +173,7 @@ $icon = function ($e): string {
                     </td>
                     <td class="py-2.5 pr-2 text-slate-500">—</td>
                     <td class="py-2.5 pr-2 text-right text-amber-400">🪙 <?= (int) ($it->price ?? 0) ?></td>
-                    <td class="py-2.5 pr-2 text-indigo-300"><?= $it->type === 'weapon' ? 'Оружие' : ($it->type === 'armor' ? 'Броня' : 'Расходник') ?></td>
+                    <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
                         <?php if ($it->type !== 'consumable'): ?>
                             +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
@@ -248,8 +258,8 @@ $icon = function ($e): string {
                             <span class="font-semibold <?= $rc ?>"><?= esc($it->name) ?></span>
                         </span>
                     </td>
-                    <td class="py-2.5 pr-2 text-slate-300"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
-                    <td class="py-2.5 pr-2 text-indigo-300"><?= $it->type === 'weapon' ? 'Оружие' : 'Броня' ?></td>
+                    <td class="py-2.5 pr-2 <?= esc($rc) ?>"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
+                    <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
                         +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
                     </td>
@@ -348,9 +358,9 @@ function inventoryFilters(sellableIds = []) {
 // Действия (надеть/снять/использовать/продать) — через общий Game.post
 (function () {
     const rarityColors = {
-        common: '#94a3b8', uncommon: '#22c55e', rare: '#3b82f6',
-        elite: '#a855f7', epic: '#ec4899', legendary: '#f59e0b',
-        celestial: '#06b6d4', exotic: '#ef4444',
+        common: '#cbd5e1', uncommon: '#86efac', rare: '#7dd3fc',
+        elite: '#9146ff', epic: '#ff69ff', legendary: '#fbbf24',
+        celestial: '#b1eb34', exotic: '#b1eb34',
     };
 
     const urls = { use: '/game/use', equip: '/game/equip', unequip: '/game/unequip', sell: '/game/sell' };

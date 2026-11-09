@@ -91,6 +91,7 @@ abstract class BaseController extends Controller
                     'characterLevel'     => (int) $character->level,
                     'characterXpPercent' => min(100, (int) round($character->xp / $xpNeeded * 100)),
                     'characterGold'      => (int) $character->gold,
+                    'characterBank'      => (int) ($character->bank_balance ?? 0),
                     'characterEnergy'    => (int) $character->energy,
                     'characterMaxEnergy' => (int) $character->max_energy,
                     'characterHp'        => (int) $character->hp,

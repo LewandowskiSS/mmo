@@ -8,6 +8,8 @@ $routes->get('/', 'Game::index');
 
 // Город
 $routes->get('town', 'Town::index');
+$routes->get('town/bank', 'Town::bank');
+$routes->get('hut', 'Town::hut');
 $routes->get('walk', 'Game::walkPage');
 
 $routes->get('view/(:num)', 'Profile::view/$1');
@@ -51,3 +53,10 @@ $routes->post('game/refreshTasks', 'Game::refreshTasks');
 $routes->get('game/chests', 'Game::chests');
 $routes->post('game/openChest', 'Game::openChest');
 $routes->post('game/buyKey', 'Game::buyKey');
+
+// Банк
+$routes->get('game/bank', 'Game::bank');
+$routes->get('game/bankState', 'Game::bankState');
+$routes->get('game/bankTransactions', 'Game::bankTransactions');
+$routes->post('game/bank/deposit', 'Game::bankDeposit');
+$routes->post('game/bank/withdraw', 'Game::bankWithdraw');

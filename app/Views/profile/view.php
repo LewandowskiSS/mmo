@@ -3,15 +3,22 @@
 
 <?php
 $rcMap = [
-    'common' => 'text-slate-400', 'uncommon' => 'text-emerald-400', 'rare' => 'text-sky-400',
-    'elite' => 'text-violet-400', 'epic' => 'text-pink-400', 'legendary' => 'text-amber-400',
-    'celestial' => 'text-cyan-400', 'exotic' => 'text-red-400',
+    'common' => 'rarity-common',
+    'uncommon' => 'rarity-uncommon',
+    'rare' => 'rarity-rare',
+    'elite' => 'rarity-elite',
+    'epic' => 'rarity-epic',
+    'legendary' => 'rarity-legendary',
+    'celestial' => 'rarity-celestial',
+    'exotic' => 'rarity-exotic',
+    'mythic' => 'rarity-mythic',
+    'ancient' => 'rarity-ancient',
 ];
 $rarityNames = [
     'common' => 'Обычный', 'uncommon' => 'Необычный', 'rare' => 'Редкий', 'elite' => 'Элитный',
-    'epic' => 'Эпический', 'legendary' => 'Легендарный', 'celestial' => 'Небесный', 'exotic' => 'Экзотический',
+    'epic' => 'Эпический', 'legendary' => 'Легендарный', 'celestial' => 'Небесный', 'exotic' => 'Экзотический', 'mythic' => 'Мифический', 'ancient' => 'Древний',
 ];
-$typeNames = ['weapon' => 'Оружие', 'armor' => 'Броня', 'consumable' => 'Расходник'];
+$typeNames = \App\Models\ItemModel::TYPE_NAMES;
 $xpNeeded = 50 + ((int) $character->level - 1) * 25;
 $hpPct = $character->max_hp > 0 ? (int) round($character->hp / $character->max_hp * 100) : 0;
 $icon = function ($e): string {

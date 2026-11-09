@@ -113,6 +113,7 @@ function layout(seed = {}) {
             level: seed.level || 1,
             xpPercent: seed.xpPercent || 0,
             gold: seed.gold || 0,
+            bank: seed.bank || 0,
             energy: seed.energy || 0,
             maxEnergy: seed.maxEnergy || 20,
             hp: seed.hp || 0,
@@ -160,6 +161,7 @@ function layout(seed = {}) {
                 this.st.level = s.level;
                 this.st.xpPercent = s.xp_needed ? Math.min(100, Math.round(s.xp / s.xp_needed * 100)) : 0;
                 this.st.gold = s.gold;
+                this.st.bank = s.bank || 0;
                 this.st.energy = s.energy;
                 this.st.maxEnergy = s.max_energy;
                 this.st.hp = s.hp;

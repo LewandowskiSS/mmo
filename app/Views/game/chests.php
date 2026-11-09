@@ -35,7 +35,15 @@
                 <div class="flex items-center gap-3 mb-3">
                     <img src="/img/chests/<?= esc($chest->key_type) ?>.ico" alt="<?= esc($chest->name) ?>" class="w-14 h-14 object-contain shrink-0">
                     <div class="flex-1">
-                        <p class="font-semibold"><?= esc($chest->name) ?></p>
+                        <?php
+                        $chestTitleClass = match ($chest->key_type) {
+                            'bronze' => 'rarity-common',
+                            'silver' => 'rarity-rare',
+                            'gold' => 'rarity-legendary',
+                            default => 'rarity-common',
+                        };
+                        ?>
+                        <p class="font-semibold <?= esc($chestTitleClass) ?>"><?= esc($chest->name) ?></p>
                         <p class="text-xs text-slate-400">Шанс выпадения:</p>
                     </div>
                     <div class="text-right space-y-1.5">
@@ -67,14 +75,16 @@
                 </div>
                 <table class="w-full text-xs text-slate-300">
                     <tbody>
-                        <tr><td class="py-1 text-slate-400">Обычный</td><td class="text-right"><?= (float) $chest->common_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-emerald-400">Необычный</td><td class="text-right"><?= (float) $chest->uncommon_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-sky-400">Редкий</td><td class="text-right"><?= (float) $chest->rare_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-violet-400">Элитный</td><td class="text-right"><?= (float) $chest->elite_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-pink-400">Эпический</td><td class="text-right"><?= (float) $chest->epic_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-amber-400">Легендарный</td><td class="text-right"><?= (float) $chest->legendary_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-cyan-400">Небесный</td><td class="text-right"><?= (float) $chest->celestial_rate ?>%</td></tr>
-                        <tr><td class="py-1 text-red-400">Экзотический</td><td class="text-right"><?= (float) $chest->exotic_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-common">Обычный</td><td class="text-right"><?= (float) $chest->common_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-uncommon">Необычный</td><td class="text-right"><?= (float) $chest->uncommon_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-rare">Редкий</td><td class="text-right"><?= (float) $chest->rare_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-elite">Элитный</td><td class="text-right"><?= (float) $chest->elite_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-epic">Эпический</td><td class="text-right"><?= (float) $chest->epic_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-legendary">Легендарный</td><td class="text-right"><?= (float) $chest->legendary_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-celestial">Небесный</td><td class="text-right"><?= (float) $chest->celestial_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-exotic">Экзотический</td><td class="text-right"><?= (float) $chest->exotic_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-mythic">Мифический</td><td class="text-right"><?= (float) $chest->mythic_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-ancient">Древний</td><td class="text-right"><?= (float) $chest->ancient_rate ?>%</td></tr>
                     </tbody>
                 </table>
             </li>
@@ -83,12 +93,12 @@
 </div>
 
 <script>
-function chestsPage(goldInit, bronzeInit, silverInit, goldInit) {
+function chestsPage(goldInit, bronzeInit, silverInit, goldKeysInit) {
     return {
         gold: goldInit,
         bronzeKeys: bronzeInit,
         silverKeys: silverInit,
-        goldKeys: goldInit,
+        goldKeys: goldKeysInit,
 
         applyState(state) {
             if (!state) return;
@@ -153,7 +163,7 @@ function chestsPage(goldInit, bronzeInit, silverInit, goldInit) {
         },
 
         showLoot(results) {
-            const rarityColors = { common: '#94a3b8', uncommon: '#22c55e', rare: '#3b82f6', elite: '#a855f7', epic: '#ec4899', legendary: '#f59e0b', celestial: '#06b6d4', exotic: '#ef4444' };
+            const rarityColors = { common: '#cbd5e1', uncommon: '#86efac', rare: '#7dd3fc', elite: '#9146ff', epic: '#ff69ff', legendary: '#fbbf24', celestial: '#b1eb34', exotic: '#b1eb34', mythic: '#ff9e00', ancient: '#ff007b' };
             const grouped = {};
             results.forEach((r) => {
                 const k = r.name + '|' + r.rarity;

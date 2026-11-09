@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\BattleLogModel;
 use App\Models\CharacterModel;
+use App\Models\BankTransactionModel;
 use App\Models\CharacterTaskModel;
 use App\Models\ChestModel;
 use App\Models\DailyTaskModel;
@@ -693,7 +694,7 @@ class Game extends BaseController
             return redirect()->to('/game/shop');
         }
 
-        $types = ($category === 'potions') ? ['consumable'] : ['weapon', 'armor'];
+        $types = ($category === 'potions') ? ['consumable'] : ['weapon', 'armor', 'helmet', 'amulet', 'chestplate', 'gloves', 'leggings', 'boots'];
 
         $items = (new ItemModel())
             ->whereIn('type', $types)
@@ -1122,6 +1123,150 @@ class Game extends BaseController
         ]);
     }
 
+    public function bank()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        return view('game/bank');
+    }
+
+    public function bankState()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'gold'     => (int) $character->gold,
+            'bank'     => (int) ($character->bank_balance ?? 0),
+        ]);
+    }
+
+    public function bankTransactions()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $page = max(1, (int) $this->request->getGet('page'));
+        $pager = (new BankTransactionModel())
+            ->where('character_id', $character->id)
+            ->orderBy('created_at', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->paginate(5, 'bank', $page);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'transactions' => array_map(static function ($transaction): array {
+                return [
+                    'id' => (int) $transaction->id,
+                    'type' => $transaction->type,
+                    'amount' => (int) $transaction->amount,
+                    'hash' => $transaction->transaction_hash,
+                    'short_hash' => substr($transaction->transaction_hash, -4),
+                    'created_at' => $transaction->created_at,
+                ];
+            }, $pager),
+            'pagination' => [
+                'current' => $page,
+                'total' => (new BankTransactionModel())->where('character_id', $character->id)->countAllResults(),
+                'per_page' => 5,
+            ],
+        ]);
+    }
+
+    public function bankDeposit()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $amount = (int) $this->request->getPost('amount');
+        if ($amount <= 0 || $amount > (int) $character->gold) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Некорректная сумма или недостаточно золота']);
+        }
+
+        $db = db_connect();
+        $db->transStart();
+
+        (new CharacterModel())->update($character->id, [
+            'gold'         => (int) $character->gold - $amount,
+            'bank_balance' => (int) ($character->bank_balance ?? 0) + $amount,
+        ]);
+        $transactionHash = hash('sha256', $character->id . '|deposit|' . $amount . '|' . microtime(true) . '|' . bin2hex(random_bytes(16)));
+        (new BankTransactionModel())->insert([
+            'character_id' => $character->id,
+            'type' => 'deposit',
+            'amount' => $amount,
+            'transaction_hash' => $transactionHash,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $db->transComplete();
+        if ($db->transStatus() === false) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Операция не сохранена']);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'gold'     => (int) $character->gold - $amount,
+            'bank'     => (int) ($character->bank_balance ?? 0) + $amount,
+            'transaction_hash' => $transactionHash,
+            'short_hash' => substr($transactionHash, -4),
+            'message'  => "На банк положено {$amount} 🪙",
+        ]);
+    }
+
+    public function bankWithdraw()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $amount = (int) $this->request->getPost('amount');
+        if ($amount <= 0 || $amount > (int) ($character->bank_balance ?? 0)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Некорректная сумма или недостаточно на счету']);
+        }
+
+        $db = db_connect();
+        $db->transStart();
+
+        (new CharacterModel())->update($character->id, [
+            'gold'         => (int) $character->gold + $amount,
+            'bank_balance' => (int) ($character->bank_balance ?? 0) - $amount,
+        ]);
+        $transactionHash = hash('sha256', $character->id . '|withdraw|' . $amount . '|' . microtime(true) . '|' . bin2hex(random_bytes(16)));
+        (new BankTransactionModel())->insert([
+            'character_id' => $character->id,
+            'type' => 'withdraw',
+            'amount' => $amount,
+            'transaction_hash' => $transactionHash,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $db->transComplete();
+        if ($db->transStatus() === false) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Операция не сохранена']);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'gold'     => (int) $character->gold + $amount,
+            'bank'     => (int) ($character->bank_balance ?? 0) - $amount,
+            'transaction_hash' => $transactionHash,
+            'short_hash' => substr($transactionHash, -4),
+            'message'  => "Со счёта снято {$amount} 🪙",
+        ]);
+    }
+
     // ---------- Приватные помощники ----------
 
     private function characterState($character): array
@@ -1134,6 +1279,7 @@ class Game extends BaseController
             'xp'             => (int) $character->xp,
             'xp_needed'      => $this->xpNeeded($character->level),
             'gold'           => (int) $character->gold,
+            'bank'           => (int) ($character->bank_balance ?? 0),
             'hp'             => (int) $character->hp,
             'max_hp'         => (int) $character->max_hp,
             'energy'         => (int) $character->energy,
@@ -1313,8 +1459,6 @@ class Game extends BaseController
             $data['hp']         = $data['max_hp'];
             $data['attack']     = 5 + ($level - 1) * 2;
             $data['defense']    = 2 + ($level - 1);
-            $data['max_energy'] = 20;
-            $data['energy']     = 20;
         }
 
         $charModel->update($character->id, $data);
@@ -1450,7 +1594,9 @@ class Game extends BaseController
 
             if ($m['type'] === 'gold_item') {
                 (new CharacterModel())->update($character->id, ['gold' => $character->gold + $m['amount']]);
-                $item = (new ItemModel())->find($m['item']);
+                // Предмет из награды выбирается из общего доступного пула по
+                // таблице шансов серебряного сундука, а не по фиксированному ID.
+                $item = $this->randomItemBySilverChest();
                 if ($item) {
                     $this->giveItem($character->id, $item->id);
                     return "+{$m['amount']} 🪙 + {$item->emoji} {$item->name}";
@@ -1664,7 +1810,7 @@ class Game extends BaseController
 
         // 8% — предмет
         if ($roll <= 95) {
-            $items = (new ItemModel())->findAll();
+            $items = (new ItemModel())->where('type !=', 'pet')->findAll();
             $item  = $items[array_rand($items)];
             $this->giveItem($character->id, $item->id);
             $this->progressTask($character->id, 'item');
@@ -1714,6 +1860,8 @@ class Game extends BaseController
             'legendary' => (float) $chest->legendary_rate,
             'celestial' => (float) $chest->celestial_rate,
             'exotic'    => (float) $chest->exotic_rate,
+            'mythic'    => (float) $chest->mythic_rate,
+            'ancient'   => (float) $chest->ancient_rate,
         ];
 
         $roll = mt_rand(0, 9999) / 100;
@@ -1731,12 +1879,38 @@ class Game extends BaseController
 
     private function randomItemByRarity($rarity)
     {
-        $items = (new ItemModel())->where('rarity', $rarity)->findAll();
+        $items = (new ItemModel())
+            ->where('rarity', $rarity)
+            ->where('type !=', 'pet')
+            ->findAll();
 
         if (empty($items)) {
-            $items = (new ItemModel())->where('rarity', 'common')->findAll();
+            $items = (new ItemModel())->where('rarity', 'common')->where('type !=', 'pet')->findAll();
         }
 
-        return $items[array_rand($items)];
+        return $items ? $items[array_rand($items)] : null;
+    }
+
+    /**
+     * Выбирает предмет с теми же весами редкостей, что и серебряный сундук.
+     * Питомцы намеренно исключены: они не выпадают из прогулок и сундуков.
+     */
+    private function randomItemBySilverChest()
+    {
+        $rates = [
+            'common' => 0, 'uncommon' => 40, 'rare' => 32, 'elite' => 16,
+            'epic' => 8, 'legendary' => 3, 'celestial' => 0.8, 'exotic' => 0.2,
+        ];
+        $roll = mt_rand(0, 9999) / 100;
+        $cum = 0.0;
+
+        foreach ($rates as $rarity => $rate) {
+            $cum += $rate;
+            if ($roll < $cum) {
+                return $this->randomItemByRarity($rarity);
+            }
+        }
+
+        return $this->randomItemByRarity('uncommon');
     }
 }

@@ -26,7 +26,84 @@
     }
     /* Скрываем оболочку до готовности Alpine — убирает рывки рендера */
     .app-shell { opacity: 0; }
-    .app-shell.app-ready { opacity: 1; transition: opacity .25s ease; }</style>
+    .app-shell.app-ready { opacity: 1; transition: opacity .25s ease; }
+
+    /* Цвета и свечение редкостей предметов */
+    .rarity-common { color: #cbd5e1 !important; font-weight: 600; }
+    .rarity-uncommon { color: #86efac !important; font-weight: 650; }
+    .rarity-rare { color: #7dd3fc !important; font-weight: 700; }
+    .rarity-elite { color: #9146ff !important; font-weight: 700; }
+    .rarity-epic {
+        color: #ff69ff !important;
+        font-weight: 700;
+        text-shadow: 0 0 2px #ff69ff, 0 0 5px rgba(255, 105, 255, .72);
+    }
+    .rarity-legendary {
+        color: #fbbf24 !important;
+        font-weight: 700;
+        text-shadow: 0 0 2px #f59e0b, 0 0 5px rgba(245, 158, 11, .8);
+    }
+    .rarity-celestial {
+        color: #b1eb34 !important;
+        font-weight: 700;
+        background-image: linear-gradient(90deg, #67e8f9, #b1eb34, #22d3ee, #67e8f9);
+        background-size: 240% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(1px 1px .1px rgb(0 55 107)) drop-shadow(0 0 4px rgb(0 161 201));
+        animation: celestial-shift 4s linear infinite, celestial-glow 2.4s ease-in-out infinite alternate;
+    }
+    .rarity-exotic {
+        color: #b1eb34 !important;
+        font-weight: 700;
+        background-image: radial-gradient(circle, rgb(255 229 184) 10%, rgb(255 255 255) 25%, rgb(254 139 139) 35%, rgb(254 159 200) 50%, rgb(255 56 142) 75%, rgb(255 0 111) 100%);
+        background-size: 180% 180%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(rgb(255 0 123) 0 0 .1px) drop-shadow(rgb(255 0 123) 0 0 4px);
+        animation: exotic-shift 3s ease-in-out infinite, exotic-glow 2.2s ease-in-out infinite alternate;
+    }
+    .rarity-mythic {
+        color: #ff9e00 !important;
+        font-weight: 700;
+        background-image: linear-gradient(115deg, #ff9e00 0%, #fff0a6 24%, #ff9e00 45%, #ff3d00 70%, #ffb300 100%);
+        background-size: 260% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(#ff9e00 0 0 .2px) drop-shadow(#ff6d00 0 0 4px);
+        animation: mythic-shift 2.6s linear infinite, mythic-glow 1.8s ease-in-out infinite alternate;
+    }
+    .rarity-ancient {
+        color: #ff007b !important;
+        font-weight: 700;
+        background-image: radial-gradient(circle, #ffe5b8 10%, #fff 25%, #fe8b8b 35%, #fe9fc8 50%, #ff388e 75%, #ff006f 100%);
+        background-size: 220% 220%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(#ff007b 0 0 .1px) drop-shadow(#ff007b 0 0 5px);
+        animation: ancient-shift 2.2s ease-in-out infinite, ancient-glow 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes celestial-shift { to { background-position: 240% center; } }
+    @keyframes celestial-glow {
+        from { filter: drop-shadow(1px 1px .1px rgb(0 55 107)) drop-shadow(0 0 3px rgb(0 161 201)); }
+        to { filter: drop-shadow(1px 1px .1px rgb(0 55 107)) drop-shadow(0 0 7px rgb(0 201 219)); }
+    }
+    @keyframes exotic-glow {
+        from { filter: drop-shadow(rgb(255 0 123) 0 0 .1px) drop-shadow(rgb(255 0 123) 0 0 3px); }
+        to { filter: drop-shadow(rgb(255 0 123) 0 0 .1px) drop-shadow(rgb(255 0 123) 0 0 8px); }
+    }
+    @keyframes exotic-shift { 0%, 100% { background-position: 20% 35%; } 50% { background-position: 80% 65%; } }
+    @keyframes mythic-shift { 0% { background-position: 0% center; } 100% { background-position: 260% center; } }
+    @keyframes mythic-glow { from { filter: drop-shadow(#ff9e00 0 0 .2px) drop-shadow(#ff6d00 0 0 3px); } to { filter: drop-shadow(#fff0a6 0 0 1px) drop-shadow(#ff3d00 0 0 9px); } }
+    @keyframes ancient-shift { 0%, 100% { background-position: 15% 35%; } 50% { background-position: 85% 65%; } }
+    @keyframes ancient-glow { from { filter: drop-shadow(#ff007b 0 0 .1px) drop-shadow(#ff007b 0 0 4px); } to { filter: drop-shadow(#fff 0 0 1px) drop-shadow(#ff007b 0 0 11px); } }
+    @media (prefers-reduced-motion: reduce) {
+        .rarity-celestial, .rarity-exotic, .rarity-mythic, .rarity-ancient { animation: none; }
+    }</style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen app-shell" x-data="layout(<?= htmlspecialchars(json_encode([
     'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',
@@ -201,7 +278,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">🏦</span>
-                                    <div><p class="text-slate-400">Банк <span class="text-slate-600">(WIP)</span></p><p class="font-semibold">0</p></div>
+                                    <div><p class="text-slate-400">Банк</p><p class="font-semibold" x-text="st.bank"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">💎</span>

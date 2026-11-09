@@ -12,4 +12,22 @@ class Town extends BaseController
 
         return view('game/town');
     }
+
+    public function bank()
+    {
+        if (! $this->currentCharacter()) {
+            return redirect()->to('/login');
+        }
+
+        return redirect()->to('/game/bank');
+    }
+
+    public function hut()
+    {
+        if (! $this->currentCharacter()) {
+            return redirect()->to('/login');
+        }
+
+        return view('game/hut');
+    }
 }

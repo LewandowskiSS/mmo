@@ -1,0 +1,1 @@
+ERROR: Error: Undefined constant "CodeIgniter\ENVIRONMENT"

@@ -1,0 +1,11 @@
+LOGIN PASS
+/ HTTP 200 final=/ bytes=20935
+/walk HTTP 200 final=/walk bytes=25817
+/game/inventory HTTP 200 final=/game/inventory bytes=26313
+/game/shop/equipment HTTP 200 final=/game/shop bytes=20137
+/game/chests HTTP 200 final=/game/chests bytes=37064
+/game/tasks HTTP 200 final=/game/tasks bytes=37409
+/town HTTP 200 final=/town bytes=27548
+/game/state HTTP 200 final=/game/state bytes=424
+/game/shop/gear HTTP 200 final=/game/shop/gear
+/game/shop/potions HTTP 200 final=/game/shop/potions

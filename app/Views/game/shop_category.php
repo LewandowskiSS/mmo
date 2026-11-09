@@ -82,17 +82,16 @@ function shopCategory(initialGold, items) {
 
         rarityClass(r) {
             const map = {
-                common: 'text-slate-400', uncommon: 'text-emerald-400', rare: 'text-sky-400',
-                elite: 'text-violet-400', epic: 'text-pink-400', legendary: 'text-amber-400',
-                celestial: 'text-cyan-400', exotic: 'text-red-400',
+                common: 'rarity-common', uncommon: 'rarity-uncommon', rare: 'rarity-rare',
+                elite: 'rarity-elite', epic: 'rarity-epic', legendary: 'rarity-legendary',
+                celestial: 'rarity-celestial', exotic: 'rarity-exotic', mythic: 'rarity-mythic', ancient: 'rarity-ancient',
             };
             return map[r] || 'text-slate-300';
         },
 
         typeLabel(item) {
-            if (item.type === 'weapon') return 'Оружие';
-            if (item.type === 'armor') return 'Броня';
-            return 'Расходник';
+            const names = <?= json_encode(\App\Models\ItemModel::TYPE_NAMES, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+            return names[item.type] || item.type;
         },
 
         async buy(item) {
