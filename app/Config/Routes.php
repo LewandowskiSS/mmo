@@ -5,6 +5,9 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 // Главная — панель игры
 $routes->get('/', 'Game::index');
+
+// Город
+$routes->get('town', 'Town::index');
 $routes->get('walk', 'Game::walkPage');
 
 $routes->get('view/(:num)', 'Profile::view/$1');
