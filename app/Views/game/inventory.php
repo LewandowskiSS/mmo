@@ -12,7 +12,7 @@ $rarityColorMap = [
     'celestial' => 'rarity-celestial',
     'exotic'    => 'rarity-exotic',
     'mythic'    => 'rarity-mythic',
-    'ancient'   => 'rarity-ancient',
+    'ancient'   => 'rarity-ancient-textured',
 ];
 $typeNames = \App\Models\ItemModel::TYPE_NAMES;
 $rarityNames = [
@@ -39,21 +39,28 @@ $rarityHex = [
     'mythic'    => '#ff9e00',
     'ancient'   => '#ff007b',
 ];
-$sortLink = function (string $key, string $label) use ($order_col, $order): string {
+$filterQuery = [
+    'item_name' => $filterName,
+    'rarities' => $filterRarities,
+    'types' => $filterTypes,
+];
+$sortLink = function (string $key, string $label) use ($order_col, $order, $filterQuery): string {
     $arrow = '';
     if ($order_col === $key) {
         $arrow = $order === 'asc' ? ' ▲' : ' ▼';
     }
     $nextOrder = ($order_col === $key && $order === 'asc') ? 'desc' : 'asc';
     $cls = $order_col === $key ? 'text-sky-300' : 'text-indigo-300 hover:text-sky-300';
-    return '<a href="?page=1&order_col=' . $key . '&order=' . $nextOrder . '" class="' . $cls . '">' . $label . $arrow . '</a>';
+    $query = http_build_query(array_merge($filterQuery, ['page' => 1, 'order_col' => $key, 'order' => $nextOrder]));
+    return '<a href="?' . esc($query) . '" class="' . $cls . '">' . $label . $arrow . '</a>';
 };
-$pageLink = function (int $p) use ($order_col, $order): string {
-    $q = '?page=' . $p;
+$pageLink = function (int $p) use ($order_col, $order, $filterQuery): string {
+    $params = array_merge($filterQuery, ['page' => $p]);
     if ($order_col !== '') {
-        $q .= '&order_col=' . urlencode($order_col) . '&order=' . $order;
+        $params['order_col'] = $order_col;
+        $params['order'] = $order;
     }
-    return $q;
+    return '?' . http_build_query($params);
 };
 $sellableIds = [];
 foreach ($items as $i) {
@@ -76,6 +83,47 @@ $icon = function ($e): string {
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 
+    <!-- Активные фильтры (чипсы) -->
+    <?php if ($filterName !== '' || $filterRarities !== [] || $filterTypes !== []): ?>
+        <?php
+        $chipLink = function (array $patch) use ($filterQuery): string {
+            $params = $filterQuery;
+            foreach ($patch as $key => $value) {
+                if ($value === [] || $value === '') {
+                    unset($params[$key]);
+                } else {
+                    $params[$key] = $value;
+                }
+            }
+            return '?' . http_build_query($params);
+        };
+        ?>
+        <div class="flex flex-wrap items-center gap-2">
+            <?php if ($filterName !== ''): ?>
+                <a href="<?= esc($chipLink(['item_name' => ''])) ?>"
+                    class="inline-flex items-center gap-1 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3 py-1 text-xs text-indigo-200 hover:bg-indigo-500/25">
+                    🔍 Имя: <?= esc($filterName) ?> <span aria-hidden="true">×</span>
+                </a>
+            <?php endif; ?>
+            <?php foreach ($filterRarities as $r): ?>
+                <a href="<?= esc($chipLink(['rarities' => array_values(array_diff($filterRarities, [$r]))])) ?>"
+                    class="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-xs text-amber-200 hover:bg-amber-500/25">
+                    ✨ <?= esc($rarityNames[$r] ?? $r) ?> <span aria-hidden="true">×</span>
+                </a>
+            <?php endforeach; ?>
+            <?php foreach ($filterTypes as $t): ?>
+                <a href="<?= esc($chipLink(['types' => array_values(array_diff($filterTypes, [$t]))])) ?>"
+                    class="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/15 px-3 py-1 text-xs text-sky-200 hover:bg-sky-500/25">
+                    🏷 <?= esc($typeNames[$t] ?? $t) ?> <span aria-hidden="true">×</span>
+                </a>
+            <?php endforeach; ?>
+            <a href="<?= esc($chipLink(['item_name' => '', 'rarities' => [], 'types' => []])) ?>"
+                class="inline-flex items-center gap-1 rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-xs text-slate-300 hover:bg-slate-700">
+                Сбросить всё
+            </a>
+        </div>
+    <?php endif; ?>
+
     <div class="flex gap-2 text-sm">
         <button type="button" @click="view = 'bag'"
             :class="view === 'bag' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
@@ -83,11 +131,11 @@ $icon = function ($e): string {
         <button type="button" @click="view = 'equipped'"
             :class="view === 'equipped' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
             class="px-4 py-2 rounded-lg transition-colors">🛡️ Экипировано</button>
-        <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700">🗄 Хранилище (WIP)</a>
+        <a href="/game/storage" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">🗄 Хранилище</a>
         <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700">🖼 Витрина (WIP)</a>
     </div>
 
-    <?php if (empty($items) && empty($equippedItems)): ?>
+    <?php if (empty($items) && empty($equippedItems) && $filterName === '' && $filterRarities === [] && $filterTypes === []): ?>
         <div class="text-center py-10 text-slate-500">
             <p class="text-4xl mb-2">🫙</p>
             <p>Инвентарь пуст. Гуляй — предметы выпадают случайно!</p>
@@ -97,29 +145,63 @@ $icon = function ($e): string {
     <!-- Подвкладка «Инвентарь» (сумка) -->
     <div x-show="view === 'bag'" class="space-y-6">
 
-        <div class="flex gap-2 text-sm">
-            <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">Все</button>
-            <button type="button" @click="tab = 'weapon'" :class="tab === 'weapon' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">⚔️ Оружие</button>
-            <?php foreach ($typeNames as $type => $label): ?>
-                <?php if (in_array($type, ['weapon', 'consumable'], true)) continue; ?>
-                <button type="button" @click="tab = '<?= esc($type) ?>'" :class="tab === '<?= esc($type) ?>' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg"><?= esc($label) ?></button>
-            <?php endforeach; ?>
-            <button type="button" @click="tab = 'consumable'" :class="tab === 'consumable' ? 'bg-slate-700 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'" class="tab-btn px-3 py-1.5 rounded-lg">🧪 Расходники</button>
-        </div>
+        <form method="get" action="/game/inventory" class="rounded-xl border border-slate-700 bg-slate-950/70 p-4 text-sm" x-data="{ rarityOpen: false, typeOpen: false }">
+            <div class="mb-1 px-1 text-xs text-slate-400">Фильтр</div>
+            <div class="grid grid-cols-2 gap-3 rounded-lg border border-slate-800 bg-black/20 p-3 sm:grid-cols-2 lg:grid-cols-5">
+                <label class="col-span-2 space-y-1 text-xs text-slate-300 lg:col-span-1">
+                    <span>Имя предмета</span>
+                    <input name="item_name" value="<?= esc($filterName) ?>" type="search" placeholder="Например: Меч"
+                        class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none">
+                </label>
 
-        <input x-model="search" type="text" placeholder="🔍 Поиск по имени..."
-            class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-emerald-500 focus:outline-none text-sm">
+                <div class="relative flex flex-col items-start space-y-1 text-xs text-slate-300 lg:col-start-4 lg:items-end">
+                    <div>Редкость<?= $filterRarities !== [] ? ' (' . count($filterRarities) . ')' : '' ?></div>
+                    <button type="button" @click="rarityOpen = !rarityOpen; typeOpen = false"
+                        class="rounded-md bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-700">Добавить</button>
+                    <div x-cloak x-show="rarityOpen" x-transition class="no-scrollbar absolute left-0 top-full z-30 mt-2 max-h-64 w-56 overflow-y-auto rounded-lg border border-slate-600 bg-slate-900 p-2 shadow-xl">
+                        <?php foreach ($rarityNames as $key => $name): ?>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-200 hover:bg-slate-800">
+                                <input type="checkbox" name="rarities[]" value="<?= esc($key) ?>" class="accent-indigo-500" <?= in_array($key, $filterRarities, true) ? 'checked' : '' ?>>
+                                <span><?= esc($name) ?></span><span class="ml-auto text-xs text-slate-500"><?= esc($counts[$key] ?? 0) ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
 
-        <div class="flex flex-wrap gap-1.5">
-            <?php foreach ($rarityNames as $key => $name): ?>
-                <button type="button" @click="toggleRarity('<?= $key ?>')"
-                    :style="rarities.includes('<?= $key ?>') ? 'background:<?= $rarityHex[$key] ?>33;border-color:<?= $rarityHex[$key] ?>' : ''"
-                    class="rarity-chip text-xs px-2.5 py-1 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-700"
-                    :class="rarities.includes('<?= $key ?>') ? 'text-white' : ''">
-                    <?= esc($name) ?> <span class="opacity-60"><?= esc($counts[$key] ?? 0) ?></span>
-                </button>
-            <?php endforeach; ?>
-        </div>
+                <div class="relative flex flex-col items-start space-y-1 text-xs text-slate-300 lg:col-start-5 lg:items-end">
+                    <div>Тип предмета<?= $filterTypes !== [] ? ' (' . count($filterTypes) . ')' : '' ?></div>
+                    <button type="button" @click="typeOpen = !typeOpen; rarityOpen = false"
+                        class="rounded-md bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-700">Добавить</button>
+                    <div x-cloak x-show="typeOpen" x-transition class="no-scrollbar absolute left-0 top-full z-30 mt-2 max-h-64 w-56 overflow-y-auto rounded-lg border border-slate-600 bg-slate-900 p-2 shadow-xl">
+                        <?php foreach ($typeNames as $type => $label): ?>
+                            <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-200 hover:bg-slate-800">
+                                <input type="checkbox" name="types[]" value="<?= esc($type) ?>" class="accent-indigo-500" <?= in_array($type, $filterTypes, true) ? 'checked' : '' ?>>
+                                <?= esc($label) ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-2 flex flex-wrap justify-end gap-2">
+                <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Обновить фильтры</button>
+                <a href="/game/inventory" class="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600">Сбросить фильтры</a>
+            </div>
+        </form>
+
+        <?php if ($filterName !== '' || $filterRarities !== [] || $filterTypes !== []): ?>
+            <div class="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-900/60 bg-emerald-950/30 px-3 py-2 text-xs" aria-live="polite">
+                <span class="font-semibold text-emerald-300">Активные фильтры:</span>
+                <?php if ($filterName !== ''): ?><span class="rounded-full bg-slate-700 px-2.5 py-1 text-slate-100">Имя: <?= esc($filterName) ?></span><?php endif; ?>
+                <?php foreach ($filterRarities as $rarity): ?>
+                    <span class="rounded-full bg-slate-700 px-2.5 py-1 text-slate-100"><?= esc($rarityNames[$rarity] ?? $rarity) ?></span>
+                <?php endforeach; ?>
+                <?php foreach ($filterTypes as $type): ?>
+                    <span class="rounded-full bg-slate-700 px-2.5 py-1 text-slate-100"><?= esc($typeNames[$type] ?? $type) ?></span>
+                <?php endforeach; ?>
+                <span class="text-slate-400">Найдено: <?= (int) $total ?></span>
+            </div>
+        <?php endif; ?>
 
         <div class="flex items-center justify-between text-xs text-slate-500 px-1">
             <span>Предметы</span>
@@ -155,7 +237,7 @@ $icon = function ($e): string {
                     data-inv="<?= (int) $it->inv_id ?>"
                     data-type="<?= esc($it->type) ?>"
                     data-rarity="<?= esc($it->rarity) ?>"
-                    x-show="matches('<?= esc($it->type) ?>', '<?= esc($it->rarity) ?>', '<?= esc($it->name) ?>')">
+                    >
                     <td class="py-2.5 pr-2">
                         <input type="checkbox" class="accent-emerald-500 cursor-pointer" <?= $it->equipped ? 'disabled' : '' ?>
                             :checked="selected.includes(<?= (int) $it->inv_id ?>)"
@@ -201,6 +283,12 @@ $icon = function ($e): string {
                                 </div>
                                 <div x-show="open" x-cloak @click.stop class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10 py-1">
                                     <button type="button"
+                                        data-action="store"
+                                        data-qty="<?= (int) $it->quantity ?>"
+                                        class="w-full text-left px-4 py-2 text-sm text-sky-300 hover:bg-slate-600 flex items-center gap-2">
+                                        🗄 Переместить в хранилище
+                                    </button>
+                                    <button type="button"
                                         data-action="sell"
                                         data-name="<?= esc($it->name) ?>"
                                         data-price="<?= (int) ($it->price ?? 0) ?>"
@@ -228,7 +316,7 @@ $icon = function ($e): string {
         </div>
         <?php endif; ?>
 
-        <p class="hidden text-center py-8 text-slate-500" x-show="!anyVisible()">Ничего не найдено.</p>
+        <?php if (empty($items)): ?><p class="text-center py-8 text-slate-500">Ничего не найдено по выбранным фильтрам.</p><?php endif; ?>
 
     </div>
 
@@ -279,9 +367,6 @@ $icon = function ($e): string {
 function inventoryFilters(sellableIds = []) {
     return {
         view: 'bag',
-        tab: 'all',
-        search: '',
-        rarities: [],
         sellableIds: sellableIds,
         selected: [],
 
@@ -336,26 +421,10 @@ function inventoryFilters(sellableIds = []) {
             }
         },
 
-        toggleRarity(r) {
-            const i = this.rarities.indexOf(r);
-            if (i >= 0) this.rarities.splice(i, 1);
-            else this.rarities.push(r);
-        },
-        matches(type, rarity, name) {
-            const term = this.search.trim().toLowerCase();
-            const okSearch = !term || name.toLowerCase().includes(term);
-            const okTab = this.tab === 'all' || type === this.tab;
-            const okRarity = this.rarities.length === 0 || this.rarities.includes(rarity);
-            return okSearch && okTab && okRarity;
-        },
-        anyVisible() {
-            const lis = document.querySelectorAll('ul li[x-show]');
-            return Array.from(lis).some((li) => li.style.display !== 'none');
-        },
     };
 }
 
-// Действия (надеть/снять/использовать/продать) — через общий Game.post
+// Действия предметов — через общий Game.post
 (function () {
     const rarityColors = {
         common: '#cbd5e1', uncommon: '#86efac', rare: '#7dd3fc',
@@ -415,6 +484,49 @@ function inventoryFilters(sellableIds = []) {
                 });
                 if (!c.isConfirmed) return;
                 var sellQty = c.value;
+            }
+
+            if (action === 'store') {
+                const qty = parseInt(btn.dataset.qty || '1', 10);
+                const c = await Swal.fire({
+                    title: 'Перемещение в хранилище',
+                    html:
+                        '<p style="margin-bottom:10px;font-size:0.9em">Сколько предметов переместить?</p>' +
+                        '<div style="display:flex;gap:6px;justify-content:center;">' +
+                            '<input id="store-qty" type="number" min="1" max="' + qty + '" value="1" ' +
+                                'style="width:110px;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 10px;color:#e2e8f0;text-align:center;font-size:1.1em;" />' +
+                            '<button type="button" id="store-all" ' +
+                                'style="background:#334155;border:1px solid #475569;border-radius:8px;padding:8px 14px;color:#e2e8f0;font-weight:600;font-size:0.9em;">Все (' + qty + ')</button>' +
+                        '</div>',
+                    showCancelButton: true,
+                    confirmButtonText: 'Переместить',
+                    cancelButtonText: 'Отмена',
+                    background: '#1e293b',
+                    color: '#e2e8f0',
+                    confirmButtonColor: '#0ea5e9',
+                    cancelButtonColor: '#64748b',
+                    didOpen: () => {
+                        const input = document.getElementById('store-qty');
+                        input.focus();
+                        input.select();
+                        document.getElementById('store-all').addEventListener('click', () => {
+                            input.value = qty;
+                        });
+                    },
+                    preConfirm: () => {
+                        const val = parseInt(document.getElementById('store-qty').value, 10);
+                        if (!val || val < 1 || val > qty) {
+                            Swal.showValidationMessage('Введи число от 1 до ' + qty);
+                            return false;
+                        }
+                        return val;
+                    },
+                });
+                if (!c.isConfirmed) return;
+                const data = await Game.post('/game/moveItem', { direction: 'to_storage', id: invId, quantity: c.value });
+                Game.toast(data.message, data.success ? 'success' : 'error');
+                if (data.success) setTimeout(() => window.location.reload(), 600);
+                return;
             }
 
             btn.disabled = true;

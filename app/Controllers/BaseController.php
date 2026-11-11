@@ -37,7 +37,7 @@ abstract class BaseController extends Controller
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
         // Хелперы загружаются до вызова родительского метода.
-        $this->helpers = ['form'];
+        $this->helpers = ['form', 'GameIcon'];
 
         parent::initController($request, $response, $logger);
 

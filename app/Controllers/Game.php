@@ -13,6 +13,7 @@ use App\Models\FlavorTextModel;
 use App\Models\InventoryModel;
 use App\Models\ItemModel;
 use App\Models\MonsterModel;
+use App\Models\StorageModel;
 
 class Game extends BaseController
 {
@@ -325,6 +326,70 @@ class Game extends BaseController
         ]);
     }
 
+    public function healer()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        $showIntro = (int) ($character->healer_intro_seen ?? 0) === 0;
+        if ($showIntro) {
+            (new CharacterModel())->update($character->id, ['healer_intro_seen' => 1]);
+        }
+
+        return view('game/healer', ['character' => $character, 'showIntro' => $showIntro]);
+    }
+
+    public function heal()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $today = date('Y-m-d');
+        $healCount = $character->heal_last_date === $today ? (int) $character->heal_count : 0;
+
+        if ($healCount >= 3) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Лимит лечения на сегодня (3 раза) исчерпан.',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        if ((int) $character->hp >= (int) $character->max_hp) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Здоровье и так полное.',
+                'state'   => $this->characterState($character),
+            ]);
+        }
+
+        $healCount++;
+        $updated = (new CharacterModel())->update($character->id, [
+            'hp'             => $character->max_hp,
+            'heal_count'     => $healCount,
+            'heal_last_date' => $today,
+        ]);
+
+        if (! $updated) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Не удалось завершить лечение.']);
+        }
+
+        $this->logEvent($character->id, 'heal', 'Целитель полностью восстановил здоровье.', null, '🧪');
+
+        return $this->response->setJSON([
+            'success'  => true,
+            'message'  => "Здоровье полностью восстановлено! Лечений сегодня: {$healCount}/3.",
+            'state'      => array_merge($this->characterState($character), ['hp' => (int) $character->max_hp]),
+            'heal_count' => $healCount,
+            'hp'         => (int) $character->max_hp,
+            'max_hp'     => (int) $character->max_hp,
+        ]);
+    }
+
     public function rest()
     {
         $character = $this->currentCharacter();
@@ -373,6 +438,28 @@ class Game extends BaseController
 
         $orderCol = (string) ($this->request->getGet('order_col') ?: '');
         $order    = strtolower((string) ($this->request->getGet('order') ?: 'asc')) === 'desc' ? 'desc' : 'asc';
+        $filterName = trim((string) ($this->request->getGet('item_name') ?? ''));
+        $filterRarities = array_values(array_intersect(
+            (array) $this->request->getGet('rarities'),
+            ['common', 'uncommon', 'rare', 'elite', 'epic', 'legendary', 'celestial', 'exotic', 'mythic', 'ancient']
+        ));
+        $filterTypes = array_values(array_intersect(
+            (array) $this->request->getGet('types'),
+            array_keys(ItemModel::TYPE_NAMES)
+        ));
+
+        $applyInventoryFilters = static function ($builder) use ($filterName, $filterRarities, $filterTypes) {
+            if ($filterName !== '') {
+                $builder->like('items.name', $filterName);
+            }
+            if ($filterRarities !== []) {
+                $builder->whereIn('items.rarity', $filterRarities);
+            }
+            if ($filterTypes !== []) {
+                $builder->whereIn('items.type', $filterTypes);
+            }
+            return $builder;
+        };
 
         $sortMap = [
             'qty'   => 'inventory.quantity',
@@ -385,20 +472,22 @@ class Game extends BaseController
 
         // Пагинация: 25 предметов на страницу (сумка — без надетых)
         $perPage = 25;
-        $total   = (new InventoryModel())
+        $totalQuery = (new InventoryModel())
+            ->join('items', 'items.id = inventory.item_id')
             ->where('character_id', $character->id)
-            ->where('inventory.equipped', 0)
-            ->countAllResults();
+            ->where('inventory.equipped', 0);
+        $total = $applyInventoryFilters($totalQuery)->countAllResults();
         $totalPages = max(1, (int) ceil($total / $perPage));
         $page       = max(1, (int) ($this->request->getGet('page') ?: 1));
         $page       = min($page, $totalPages);
         $offset     = ($page - 1) * $perPage;
 
-        $items = (new InventoryModel())
+        $itemsQuery = (new InventoryModel())
             ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
-            ->where('inventory.equipped', 0)
+            ->where('inventory.equipped', 0);
+        $items = $applyInventoryFilters($itemsQuery)
             ->orderBy($orderSql, $order)
             ->orderBy('inventory.id', 'ASC')
             ->findAll($perPage, $offset);
@@ -471,7 +560,147 @@ class Game extends BaseController
             'totalPages'    => $totalPages,
             'used'          => $used,
             'limit'         => self::INVENTORY_CAPACITY,
+            'filterName'    => $filterName,
+            'filterRarities'=> $filterRarities,
+            'filterTypes'   => $filterTypes,
         ]);
+    }
+
+    public function storage()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        $filterName = trim((string) ($this->request->getGet('item_name') ?? ''));
+        $rarityOptions = ['common', 'uncommon', 'rare', 'elite', 'epic', 'legendary', 'celestial', 'exotic', 'mythic', 'ancient'];
+        $filterRarities = array_values(array_intersect((array) $this->request->getGet('rarities'), $rarityOptions));
+        $filterTypes = array_values(array_intersect((array) $this->request->getGet('types'), array_keys(ItemModel::TYPE_NAMES)));
+
+        $applyFilters = static function ($builder) use ($filterName, $filterRarities, $filterTypes) {
+            if ($filterName !== '') {
+                $builder->like('items.name', $filterName);
+            }
+            if ($filterRarities !== []) {
+                $builder->whereIn('items.rarity', $filterRarities);
+            }
+            if ($filterTypes !== []) {
+                $builder->whereIn('items.type', $filterTypes);
+            }
+            return $builder;
+        };
+
+        $sortMap = [
+            'qty' => 'storage.quantity',
+            'name' => 'items.name',
+            'price' => 'items.price',
+            'type' => 'items.type',
+            'stat' => 'items.value',
+        ];
+        $orderCol = (string) ($this->request->getGet('order_col') ?? '');
+        $order = strtolower((string) ($this->request->getGet('order') ?? 'asc')) === 'desc' ? 'desc' : 'asc';
+        $perPage = 25;
+        $totalQuery = (new StorageModel())
+            ->join('items', 'items.id = storage.item_id')
+            ->where('storage.character_id', $character->id);
+        $total = $applyFilters($totalQuery)->countAllResults();
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, (int) ($this->request->getGet('page') ?: 1)), $totalPages);
+        $offset = ($page - 1) * $perPage;
+
+        $itemsQuery = (new StorageModel())
+            ->select('storage.id AS store_id, storage.quantity, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
+            ->join('items', 'items.id = storage.item_id')
+            ->where('storage.character_id', $character->id);
+        $items = $applyFilters($itemsQuery)
+            ->orderBy($sortMap[$orderCol] ?? 'storage.id', $order)
+            ->orderBy('storage.id', 'ASC')
+            ->findAll($perPage, $offset);
+
+        $counts = [];
+        foreach ((new StorageModel())->select('items.rarity AS rarity')->join('items', 'items.id = storage.item_id')->where('storage.character_id', $character->id)->findAll() as $row) {
+            $counts[$row->rarity] = ($counts[$row->rarity] ?? 0) + 1;
+        }
+        $used = (int) ((new StorageModel())->selectSum('quantity')->where('character_id', $character->id)->first()->quantity ?? 0);
+
+        return view('game/storage', [
+            'character' => $character,
+            'items' => $items,
+            'counts' => $counts,
+            'used' => $used,
+            'filterName' => $filterName,
+            'filterRarities' => $filterRarities,
+            'filterTypes' => $filterTypes,
+            'order_col' => $orderCol,
+            'order' => $order,
+            'page' => $page,
+            'total' => $total,
+            'totalPages' => $totalPages,
+        ]);
+    }
+
+    public function moveItem()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
+        }
+
+        $direction = (string) $this->request->getPost('direction');
+        $id = (int) $this->request->getPost('id');
+        $quantity = max(1, (int) $this->request->getPost('quantity'));
+        if (! in_array($direction, ['to_storage', 'to_inventory'], true) || $id < 1) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Некорректный запрос']);
+        }
+
+        $db = db_connect();
+        $sourceTable = $direction === 'to_storage' ? 'inventory' : 'storage';
+        $targetTable = $direction === 'to_storage' ? 'storage' : 'inventory';
+        $db->transBegin();
+
+        try {
+            $source = $db->table($sourceTable)->where('id', $id)->where('character_id', $character->id)->get()->getRow();
+            if (! $source || ($sourceTable === 'inventory' && (int) ($source->equipped ?? 0) === 1)) {
+                $db->transRollback();
+                return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден или экипирован']);
+            }
+
+            $quantity = min($quantity, (int) $source->quantity);
+            $target = $db->table($targetTable)
+                ->where('character_id', $character->id)
+                ->where('item_id', $source->item_id)
+                ->get()->getRow();
+
+            if ($target) {
+                $db->table($targetTable)->where('id', $target->id)->where('character_id', $character->id)
+                    ->update(['quantity' => (int) $target->quantity + $quantity]);
+            } else {
+                $db->table($targetTable)->insert([
+                    'character_id' => $character->id,
+                    'item_id' => $source->item_id,
+                    'quantity' => $quantity,
+                    ...($targetTable === 'inventory' ? ['equipped' => 0] : []),
+                ]);
+            }
+
+            if ((int) $source->quantity === $quantity) {
+                $db->table($sourceTable)->where('id', $id)->where('character_id', $character->id)->delete();
+            } else {
+                $db->table($sourceTable)->where('id', $id)->where('character_id', $character->id)
+                    ->update(['quantity' => (int) $source->quantity - $quantity]);
+            }
+
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Storage transfer failed');
+            }
+            $db->transCommit();
+            return $this->response->setJSON(['success' => true, 'message' => $direction === 'to_storage' ? 'Предмет перемещён в хранилище' : 'Предмет перемещён в инвентарь']);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Storage transfer failed: {message}', ['message' => $e->getMessage()]);
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Не удалось переместить предмет']);
+        }
     }
 
     public function equip()
@@ -1808,10 +2037,17 @@ class Game extends BaseController
             ];
         }
 
-        // 8% — предмет
+        // 8% — предмет. Редчайшие предметы имеют отдельный шанс внутри дропа.
         if ($roll <= 95) {
             $items = (new ItemModel())->where('type !=', 'pet')->findAll();
-            $item  = $items[array_rand($items)];
+            $rareRoll = random_int(1, 10000);
+            $rareRarity = $rareRoll === 1 ? 'ancient' : ($rareRoll <= 4 ? 'mythic' : null);
+            if ($rareRarity !== null) {
+                $rareItems = array_values(array_filter($items, static fn ($candidate) => $candidate->rarity === $rareRarity));
+            }
+            $item = ! empty($rareItems ?? [])
+                ? $rareItems[array_rand($rareItems)]
+                : $items[array_rand($items)];
             $this->giveItem($character->id, $item->id);
             $this->progressTask($character->id, 'item');
             $this->logEvent($character->id, 'item', $item->name, $item->rarity, $item->emoji);

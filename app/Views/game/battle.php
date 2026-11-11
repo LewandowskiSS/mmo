@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<div class="space-y-6" x-data="battleView(<?= (int) $monster->hp ?>, <?= (int) $monster_hp ?>, <?= (int) $character->hp ?>, <?= (int) $character->max_hp ?>)">
+<div class="space-y-6" x-data="battleView(<?= (int) $monster->hp ?>, <?= (int) $monster_hp ?>, <?= (int) $character->hp ?>, <?= (int) $character->max_hp ?>)" data-back="<?= esc($back) ?>">
     <div class="text-center">
         <div class="text-6xl mb-2"><?= esc($monster->emoji) ?></div>
         <h1 class="text-2xl font-bold"><?= esc($monster->name) ?></h1>
@@ -95,6 +95,28 @@ function battleView(maxMonsterHpInit, monsterHpInit, hpInit, maxHpInit) {
                     this.maxHp = data.state.max_hp;
                 }
                 if (data.log) data.log.forEach((l) => this.addLog(l));
+
+                // Обработка нехватки энергии
+                if (data.type === 'no_energy') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Нет энергии',
+                        text: data.message,
+                        confirmButtonText: 'Выйти из боя',
+                        background: '#1e293b',
+                        color: '#e2e8f0',
+                    }).then(() => {
+                        const el = document.querySelector('[data-back]');
+                        if (el && el.dataset.back) {
+                            window.location = el.dataset.back;
+                        } else {
+                            // fallback to главная
+                            window.location = '/';
+                        }
+                    });
+                    this.busy = false;
+                    return;
+                }
 
                 if (data.result === 'continue') {
                     this.monsterHp = data.monster_hp;

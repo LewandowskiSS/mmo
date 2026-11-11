@@ -33,7 +33,10 @@ foreach ($periods as $p => $d) {
 
         <!-- Сундук выполнения -->
         <div class="bg-slate-800 rounded-lg p-4 space-y-3">
-            <p class="text-sm font-semibold text-slate-300">📦 Сундук выполнения</p>
+             <p class="text-sm font-semibold text-slate-300">
+                 <img src="/img/misc/chest.png" alt="Сундук" class="h-6 w-6 inline-block">
+                 Сундук выполнения
+             </p>
             <div class="flex items-center justify-between text-sm">
                 <span class="text-slate-400">
                     <span class="font-bold text-white" x-text="periods[p].completed"></span>

@@ -77,15 +77,26 @@
         animation: mythic-shift 2.6s linear infinite, mythic-glow 1.8s ease-in-out infinite alternate;
     }
     .rarity-ancient {
-        color: #ff007b !important;
-        font-weight: 700;
-        background-image: radial-gradient(circle, #ffe5b8 10%, #fff 25%, #fe8b8b 35%, #fe9fc8 50%, #ff388e 75%, #ff006f 100%);
-        background-size: 220% 220%;
+        font-weight: 800;
+        background-image: url("https://cdn.7tv.app/paint/01JEDE45FTB7XTQGRFXP0BA2PT/layer/01JF06XNCYM98WZAGNT0D51SQ3/1x.webp");
+        background-size: 200% 200%;
+        background-position: center;
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        filter: drop-shadow(#ff007b 0 0 .1px) drop-shadow(#ff007b 0 0 5px);
-        animation: ancient-shift 2.2s ease-in-out infinite, ancient-glow 1.5s ease-in-out infinite alternate;
+        filter: drop-shadow(0 0 4px rgba(255, 0, 110, 0.8)) drop-shadow(0 0 12px rgba(131, 56, 236, 0.6));
+        animation: ancient-texture-shift 6s linear infinite, ancient-texture-glow 4s ease-in-out infinite alternate;
+    }
+    .rarity-ancient-textured {
+        font-weight: 800;
+        background-image: url("https://cdn.7tv.app/paint/01JEDE45FTB7XTQGRFXP0BA2PT/layer/01JF06XNCYM98WZAGNT0D51SQ3/1x.webp");
+        background-size: 200% 200%;
+        background-position: center;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 4px rgba(255, 0, 110, 0.8)) drop-shadow(0 0 12px rgba(131, 56, 236, 0.6));
+        animation: ancient-texture-shift 6s linear infinite, ancient-texture-glow 4s ease-in-out infinite alternate;
     }
     @keyframes celestial-shift { to { background-position: 240% center; } }
     @keyframes celestial-glow {
@@ -100,8 +111,19 @@
     @keyframes mythic-shift { 0% { background-position: 0% center; } 100% { background-position: 260% center; } }
     @keyframes mythic-glow { from { filter: drop-shadow(#ff9e00 0 0 .2px) drop-shadow(#ff6d00 0 0 3px); } to { filter: drop-shadow(#fff0a6 0 0 1px) drop-shadow(#ff3d00 0 0 9px); } }
     @keyframes ancient-shift { 0%, 100% { background-position: 15% 35%; } 50% { background-position: 85% 65%; } }
+
+    @keyframes ancient-texture-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes ancient-texture-glow {
+        0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 0, 110, 0.8)) drop-shadow(0 0 12px rgba(131, 56, 236, 0.6)); }
+        50% { filter: drop-shadow(0 0 10px rgba(255, 0, 110, 1)) drop-shadow(0 0 24px rgba(131, 56, 236, 0.9)); }
+    }
     @keyframes ancient-glow { from { filter: drop-shadow(#ff007b 0 0 .1px) drop-shadow(#ff007b 0 0 4px); } to { filter: drop-shadow(#fff 0 0 1px) drop-shadow(#ff007b 0 0 11px); } }
     @media (prefers-reduced-motion: reduce) {
+        .rarity-ancient-textured { animation: none; }
         .rarity-celestial, .rarity-exotic, .rarity-mythic, .rarity-ancient { animation: none; }
     }</style>
 </head>
@@ -141,16 +163,16 @@
                 <span class="text-xl shrink-0">🏠</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Главная</span>
             </a>
             <a href="/town" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🗺️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Город</span>
+                <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Город</span>
             </a>
             <a href="/game/inventory" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🎒</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Инвентарь</span>
+                <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Инвентарь</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">⚔️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Бой (WIP)</span>
+            <a href="/game/battle" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <?= game_icon('/img/misc/fight.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Бой</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">✅</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Квесты (WIP)</span>
+            <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                <?= game_icon('/img/misc/quests.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Квесты</span>
             </a>
 
             <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Персонаж</p>

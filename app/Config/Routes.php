@@ -50,9 +50,16 @@ $routes->get('game/tasksState', 'Game::tasksState');
 $routes->post('game/claimTask', 'Game::claimTask');
 $routes->post('game/claimMilestone', 'Game::claimMilestone');
 $routes->post('game/refreshTasks', 'Game::refreshTasks');
+$routes->get('game/healer', 'Game::healer');
+$routes->post('game/heal', 'Game::heal');
 $routes->get('game/chests', 'Game::chests');
 $routes->post('game/openChest', 'Game::openChest');
 $routes->post('game/buyKey', 'Game::buyKey');
+
+// Хранилище
+$routes->get('game/storage', 'Game::storage');
+$routes->post('game/moveItem', 'Game::moveItem');
+
 
 // Банк
 $routes->get('game/bank', 'Game::bank');

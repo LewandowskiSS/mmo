@@ -12,7 +12,7 @@ $rcMap = [
     'celestial' => 'rarity-celestial',
     'exotic' => 'rarity-exotic',
     'mythic' => 'rarity-mythic',
-    'ancient' => 'rarity-ancient',
+    'ancient' => 'rarity-ancient-textured',
 ];
 $rarityNames = [
     'common' => 'Обычный', 'uncommon' => 'Необычный', 'rare' => 'Редкий', 'elite' => 'Элитный',

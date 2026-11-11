@@ -84,7 +84,7 @@ function shopCategory(initialGold, items) {
             const map = {
                 common: 'rarity-common', uncommon: 'rarity-uncommon', rare: 'rarity-rare',
                 elite: 'rarity-elite', epic: 'rarity-epic', legendary: 'rarity-legendary',
-                celestial: 'rarity-celestial', exotic: 'rarity-exotic', mythic: 'rarity-mythic', ancient: 'rarity-ancient',
+            celestial: 'rarity-celestial', exotic: 'rarity-exotic', mythic: 'rarity-mythic', ancient: 'rarity-ancient-textured',
             };
             return map[r] || 'text-slate-300';
         },

@@ -84,7 +84,7 @@
                         <tr><td class="py-1 rarity-celestial">Небесный</td><td class="text-right"><?= (float) $chest->celestial_rate ?>%</td></tr>
                         <tr><td class="py-1 rarity-exotic">Экзотический</td><td class="text-right"><?= (float) $chest->exotic_rate ?>%</td></tr>
                         <tr><td class="py-1 rarity-mythic">Мифический</td><td class="text-right"><?= (float) $chest->mythic_rate ?>%</td></tr>
-                        <tr><td class="py-1 rarity-ancient">Древний</td><td class="text-right"><?= (float) $chest->ancient_rate ?>%</td></tr>
+                        <tr><td class="py-1 rarity-ancient-textured">Древний</td><td class="text-right"><?= (float) $chest->ancient_rate ?>%</td></tr>
                     </tbody>
                 </table>
             </li>
@@ -163,7 +163,15 @@ function chestsPage(goldInit, bronzeInit, silverInit, goldKeysInit) {
         },
 
         showLoot(results) {
-            const rarityColors = { common: '#cbd5e1', uncommon: '#86efac', rare: '#7dd3fc', elite: '#9146ff', epic: '#ff69ff', legendary: '#fbbf24', celestial: '#b1eb34', exotic: '#b1eb34', mythic: '#ff9e00', ancient: '#ff007b' };
+            const rarityClasses = {
+                common: 'rarity-common', uncommon: 'rarity-uncommon', rare: 'rarity-rare',
+                elite: 'rarity-elite', epic: 'rarity-epic', legendary: 'rarity-legendary',
+                celestial: 'rarity-celestial', exotic: 'rarity-exotic', mythic: 'rarity-mythic',
+                ancient: 'rarity-ancient-textured'
+            };
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            }[char]));
             const grouped = {};
             results.forEach((r) => {
                 const k = r.name + '|' + r.rarity;
@@ -171,11 +179,11 @@ function chestsPage(goldInit, bronzeInit, silverInit, goldKeysInit) {
                 else grouped[k] = { name: r.name, emoji: r.emoji, rarity: r.rarity, count: 1 };
             });
             const lines = Object.values(grouped).map((g) => {
-                const color = rarityColors[g.rarity] || '#94a3b8';
+                const rarityClass = rarityClasses[g.rarity] || 'rarity-common';
                 const icon = (typeof g.emoji === 'string' && g.emoji.startsWith('/'))
-                    ? '<img src="' + g.emoji + '" style="width:20px;height:20px;object-fit:contain;">'
-                    : '<span>' + g.emoji + '</span>';
-                return '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' + icon + '<span style="color:' + color + '">' + g.name + '</span>' + (g.count > 1 ? '<span style="color:#94a3b8">×' + g.count + '</span>' : '') + '</div>';
+                    ? '<img src="' + escapeHtml(g.emoji) + '" style="width:20px;height:20px;object-fit:contain;">'
+                    : '<span>' + escapeHtml(g.emoji) + '</span>';
+                return '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' + icon + '<span class="' + rarityClass + '">' + escapeHtml(g.name) + '</span>' + (g.count > 1 ? '<span style="color:#94a3b8">×' + g.count + '</span>' : '') + '</div>';
             }).join('');
             Swal.fire({ icon: 'success', title: 'Добыча (' + results.length + ' шт.)', html: '<div class="no-scrollbar" style="text-align:left;max-height:300px;overflow-y:auto;">' + lines + '</div>', background: '#1e293b', color: '#e2e8f0', confirmButtonColor: '#f59e0b' });
         },
