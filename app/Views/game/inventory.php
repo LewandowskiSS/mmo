@@ -254,7 +254,7 @@ $icon = function ($e): string {
                         <?php if ($it->equipped): ?><span class="text-xs text-emerald-400 ml-1">✓ надето</span><?php endif; ?>
                     </td>
                     <td class="py-2.5 pr-2 text-slate-500">—</td>
-                    <td class="py-2.5 pr-2 text-right text-amber-400">🪙 <?= (int) ($it->price ?? 0) ?></td>
+                    <td class="py-2.5 pr-2 text-right text-amber-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <?= (int) ($it->price ?? 0) ?></td>
                     <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
                         <?php if ($it->type !== 'consumable'): ?>
@@ -295,7 +295,7 @@ $icon = function ($e): string {
                                         data-rarity="<?= esc($it->rarity) ?>"
                                         data-qty="<?= (int) $it->quantity ?>"
                                         class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
-                                        💰 Продать за <span class="font-semibold">🪙 <?= (int) ($it->price ?? 0) ?></span>
+                                        💰 Продать за <span class="font-semibold"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <?= (int) ($it->price ?? 0) ?></span>
                                     </button>
                                 </div>
                             </div>
@@ -450,7 +450,7 @@ function inventoryFilters(sellableIds = []) {
                     title: 'Быстрая продажа',
                     html:
                         '<span style="color:' + color + ';font-weight:700">' + name + '</span>' +
-                        '<p style="margin-top:8px;font-size:0.9em">Сколько продать? Ты получишь <b>🪙 ' + price + '</b> за каждый предмет.</p>' +
+                        '<p style="margin-top:8px;font-size:0.9em">Сколько продать? Ты получишь <b><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> ' + price + '</b> за каждый предмет.</p>' +
                         '<div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">' +
                             '<input id="sell-qty" type="number" min="1" max="' + qty + '" value="1" ' +
                                 'style="width:110px;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 10px;color:#e2e8f0;text-align:center;font-size:1.1em;" />' +

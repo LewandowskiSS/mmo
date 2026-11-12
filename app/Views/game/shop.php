@@ -9,7 +9,7 @@
 
     <div class="bg-slate-800 rounded-lg p-4 text-center">
         <p class="text-sm text-slate-400">Твоё золото</p>
-        <p class="text-2xl font-bold text-amber-400"><?= (int) ($character->gold ?? 0) ?> 🪙</p>
+        <p class="text-2xl font-bold text-amber-400"><?= (int) ($character->gold ?? 0) ?> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
     </div>
 
     <ul class="divide-y divide-slate-700/60 bg-slate-900 rounded-lg overflow-hidden">

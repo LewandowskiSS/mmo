@@ -75,7 +75,7 @@ foreach ($periods as $p => $d) {
                         </div>
                         <p class="text-xs text-slate-500 mt-1">
                             <span x-text="it.progress + ' / ' + it.target"></span>
-                            <span class="text-amber-400" x-text="' · ' + it.reward_gold + ' 🪙'"></span>
+                            <span class="text-amber-400" x-text="' · ' + it.reward_gold + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">'"></span>
                             <span class="text-purple-300" x-text="' + ' + it.reward_xp + ' XP'"></span>
                         </p>
                     </div>

@@ -18,7 +18,7 @@
                         <p class="font-semibold"><?= esc($c->name) ?></p>
                         <p class="text-xs text-slate-400">Уровень <?= (int) $c->level ?></p>
                     </div>
-                    <span class="text-amber-400 font-semibold"><?= (int) $c->gold ?> 🪙</span>
+                    <span class="text-amber-400 font-semibold"><?= (int) $c->gold ?> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></span>
                 </li>
             <?php endforeach; ?>
         </ol>

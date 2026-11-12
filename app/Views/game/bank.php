@@ -22,11 +22,11 @@
     <div class="grid gap-4 sm:grid-cols-2">
         <div class="rounded-xl border border-slate-700 bg-slate-800 p-5">
             <p class="text-sm text-slate-400">На руках</p>
-            <p class="mt-2 text-3xl font-bold text-amber-300"><span x-text="format(gold)">0</span> 🪙</p>
+            <p class="mt-2 text-3xl font-bold text-amber-300"><span x-text="format(gold)">0</span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
         </div>
         <div class="rounded-xl border border-emerald-700/50 bg-emerald-950/20 p-5">
             <p class="text-sm text-slate-400">На банковском счёте</p>
-            <p class="mt-2 text-3xl font-bold text-emerald-300"><span x-text="format(bank)">0</span> 🪙</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-300"><span x-text="format(bank)">0</span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
         </div>
     </div>
 
@@ -74,7 +74,7 @@
                             <p class="text-xs text-slate-500"><span x-text="transaction.created_at"></span> · <span x-text="'....' + transaction.short_hash"></span></p>
                         </div>
                     </div>
-                    <span class="font-semibold" :class="transaction.type === 'deposit' ? 'text-emerald-400' : 'text-amber-400'" x-text="'....' + transaction.short_hash + ' ' + (transaction.type === 'deposit' ? '+' : '-') + format(transaction.amount) + ' 🪙'"></span>
+                    <span class="font-semibold" :class="transaction.type === 'deposit' ? 'text-emerald-400' : 'text-amber-400'" x-text="'....' + transaction.short_hash + ' ' + (transaction.type === 'deposit' ? '+' : '-') + format(transaction.amount) + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">'"></span>
                 </div>
             </template>
             <p x-show="!transactions.length" class="py-6 text-center text-sm text-slate-500">Операций пока нет.</p>

@@ -840,7 +840,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Продано: {$item->emoji} {$item->name} (+{$price} 🪙)",
+            'message' => "Продано: {$item->emoji} {$item->name} (+{$price} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -892,7 +892,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Продано предметов: {$sold} (+{$gold} 🪙)",
+            'message' => "Продано предметов: {$sold} (+{$gold} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -965,7 +965,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Куплено: {$item->emoji} {$item->name} (-{$item->price} 🪙)",
+            'message' => "Куплено: {$item->emoji} {$item->name} (-{$item->price} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -1118,7 +1118,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Награда получена: +{$row->reward_gold} 🪙 +{$row->reward_xp} XP",
+            'message' => "Награда получена: +{$row->reward_gold} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> +{$row->reward_xp} XP",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -1449,7 +1449,7 @@ class Game extends BaseController
             'bank'     => (int) ($character->bank_balance ?? 0) + $amount,
             'transaction_hash' => $transactionHash,
             'short_hash' => substr($transactionHash, -4),
-            'message'  => "На банк положено {$amount} 🪙",
+            'message'  => "На банк положено {$amount} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">",
         ]);
     }
 
@@ -1492,7 +1492,7 @@ class Game extends BaseController
             'bank'     => (int) ($character->bank_balance ?? 0) - $amount,
             'transaction_hash' => $transactionHash,
             'short_hash' => substr($transactionHash, -4),
-            'message'  => "Со счёта снято {$amount} 🪙",
+            'message'  => "Со счёта снято {$amount} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">",
         ]);
     }
 
@@ -1813,7 +1813,7 @@ class Game extends BaseController
 
             if ($m['type'] === 'gold') {
                 (new CharacterModel())->update($character->id, ['gold' => $character->gold + $m['amount']]);
-                return "+{$m['amount']} 🪙";
+                return "+{$m['amount']} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">";
             }
 
             if ($m['type'] === 'diamonds') {
@@ -1828,9 +1828,9 @@ class Game extends BaseController
                 $item = $this->randomItemBySilverChest();
                 if ($item) {
                     $this->giveItem($character->id, $item->id);
-                    return "+{$m['amount']} 🪙 + {$item->emoji} {$item->name}";
+                    return "+{$m['amount']} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> + {$item->emoji} {$item->name}";
                 }
-                return "+{$m['amount']} 🪙";
+                return "+{$m['amount']} <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">";
             }
         }
 

@@ -295,7 +295,7 @@
 
                             <div class="p-4 border-b border-slate-700 grid grid-cols-2 gap-3 text-xs">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-lg">🪙</span>
+                                    <span class="text-lg"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></span>
                                     <div><p class="text-slate-400">Золото</p><p class="font-semibold" x-text="st.gold"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">

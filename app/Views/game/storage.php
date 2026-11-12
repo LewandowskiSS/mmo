@@ -31,7 +31,7 @@
                         </td>
                         <td class="p-3 text-center"><?= (int) $item->quantity ?></td>
                         <td class="p-3 text-center"><?= esc(\App\Models\ItemModel::TYPE_NAMES[$item->type] ?? $item->type) ?></td>
-                        <td class="p-3 text-center"><?= (int) $item->price ?> 🪙</td>
+                        <td class="p-3 text-center"><?= (int) $item->price ?> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></td>
                         <td class="p-3 text-center"><button type="button" class="rounded bg-emerald-600 px-3 py-1 text-white hover:bg-emerald-500" onclick="moveFromStorage(<?= (int) $item->store_id ?>)">📤 В инвентарь</button></td>
                     </tr>
                 <?php endforeach; ?>

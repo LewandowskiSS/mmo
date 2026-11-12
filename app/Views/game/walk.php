@@ -8,7 +8,7 @@
             <p class="text-sm text-slate-400">Уровень <span id="st-level"><?= esc($character->level) ?></span></p>
         </div>
         <div class="text-right">
-            <p class="text-2xl font-bold text-amber-400"><span id="st-gold"><?= esc($character->gold) ?></span> 🪙</p>
+            <p class="text-2xl font-bold text-amber-400"><span id="st-gold"><?= esc($character->gold) ?></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
             <p class="text-xs text-slate-400">золото</p>
         </div>
     </div>

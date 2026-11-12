@@ -25,7 +25,7 @@
             <a href="/game/tasks" class="text-xs text-sky-400 hover:text-sky-300">Смотреть задания →</a>
         </div>
         <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-            <p class="text-2xl mb-1">🪙</p>
+            <p class="text-2xl mb-1"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
             <p class="font-bold"><?= esc($character->gold) ?></p>
             <p class="text-xs text-slate-400 mb-1">Золото</p>
             <a href="/game/shop" class="text-xs text-sky-400 hover:text-sky-300">В магазин →</a>

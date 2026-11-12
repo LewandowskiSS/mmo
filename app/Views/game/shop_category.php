@@ -13,7 +13,7 @@
 
     <div class="bg-slate-800 rounded-lg p-4 text-center">
         <p class="text-sm text-slate-400">Твоё золото</p>
-        <p class="text-2xl font-bold text-amber-400"><span x-text="gold"></span> 🪙</p>
+        <p class="text-2xl font-bold text-amber-400"><span x-text="gold"></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
     </div>
 
     <ul class="divide-y divide-slate-700/60 bg-slate-900 rounded-lg overflow-hidden">
@@ -39,7 +39,7 @@
                         </p>
                     </div>
                     <span class="flex items-center gap-1 text-sm font-semibold text-amber-400">
-                        🪙 <span x-text="item.price"></span>
+                        <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <span x-text="item.price"></span>
                     </span>
                 </button>
             </li>
@@ -101,10 +101,10 @@ function shopCategory(initialGold, items) {
             }
             const c = await Swal.fire({
                 title: 'Вы уверены?',
-                text: 'Купить «' + item.name + '» за ' + item.price + ' 🪙?',
+                text: 'Купить «' + item.name + '» за ' + item.price + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">?',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Да (' + item.price + ' 🪙)',
+                confirmButtonText: 'Да (' + item.price + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">)',
                 cancelButtonText: 'Нет',
                 background: '#1e293b',
                 color: '#e2e8f0',
