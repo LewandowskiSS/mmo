@@ -83,9 +83,9 @@
             <p x-show="!transactions.length" class="py-6 text-center text-sm text-slate-500">Операций пока нет.</p>
         </div>
         <div x-show="totalPages > 1" class="mt-4 flex items-center justify-center gap-2">
-            <button type="button" @click="loadTransactions(page - 1)" :disabled="page <= 1" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">←</button>
+            <button type="button" @click="loadTransactions(page - 1)" :disabled="page <= 1" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <img src="/img/misc/left_arrow.png" alt="←" class="w-4 h-4"></button>
             <span class="text-sm text-slate-400"><span x-text="page"></span> / <span x-text="totalPages"></span></span>
-            <button type="button" @click="loadTransactions(page + 1)" :disabled="page >= totalPages" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">→</button>
+            <button type="button" @click="loadTransactions(page + 1)" :disabled="page >= totalPages" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <img src="/img/misc/right_arrow.png" alt="→" class="w-4 h-4"></button>
         </div>
     </section>
 </div>

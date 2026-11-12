@@ -48,9 +48,9 @@
     <div class="flex justify-center">
         <div class="flex gap-1">
             <button type="button" @click="prevPage()" :disabled="page <= 1"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">◀ Назад</button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <img src="/img/misc/left_arrow.png" alt="◀" class="w-4 h-4"> Назад</button>
             <button type="button" @click="nextPage()" :disabled="page >= totalPages()"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">Вперёд ▶</button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">Вперёд                 <img src="/img/misc/right_arrow.png" alt="▶" class="w-4 h-4"></button>
         </div>
     </div>
     <p class="text-center text-xs text-slate-500" x-text="'Страница ' + page + ' / ' + totalPages()"></p>

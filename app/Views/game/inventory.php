@@ -309,10 +309,10 @@ $icon = function ($e): string {
         <?php if ($totalPages > 1): ?>
         <div class="flex items-center justify-center gap-3 text-sm">
             <a href="<?= $pageLink(max(1, $page - 1)) ?>"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page <= 1 ? 'opacity-40 pointer-events-none' : '' ?>">◀ Назад</a>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page <= 1 ? 'opacity-40 pointer-events-none' : '' ?>">                <img src="/img/misc/left_arrow.png" alt="◀" class="w-4 h-4"> Назад</a>
             <span class="text-slate-400">Страница <?= $page ?> / <?= $totalPages ?></span>
             <a href="<?= $pageLink(min($totalPages, $page + 1)) ?>"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>">Вперёд ▶</a>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>">Вперёд                 <img src="/img/misc/right_arrow.png" alt="▶" class="w-4 h-4"></a>
         </div>
         <?php endif; ?>
 
