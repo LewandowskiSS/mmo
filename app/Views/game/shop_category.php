@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<div class="space-y-6" x-data="shopCategory(<?= (int) ($character->gold ?? 0) ?>, <?= htmlspecialchars(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
+<div class="space-y-6" x-data="shopCategory(<?= (int) ($initialGold ?? 0) ?>, <?= htmlspecialchars(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">🏪 <?= esc($shopInfo['title']) ?></h1>
         <a href="/game/shop" class="text-sm text-slate-400 hover:text-white">← К магазинам</a>
@@ -9,11 +9,6 @@
 
     <div class="bg-slate-800 rounded-lg p-4 text-sm text-slate-300">
         💬 <?= esc($shopInfo['desc']) ?>
-    </div>
-
-    <div class="bg-slate-800 rounded-lg p-4 text-center">
-        <p class="text-sm text-slate-400">Твоё золото</p>
-        <p class="text-2xl font-bold text-amber-400"><span x-text="gold"></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
     </div>
 
     <ul class="divide-y divide-slate-700/60 bg-slate-900 rounded-lg overflow-hidden">

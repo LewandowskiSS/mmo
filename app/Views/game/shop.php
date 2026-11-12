@@ -7,35 +7,27 @@
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 
-    <div class="bg-slate-800 rounded-lg p-4 text-center">
-        <p class="text-sm text-slate-400">Твоё золото</p>
-        <p class="text-2xl font-bold text-amber-400"><?= (int) ($character->gold ?? 0) ?> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
-    </div>
+    <div class="grid gap-4 md:grid-cols-2">
+        <a href="/game/shop/gear" class="block rounded-xl border border-slate-700 bg-slate-800 p-5 hover:border-amber-500/50 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl">⚔️</span>
+                <div>
+                    <h2 class="text-lg font-bold">Оружейная лавка</h2>
+                    <p class="text-sm text-slate-400">Оружие и броня для твоего героя</p>
+                </div>
+            </div>
+        </a>
 
-    <ul class="divide-y divide-slate-700/60 bg-slate-900 rounded-lg overflow-hidden">
-        <li>
-            <a href="/game/shop/gear" class="block px-4 py-4 hover:bg-slate-800 transition-colors">
-                <div class="flex items-center gap-3">
-                    <span class="text-3xl">⚔️</span>
-                    <div>
-                        <p class="font-semibold text-sky-400 hover:text-sky-300">Оружейная лавка</p>
-                        <p class="text-sm text-slate-500 mt-0.5">Оружие и броня для твоего героя. Лучший выбор для тех, кто идёт в бой!</p>
-                    </div>
+        <a href="/game/shop/potions" class="block rounded-xl border border-slate-700 bg-slate-800 p-5 hover:border-emerald-500/50 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl">🧪</span>
+                <div>
+                    <h2 class="text-lg font-bold">Аптека зелий</h2>
+                    <p class="text-sm text-slate-400">Зелья здоровья и энергии</p>
                 </div>
-            </a>
-        </li>
-        <li>
-            <a href="/game/shop/potions" class="block px-4 py-4 hover:bg-slate-800 transition-colors">
-                <div class="flex items-center gap-3">
-                    <span class="text-3xl">🧪</span>
-                    <div>
-                        <p class="font-semibold text-sky-400 hover:text-sky-300">Аптека зелий</p>
-                        <p class="text-sm text-slate-500 mt-0.5">Зелья на любой случай: здоровье, энергия — всё для выживания.</p>
-                    </div>
-                </div>
-            </a>
-        </li>
-    </ul>
+            </div>
+        </a>
+    </div>
 </div>
 
 <?= $this->endSection() ?>

@@ -935,6 +935,7 @@ class Game extends BaseController
             'items'     => $items,
             'category'  => $category,
             'shopInfo'  => $categories[$category],
+            'initialGold' => (int) $character->gold,
         ]);
     }
 
