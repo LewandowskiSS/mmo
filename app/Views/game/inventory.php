@@ -162,7 +162,7 @@ $icon = function ($e): string {
                         <?php foreach ($rarityNames as $key => $name): ?>
                             <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-200 hover:bg-slate-800">
                                 <input type="checkbox" name="rarities[]" value="<?= esc($key) ?>" class="accent-indigo-500" <?= in_array($key, $filterRarities, true) ? 'checked' : '' ?>>
-                                <span><?= esc($name) ?></span><span class="ml-auto text-xs text-slate-500"><?= esc($counts[$key] ?? 0) ?></span>
+                                <span class="<?= esc($rarityColorMap[$key] ?? 'text-slate-300') ?>"><?= esc($name) ?></span><span class="ml-auto text-xs text-slate-500"><?= esc($counts[$key] ?? 0) ?></span>
                             </label>
                         <?php endforeach; ?>
                     </div>
