@@ -23,8 +23,9 @@
                     </template>
                     <div class="flex-1">
                         <p class="font-semibold" :class="rarityClass(item.rarity)" x-text="item.name"></p>
-                        <p class="text-xs text-slate-500">
-                            <span x-text="typeLabel(item)"></span>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            <span class="text-xs font-medium" :class="rarityClass(item.rarity)" x-text="rarityLabel(item.rarity)"></span>
+                            <span class="ml-1" x-text="typeLabel(item)"></span>
                             <template x-if="item.type !== 'consumable'">
                                 <span x-text="' +' + item.value + (item.stat === 'attack' ? ' атаки' : ' защиты')"></span>
                             </template>
@@ -87,6 +88,15 @@ function shopCategory(initialGold, items) {
         typeLabel(item) {
             const names = <?= json_encode(\App\Models\ItemModel::TYPE_NAMES, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
             return names[item.type] || item.type;
+        },
+
+        rarityLabel(r) {
+            const labels = {
+                common: 'Обычный', uncommon: 'Необычный', rare: 'Редкий',
+                elite: 'Элитный', epic: 'Эпический', legendary: 'Легендарный',
+                celestial: 'Небесный', exotic: 'Экзотический', mythic: 'Мифический', ancient: 'Древний'
+            };
+            return labels[r] || r;
         },
 
         async buy(item) {
