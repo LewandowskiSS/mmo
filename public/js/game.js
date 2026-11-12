@@ -60,15 +60,60 @@ if (window.Swal && Swal.defaults) {
         box._t = setTimeout(() => { box.style.opacity = '0'; }, 3000);
     }
 
+    let prevXp = null;
+    let prevLevel = null;
+    let xpAnimFrame = null;
+    let xpGlowTimer = null;
+
+    function animateXpCounter(el, fromXp, toXp, needed, duration = 650) {
+        if (!el) return;
+        if (xpAnimFrame) cancelAnimationFrame(xpAnimFrame);
+        const start = performance.now();
+        const step = (now) => {
+            const p = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - p, 3);
+            const curr = Math.round(fromXp + (toXp - fromXp) * eased);
+            el.textContent = curr + ' / ' + needed;
+            if (p < 1) {
+                xpAnimFrame = requestAnimationFrame(step);
+            }
+        };
+        xpAnimFrame = requestAnimationFrame(step);
+    }
+
     // Обновить статы персонажа на панели по объекту state
     function updateState(s) {
         if (!s) return;
         const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         const setBar = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
 
+        const xpEl = document.getElementById('st-xp');
+        const xpBar = document.getElementById('bar-xp');
+
+        // Инициализация стартового значения из DOM, если еще не сохранено
+        if (prevXp === null && xpEl) {
+            const m = xpEl.textContent.match(/^(\d+)/);
+            if (m) prevXp = parseInt(m[1], 10);
+        }
+
+        const newPct = s.xp_needed ? (s.xp / s.xp_needed * 100) : 0;
+        const gainedXp = (prevXp !== null && s.xp > prevXp) || (prevLevel !== null && s.level > prevLevel);
+
         setText('st-level', s.level);
-        setText('st-xp', s.xp + ' / ' + s.xp_needed);
-        setBar('bar-xp', s.xp_needed ? (s.xp / s.xp_needed * 100) : 0);
+
+        if (gainedXp && xpBar) {
+            xpBar.classList.add('xp-gaining');
+            clearTimeout(xpGlowTimer);
+            xpGlowTimer = setTimeout(() => xpBar.classList.remove('xp-gaining'), 750);
+            animateXpCounter(xpEl, prevLevel !== null && s.level > prevLevel ? 0 : prevXp, s.xp, s.xp_needed, 650);
+        } else {
+            setText('st-xp', s.xp + ' / ' + s.xp_needed);
+        }
+
+        setBar('bar-xp', newPct);
+        prevXp = s.xp;
+        prevLevel = s.level;
+
         setText('st-gold', s.gold);
         setText('st-hp', s.hp + ' / ' + s.max_hp);
         setBar('bar-hp', s.max_hp ? (s.hp / s.max_hp * 100) : 0);
@@ -85,7 +130,7 @@ if (window.Swal && Swal.defaults) {
 
         const energyTimer = document.getElementById('energy-timer');
         if (energyTimer) {
-            energyTimer.textContent = (s.energy >= s.max_energy) ? '⚡ полная' : ('⚡ через ' + s.next_energy_in + ' c');
+            energyTimer.textContent = (s.energy >= s.max_energy) ? '🔋 полная' : ('🔋 через ' + s.next_energy_in + ' c');
         }
     }
 

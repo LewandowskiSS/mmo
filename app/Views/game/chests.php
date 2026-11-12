@@ -51,7 +51,7 @@
                             <button type="button" :disabled="buying"
                                 @click="$dispatch('buy-key', { key_type: '<?= esc($chest->key_type) ?>', quantity: buyQty, unit_price: <?= (int) $chest->key_price ?> })"
                                 class="flex-1 px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-500 disabled:opacity-50 text-white text-sm font-semibold whitespace-nowrap">
-                                <span x-show="!buying">Купить 🗝️ <span x-text="<?= (int) $chest->key_price ?> * buyQty"></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></span>
+                                <span x-show="!buying" class="inline-flex items-center gap-1">Купить 🗝️ <span x-text="<?= (int) $chest->key_price ?> * buyQty"></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt=""></span>
                                 <span x-show="buying" x-cloak>Покупаем..</span>
                             </button>
                             <div class="flex rounded-md overflow-hidden border border-slate-600 shrink-0">
@@ -118,7 +118,7 @@ function chestsPage(goldInit, bronzeInit, silverInit, goldKeysInit) {
                 Swal.fire({ icon: 'error', title: 'Нехватка средств', text: 'Не хватает золота для покупки.', background: '#1e293b', color: '#e2e8f0', confirmButtonText: 'Ок', confirmButtonColor: '#ef4444' });
                 return;
             }
-            const c = await Swal.fire({ title: 'Вы уверены?', text: 'Купить ' + detail.quantity + ' ключ(ей) за ' + total + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">?', icon: 'question', showCancelButton: true, confirmButtonText: 'Да (' + total + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">)', cancelButtonText: 'Нет', background: '#1e293b', color: '#e2e8f0', confirmButtonColor: '#10b981', cancelButtonColor: '#64748b' });
+            const c = await Swal.fire({ title: 'Вы уверены?', text: 'Купить ' + detail.quantity + ' ключ(ей) за ' + total + ' золота?', icon: 'question', showCancelButton: true, confirmButtonText: 'Да (' + total + ' золота)', cancelButtonText: 'Нет', background: '#1e293b', color: '#e2e8f0', confirmButtonColor: '#10b981', cancelButtonColor: '#64748b' });
             if (!c.isConfirmed) return;
 
             try {

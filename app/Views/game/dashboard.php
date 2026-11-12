@@ -10,9 +10,9 @@
             <h2 class="text-3xl font-bold mb-2">Начало твоего пути</h2>
             <p class="text-slate-300 mb-6">Одно нажатие кнопки — и приключение всей жизни начинается.</p>
             <a href="/walk" class="inline-block px-8 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold text-lg">
-                🚶 Нажми, чтобы начать
+                <span class="walk-sprite" aria-hidden="true"></span> Нажми, чтобы начать
             </a>
-            <p class="text-xs text-slate-400 mt-4">Энергия: <span class="font-semibold text-slate-300"><?= (int) $character->energy ?>/<?= (int) $character->max_energy ?></span> · 1 прогулка = 1 ⚡</p>
+            <p class="text-xs text-slate-400 mt-4">Энергия: <span class="font-semibold text-slate-300"><?= (int) $character->energy ?>/<?= (int) $character->max_energy ?></span> · 1 прогулка = 1 <img src="/img/misc/energy.png" class="inline-block w-3.5 h-3.5 align-middle object-contain" alt="энергия"></p>
         </div>
     </div>
 

@@ -6,9 +6,48 @@
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <title>⚔️ Моя ММО</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Ремаппинг slate → нейтральный графит (без синего подтона)
+                        slate: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            900: '#171717',
+                            950: '#0a0a0a',
+                        },
+                        // Индиго → тёмно-серый для кнопок действий
+                        indigo: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#525252',
+                            600: '#404040',
+                            700: '#3f3f46',
+                            800: '#36363a',
+                            900: '#27272a',
+                            950: '#1a1a1d',
+                        },
+                    },
+                },
+            },
+        };
+    </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/game.js"></script>
+    <link rel="stylesheet" href="/css/theme.css">
     <style>[x-cloak]{display:none!important}
     /* Скрываем скроллбар страницы, прокрутка остаётся */
     html { scrollbar-width: none; -ms-overflow-style: none; }
@@ -160,7 +199,7 @@
             <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Основное</p>
 
             <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🏠</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Главная</span>
+                <?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Главная</span>
             </a>
             <a href="/town" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
                 <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Город</span>
@@ -178,7 +217,7 @@
             <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Персонаж</p>
 
             <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">👤</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Мой персонаж (WIP)</span>
+                <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Мой персонаж (WIP)</span>
             </a>
             <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
                 <span class="text-xl shrink-0">💼</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Профессия (WIP)</span>
@@ -277,13 +316,13 @@
 
                     <div class="relative">
                         <button type="button" @click="toggleProfile()" class="flex items-center gap-2 hover:opacity-80" title="Мой профиль">
-                            <span class="text-2xl">👤</span>
+                            <img src="/img/misc/character.png" class="w-6 h-6 object-contain" alt="Профиль">
                         </button>
                         <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false"
                             class="absolute right-0 mt-2 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden">
 
                             <div class="p-4 border-b border-slate-700 flex items-center gap-3">
-                                <span class="text-3xl">👤</span>
+                                <?= game_icon('/img/misc/character.png', 'h-8 w-8') ?>
                                 <div class="flex-1">
                                     <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="font-bold text-emerald-400 hover:text-emerald-300" x-text="st.name + '#' + st.tag"></a>
                                     <p class="text-xs text-slate-400">Уровень <span x-text="st.level"></span></p>
@@ -299,12 +338,12 @@
                                     <div><p class="text-slate-400">Золото</p><p class="font-semibold" x-text="st.gold"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-lg">🏦</span>
+                                    <span class="text-lg"><img src="/img/misc/bank.png" class="inline-block w-4 h-4 align-middle object-contain" alt="банк"></span>
                                     <div><p class="text-slate-400">Банк</p><p class="font-semibold" x-text="st.bank"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-lg">💎</span>
-                                    <div><p class="text-slate-400">Алмазы</p><p class="font-semibold" x-text="st.diamonds"></p></div>
+                                    <span class="text-lg"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 align-middle object-contain" alt="изумруд"></span>
+                                    <div><p class="text-slate-400">Изумруды</p><p class="font-semibold" x-text="st.diamonds"></p></div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg">👟</span>
@@ -324,7 +363,7 @@
                                 </div>
                                 <div>
                                     <div class="flex justify-between mb-1">
-                                        <span class="text-slate-300">⚡ Энергия <span class="text-indigo-400 cursor-not-allowed" title="WIP">Пополнить</span></span>
+                                        <span class="text-slate-300"><img src="/img/misc/energy.png" class="inline-block w-3.5 h-3.5 align-middle object-contain" alt="энергия"> Энергия <span class="text-white cursor-not-allowed" title="WIP">Пополнить</span></span>
                                         <span class="text-slate-400" x-text="st.energy + ' из ' + st.maxEnergy"></span>
                                     </div>
                                     <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -334,8 +373,8 @@
                             </div>
 
                             <nav class="p-2 space-y-0.5 text-sm">
-                                <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">👤</span> Мой профиль</a>
-                                <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">🏠</span> Главная</a>
+                                <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><?= game_icon('/img/misc/character.png', 'h-5 w-5 shrink-0') ?> Мой профиль</a>
+                                <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> Главная</a>
                                 <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">⭐</span> Задания</a>
                                 <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">💰</span> Магазин</a>
                                 <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">🏆</span> Топ игроков</a>

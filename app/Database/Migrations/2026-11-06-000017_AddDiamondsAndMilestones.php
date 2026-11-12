@@ -8,7 +8,7 @@ class AddDiamondsAndMilestones extends Migration
 {
     public function up(): void
     {
-        // Алмазы как валюта
+        // Изумруды как валюта
         $this->forge->addColumn('characters', [
             'diamonds' => ['type' => 'INT', 'constraint' => 11, 'unsigned' => true, 'default' => 0],
         ]);

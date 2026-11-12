@@ -18,8 +18,8 @@
             <span>Опыт</span>
             <span id="st-xp"><?= esc($character->xp) ?> / <?= esc($xp_needed) ?></span>
         </div>
-        <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
-            <div id="bar-xp" class="h-full bg-purple-500" style="width: <?= esc($xp_percent) ?>%"></div>
+        <div class="h-2 bg-slate-700 rounded-full">
+            <div id="bar-xp" class="h-full bg-purple-500 rounded-full" style="width: <?= esc($xp_percent) ?>%"></div>
         </div>
     </div>
 
@@ -29,16 +29,16 @@
                 <span class="inline-flex items-center gap-1"><img src="/img/misc/Heart.png" alt="❤" class="w-3.5 h-3.5 object-contain">Здоровье</span>
                 <span id="st-hp"><?= esc($character->hp) ?> / <?= esc($character->max_hp) ?></span>
             </div>
-            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-2 bg-slate-700 rounded-full">
                 <div id="bar-hp" class="h-full bg-red-500" style="width: <?= esc($hp_percent) ?>%"></div>
             </div>
         </div>
         <div>
             <div class="flex justify-between text-xs text-slate-400 mb-1">
-                <span>⚡ Энергия</span>
+                <span><img src="/img/misc/energy.png" class="inline-block w-3.5 h-3.5 align-middle object-contain" alt="энергия"> Энергия</span>
                 <span id="st-energy"><?= esc($character->energy) ?> / <?= esc($character->max_energy) ?></span>
             </div>
-            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-2 bg-slate-700 rounded-full">
                 <div id="bar-energy" class="h-full bg-sky-400" style="width: <?= esc($energy_percent) ?>%"></div>
             </div>
         </div>
@@ -75,12 +75,12 @@
     <div class="space-y-3">
         <div class="relative">
             <button type="button" :disabled="walking"
-                class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 font-bold text-lg"
+                class="w-full max-w-[340px] mx-auto py-3 px-8 flex items-center justify-center gap-2 rounded-[12px] bg-[#F4B89A] hover:bg-[#F7C6AE] text-[#231712] font-semibold text-lg transition-colors duration-200 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed"
                 @click="doAction('/game/walk')">
-                <span x-show="!walking">🚶 Прогулка</span>
+                <span x-show="!walking"><span class="walk-sprite" aria-hidden="true"></span> Прогулка</span>
                 <span x-show="walking" x-cloak>Идём…</span>
             </button>
-            <div x-show="walking" x-cloak class="h-1 rounded-lg bg-slate-700 overflow-hidden mt-1.5">
+            <div x-show="walking" x-cloak class="w-full max-w-[340px] mx-auto h-1 rounded-lg bg-slate-700 overflow-hidden mt-1.5">
                 <div class="h-1 bg-emerald-400 rounded-lg ring-run"></div>
             </div>
         </div>

@@ -184,7 +184,7 @@ $icon = function ($e): string {
 
         <div class="bg-slate-800 rounded-lg divide-y divide-slate-700/60 text-sm">
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> Золото</span><span class="font-semibold text-amber-400" id="pf-gold"><?= number_format((int) $character->gold, 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">💎 Алмазы</span><span class="font-semibold" id="pf-diamonds"><?= (int) ($character->diamonds ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 align-middle object-contain" alt="изумруд"> Изумруды</span><span class="font-semibold" id="pf-diamonds"><?= (int) ($character->diamonds ?? 0) ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👟 Прогулок</span><span class="font-semibold" id="pf-walks"><?= number_format((int) ($character->steps_total ?? 0), 0, ',', ' ') ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">📦 Сундуков открыто</span><span class="font-semibold" id="pf-chests"><?= number_format((int) ($character->chests_opened ?? 0), 0, ',', ' ') ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">✅ Выполнено заданий</span><span class="font-semibold" id="pf-quests"><?= number_format((int) ($character->quests_done ?? 0), 0, ',', ' ') ?></span></div>
@@ -488,3 +488,4 @@ window.drawComments = function (list, comments, profileId) {
 <?php endif; ?>
 
 <?= $this->endSection() ?>
+

@@ -101,10 +101,10 @@ function shopCategory(initialGold, items) {
             }
             const c = await Swal.fire({
                 title: 'Вы уверены?',
-                text: 'Купить «' + item.name + '» за ' + item.price + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">?',
+                text: 'Купить «' + item.name + '» за ' + item.price + ' золота?',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Да (' + item.price + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">)',
+                confirmButtonText: 'Да (' + item.price + ' золота)',
                 cancelButtonText: 'Нет',
                 background: '#1e293b',
                 color: '#e2e8f0',

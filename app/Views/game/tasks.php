@@ -75,7 +75,10 @@ foreach ($periods as $p => $d) {
                         </div>
                         <p class="text-xs text-slate-500 mt-1">
                             <span x-text="it.progress + ' / ' + it.target"></span>
-                            <span class="text-amber-400" x-text="' · ' + it.reward_gold + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">'"></span>
+                            <span class="text-amber-400 inline-flex items-center gap-1">
+                                <span x-text="'· ' + it.reward_gold"></span>
+                                <img src="/img/misc/coin.png" class="inline-block w-3.5 h-3.5 align-middle object-contain" alt="">
+                            </span>
                             <span class="text-purple-300" x-text="' + ' + it.reward_xp + ' XP'"></span>
                         </p>
                     </div>
@@ -96,7 +99,7 @@ foreach ($periods as $p => $d) {
         </ul>
 
         <div class="flex items-center justify-between text-xs text-slate-500 px-1">
-            <button type="button" @click="refresh(p)" class="text-violet-400 hover:text-violet-300">🔄 Обновить задания (💎 5)</button>
+            <button type="button" @click="refresh(p)" class="text-violet-400 hover:text-violet-300">🔄 Обновить задания (<img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5)</button>
             <span>До новых заданий: <span class="text-slate-300" x-text="fmt(timers[p])"></span></span>
         </div>
     </div>
@@ -220,10 +223,10 @@ function tasks(seed, resetIn) {
         async refresh(period) {
             const c = await Swal.fire({
                 title: 'Обновить задания?',
-                text: 'Новый случайный набор на этот период. Стоимость: 💎 5. Доступно только если нет прогресса!',
+                text: 'Новый случайный набор на этот период. Стоимость: <img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5. Доступно только если нет прогресса!',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Обновить (💎 5)',
+                confirmButtonText: 'Обновить (<img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5)',
                 cancelButtonText: 'Отмена',
                 background: '#1e293b',
                 color: '#e2e8f0',

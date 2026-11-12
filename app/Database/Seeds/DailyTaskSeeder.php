@@ -21,7 +21,7 @@ class DailyTaskSeeder extends Seeder
             ['name' => 'Выиграй 2 боя',       'description' => 'Выиграй 2 боя',                'type' => 'win',  'target' => 2, 'reward_gold' => 40,  'reward_xp' => 25, 'min_level' => 1,  'emoji' => '🏆'],
             ['name' => 'Гладиатор',           'description' => 'Выиграй 5 боёв',               'type' => 'win',  'target' => 5, 'reward_gold' => 100, 'reward_xp' => 60, 'min_level' => 10, 'emoji' => '🏟️'],
             // item
-            ['name' => 'Найди 2 предмета',    'description' => 'Найди 2 предмета на прогулке', 'type' => 'item', 'target' => 2, 'reward_gold' => 30,  'reward_xp' => 20, 'min_level' => 1,  'emoji' => '🎒'],
+            ['name' => 'Найди 2 предмета',    'description' => 'Найди 2 предмета на прогулке', 'type' => 'item', 'target' => 2, 'reward_gold' => 30,  'reward_xp' => 20, 'min_level' => 1,  'emoji' => '/img/misc/bag.png'],
             ['name' => 'Собиратель сокровищ', 'description' => 'Найди 4 предмета на прогулке', 'type' => 'item', 'target' => 4, 'reward_gold' => 70,  'reward_xp' => 45, 'min_level' => 6,  'emoji' => '💎'],
         ];
 

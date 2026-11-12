@@ -5,13 +5,13 @@
     <div class="flex items-center justify-between">
         <div>
             <p class="text-sm text-slate-400 mb-1">Центр города</p>
-            <h1 class="text-2xl font-bold">🏦 Банк</h1>
+            <h1 class="text-2xl font-bold"><?= game_icon('/img/misc/bank.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain') ?> Банк</h1>
         </div>
         <a href="/town" class="text-sm text-slate-400 hover:text-white">← В город</a>
     </div>
 
     <div class="relative overflow-hidden rounded-2xl border border-amber-700/50 bg-gradient-to-br from-amber-900/70 via-slate-800 to-slate-900">
-        <div class="absolute -right-8 -top-10 text-[9rem] opacity-10">🏦</div>
+        <div class="absolute -right-8 -top-10 text-[9rem] opacity-10"><img src="/img/misc/bank.png" class="w-full h-full object-contain" alt=""></div>
         <div class="relative p-6 sm:p-8">
             <p class="text-sm uppercase tracking-widest text-amber-300">Надёжное хранилище</p>
             <h2 class="mt-2 text-2xl font-bold">Твои деньги в безопасности</h2>
@@ -74,7 +74,10 @@
                             <p class="text-xs text-slate-500"><span x-text="transaction.created_at"></span> · <span x-text="'....' + transaction.short_hash"></span></p>
                         </div>
                     </div>
-                    <span class="font-semibold" :class="transaction.type === 'deposit' ? 'text-emerald-400' : 'text-amber-400'" x-text="'....' + transaction.short_hash + ' ' + (transaction.type === 'deposit' ? '+' : '-') + format(transaction.amount) + ' <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото">'"></span>
+                    <span class="font-semibold inline-flex items-center gap-1" :class="transaction.type === 'deposit' ? 'text-emerald-400' : 'text-amber-400'">
+                        <span x-text="'....' + transaction.short_hash + ' ' + (transaction.type === 'deposit' ? '+' : '-') + format(transaction.amount)"></span>
+                        <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="">
+                    </span>
                 </div>
             </template>
             <p x-show="!transactions.length" class="py-6 text-center text-sm text-slate-500">Операций пока нет.</p>

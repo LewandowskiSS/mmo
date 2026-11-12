@@ -79,7 +79,7 @@ $icon = function ($e): string {
 
 <div class="space-y-6" x-data="inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">🎒 Инвентарь</h1>
+        <h1 class="text-2xl font-bold"><img src="/img/misc/bag.png" class="inline-block w-8 h-8 align-middle object-contain" alt="инвентарь"> Инвентарь</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 
@@ -127,11 +127,11 @@ $icon = function ($e): string {
     <div class="flex gap-2 text-sm">
         <button type="button" @click="view = 'bag'"
             :class="view === 'bag' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
-            class="px-4 py-2 rounded-lg transition-colors">🎒 Инвентарь</button>
+            class="px-4 py-2 rounded-lg transition-colors\"><img src="/img/misc/bag.png" class="inline-block w-5 h-5 align-middle object-contain" alt="инвентарь"> Инвентарь</button>
         <button type="button" @click="view = 'equipped'"
             :class="view === 'equipped' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
             class="px-4 py-2 rounded-lg transition-colors">🛡️ Экипировано</button>
-        <a href="/game/storage" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">🗄 Хранилище</a>
+        <a href="/game/storage" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"><?= game_icon('/img/misc/storage.png', 'inline-block w-5 h-5 align-middle object-contain mr-1') ?> Хранилище</a>
         <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700">🖼 Витрина (WIP)</a>
     </div>
 
@@ -286,7 +286,7 @@ $icon = function ($e): string {
                                         data-action="store"
                                         data-qty="<?= (int) $it->quantity ?>"
                                         class="w-full text-left px-4 py-2 text-sm text-sky-300 hover:bg-slate-600 flex items-center gap-2">
-                                        🗄 Переместить в хранилище
+                                        <?= game_icon('/img/misc/storage.png', 'w-4 h-4 object-contain') ?> Переместить в хранилище
                                     </button>
                                     <button type="button"
                                         data-action="sell"

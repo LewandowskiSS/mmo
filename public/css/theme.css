@@ -1,0 +1,129 @@
+/**
+ * Neutral Graphite Dark Theme for "Моя ММО"
+ * Replaces slate/indigo palette with neutral graphite tones
+ * Minimal overrides, no blue undertones
+ */
+
+:root {
+    --bg-body: #121212;
+    --bg-sidebar: #181818;
+    --bg-card: #1A1A1A;
+    --bg-input: #222222;
+    --bg-input-hover: #2A2A2A;
+    --border-color: #282828;
+    --text-primary: #F4F4F5;
+    --text-secondary: #8E8E93;
+    --active-bg: #ECECEC;
+    --active-text: #141414;
+    --primary-bg: #ECECEC;
+    --primary-text: #141414;
+    --primary-hover: #FFFFFF;
+    --logout-red: #EF4444;
+    --energy-track: #262626;
+}
+
+/* Base backgrounds */
+body.bg-slate-900 { background-color: var(--bg-body) !important; }
+.bg-slate-800 { background-color: var(--bg-sidebar) !important; }
+.bg-slate-700 { background-color: var(--bg-card) !important; }
+.bg-slate-600 { background-color: var(--bg-input) !important; }
+.hover\:bg-slate-500:hover { background-color: var(--bg-input-hover) !important; }
+.hover\:bg-slate-700:hover { background-color: var(--bg-card) !important; }
+
+/* Borders */
+.border-slate-700, .border-slate-600 { border-color: var(--border-color) !important; }
+
+/* Text */
+.text-slate-100 { color: var(--text-primary) !important; }
+.text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600 { color: var(--text-secondary) !important; }
+
+/* Active elements (sidebar, tabs, primary buttons - replacing indigo) */
+.bg-indigo-600, .bg-indigo-500, .bg-indigo-400 { background-color: var(--active-bg) !important; color: var(--active-text) !important; }
+.hover\:bg-indigo-500:hover, .hover\:bg-indigo-600:hover { background-color: var(--active-bg) !important; }
+.text-indigo-400, .text-indigo-300, .text-indigo-200 { color: var(--active-text) !important; }
+
+/* Purple/violet accents → neutral */
+.bg-purple-500 { background-color: #A0A0A0 !important; }
+.text-purple-300 { color: var(--text-secondary) !important; }
+.text-violet-400, .hover\:text-violet-300:hover { color: #B0B0B0 !important; }
+
+/* Sky/blue accents → neutral light blue */
+.text-sky-400, .hover\:text-sky-300:hover { color: #8BBDFF !important; }
+.text-sky-300 { color: #7DD3FC !important; }
+.bg-sky-500\/10 { background-color: rgba(14,165,233,0.1) !important; }
+.border-sky-500 { border-color: #38BDF8 !important; }
+.bg-sky-500\/15 { background-color: rgba(14,165,233,0.15) !important; }
+.border-sky-500\/40 { border-color: rgba(56,189,248,0.4) !important; }
+
+/* Indigo borders/bgs for filters → neutral */
+.border-indigo-500\/40 { border-color: var(--border-color) !important; }
+.bg-indigo-500\/15 { background-color: var(--bg-input) !important; }
+
+/* Health/Energy/XP bar tracks */
+.bg-slate-700.rounded-full.overflow-hidden { background-color: var(--energy-track) !important; }
+
+/* Logout */
+.text-red-300, .hover\:text-red-200:hover { color: var(--logout-red) !important; }
+.bg-red-900\/50 { background-color: rgba(239,68,68,0.5) !important; }
+
+/* Flash messages */
+.bg-emerald-500\/10 { background-color: rgba(16,185,129,0.1) !important; }
+.border-emerald-500 { border-color: #10B981 !important; }
+.text-emerald-300 { color: #6EE7B7 !important; }
+.bg-red-500\/10 { background-color: rgba(239,68,68,0.1) !important; }
+.border-red-500 { border-color: #EF4444 !important; }
+.text-red-300 { color: #FCA5A5 !important; }
+.bg-sky-500\/10 { background-color: rgba(14,165,233,0.1) !important; }
+.border-sky-500 { border-color: #38BDF8 !important; }
+.text-sky-300 { color: #7DD3FC !important; }
+
+/* Modal overlays */
+.bg-slate-900\/50 { background-color: rgba(18,18,18,0.5) !important; }
+
+/* Gradient banners (dashboard, profile) - replace indigo/purple with graphite */
+.bg-gradient-to-br.from-indigo-600\/60.via-purple-600\/40.to-slate-900,
+.bg-gradient-to-br.from-indigo-600\/50.via-purple-600\/30.to-slate-900 {
+    background: linear-gradient(135deg, rgba(60,60,60,0.6) 0%, rgba(40,40,40,0.3) 50%, rgba(18,18,18,1) 100%) !important;
+}
+
+/* Focus states for inputs */
+.focus\:border-indigo-500:focus { border-color: var(--border-color) !important; }
+
+/* --- Sprite Animation Styles --- */
+.walk-sprite {
+    display: inline-block;
+    width: 24px; 
+    height: 24px;
+    background: url('/img/misc/walk_sprite.png') 0 0 / 400% 100% no-repeat;
+    image-rendering: pixelated;
+    animation: walk-cycle 0.7s steps(4) infinite;
+}
+
+@keyframes walk-cycle {
+    from { background-position: 0 0; } 
+    /* 4 кадра по 24px = 96px сдвига; -96px возвращает к первому кадру без пустого кадра */
+    to { background-position: -96px 0; }
+}
+
+/* Полоса опыта: плавное заполнение + свечение при получении опыта */
+#bar-xp {
+    position: relative;
+    transition: width 0.65s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, background 0.4s ease;
+}
+
+#bar-xp.xp-gaining {
+    background: linear-gradient(90deg, #9ca3af 0%, #f4b89a 85%, #ffffff 100%) !important;
+    box-shadow: 0 0 12px rgba(244, 184, 154, 0.6), 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+#bar-xp.xp-gaining::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -1px;
+    bottom: -1px;
+    width: 8px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 0 8px 2px #f4b89a;
+}
