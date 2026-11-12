@@ -543,6 +543,7 @@ class Game extends BaseController
             ->select('items.rarity AS rarity')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
+            ->where('inventory.equipped', 0)
             ->findAll();
         foreach ($rarityRows as $r) {
             $counts[$r->rarity] = ($counts[$r->rarity] ?? 0) + 1;

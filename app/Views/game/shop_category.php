@@ -46,11 +46,11 @@
 
     <!-- Пагинация: миниблок, разделён пополам, по центру -->
     <div class="flex justify-center">
-        <div class="flex rounded-lg overflow-hidden border border-slate-600">
+        <div class="flex gap-1">
             <button type="button" @click="prevPage()" :disabled="page <= 1"
-                class="px-5 py-2 text-sm text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border-r border-slate-600">◀ Назад</button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">◀ Назад</button>
             <button type="button" @click="nextPage()" :disabled="page >= totalPages()"
-                class="px-5 py-2 text-sm text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">Вперёд ▶</button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">Вперёд ▶</button>
         </div>
     </div>
     <p class="text-center text-xs text-slate-500" x-text="'Страница ' + page + ' / ' + totalPages()"></p>

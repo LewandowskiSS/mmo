@@ -36,8 +36,8 @@
             <p class="mt-1 text-sm text-slate-400">Перевести золото с кошелька на счёт.</p>
             <input x-model.number="depositAmount" type="number" min="1" :max="gold" required class="mt-4 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-white" placeholder="Сумма">
             <div class="mt-3 flex flex-wrap gap-2">
-                <button type="button" @click="depositAmount = gold" class="rounded-md bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600">Всё</button>
-                <button type="button" @click="depositAmount = Math.floor(gold / 2)" class="rounded-md bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600">50%</button>
+                <button type="button" @click="depositAmount = gold" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500">Всё</button>
+                <button type="button" @click="depositAmount = Math.floor(gold / 2)" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500">50%</button>
                 <button type="submit" class="ml-auto rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-500">Положить</button>
             </div>
         </form>
@@ -47,8 +47,8 @@
             <p class="mt-1 text-sm text-slate-400">Перевести золото со счёта в кошелёк.</p>
             <input x-model.number="withdrawAmount" type="number" min="1" :max="bank" required class="mt-4 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-white" placeholder="Сумма">
             <div class="mt-3 flex flex-wrap gap-2">
-                <button type="button" @click="withdrawAmount = bank" class="rounded-md bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600">Всё</button>
-                <button type="button" @click="withdrawAmount = Math.floor(bank / 2)" class="rounded-md bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600">50%</button>
+                <button type="button" @click="withdrawAmount = bank" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500">Всё</button>
+                <button type="button" @click="withdrawAmount = Math.floor(bank / 2)" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500">50%</button>
                 <button type="submit" class="ml-auto rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold hover:bg-indigo-500">Снять</button>
             </div>
         </form>
@@ -83,9 +83,9 @@
             <p x-show="!transactions.length" class="py-6 text-center text-sm text-slate-500">Операций пока нет.</p>
         </div>
         <div x-show="totalPages > 1" class="mt-4 flex items-center justify-center gap-2">
-            <button type="button" @click="loadTransactions(page - 1)" :disabled="page <= 1" class="rounded-lg bg-slate-700 px-3 py-1.5 text-sm hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-40">←</button>
+            <button type="button" @click="loadTransactions(page - 1)" :disabled="page <= 1" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">←</button>
             <span class="text-sm text-slate-400"><span x-text="page"></span> / <span x-text="totalPages"></span></span>
-            <button type="button" @click="loadTransactions(page + 1)" :disabled="page >= totalPages" class="rounded-lg bg-slate-700 px-3 py-1.5 text-sm hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-40">→</button>
+            <button type="button" @click="loadTransactions(page + 1)" :disabled="page >= totalPages" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">→</button>
         </div>
     </section>
 </div>
