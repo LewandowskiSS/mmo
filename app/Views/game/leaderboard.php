@@ -3,7 +3,7 @@
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">🏆 Топ игроков</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">🏆</span> Топ игроков</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 

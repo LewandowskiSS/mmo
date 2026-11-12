@@ -5,7 +5,7 @@
 $sections = [
     'Рынок' => [
         ['icon' => '<img src="/img/misc/energy.png" class="w-6 h-6 object-contain" alt="энергия">', 'title' => 'Рынок игроков', 'desc' => 'Покупай предметы у других игроков', 'wip' => true],
-        ['icon' => '🏪', 'title' => 'Магазин предметов', 'desc' => 'Покупай новое снаряжение для приключений', 'href' => '/game/shop'],
+        ['icon' => '<img src="/img/misc/shop.png" class="w-6 h-6 object-contain" alt="магазин">', 'title' => 'Магазин предметов', 'desc' => 'Покупай новое снаряжение для приключений', 'href' => '/game/shop'],
         ['icon' => '<img src="/img/misc/emerald.png" class="w-6 h-6 object-contain" alt="изумруд">', 'title' => 'Изумрудный рынок', 'desc' => 'Покупай изумруды у других игроков', 'wip' => true],
         ['icon' => game_icon('/img/misc/bank.png', 'w-6 h-6'), 'title' => 'Банк', 'desc' => 'Храни свои деньги в безопасности', 'href' => '/town/bank'],
     ],
@@ -29,7 +29,7 @@ $sections = [
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold"><?= game_icon('/img/misc/map.png', 'h-6 w-6') ?> Город</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><?= game_icon('/img/misc/map.png', 'h-6 w-6 shrink-0') ?> Город</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 

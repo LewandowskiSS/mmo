@@ -31,7 +31,7 @@ $typeNames = \App\Models\ItemModel::TYPE_NAMES;
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold"><?= game_icon('/img/misc/storage.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain') ?> Хранилище</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><?= game_icon('/img/misc/storage.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain shrink-0') ?> Хранилище</h1>
         <a href="/game/inventory" class="text-sm text-slate-400 hover:text-white">← К инвентарю</a>
     </div>
     <div class="flex gap-2 text-sm">

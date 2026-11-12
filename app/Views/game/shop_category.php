@@ -3,7 +3,7 @@
 
 <div class="space-y-6" x-data="shopCategory(<?= (int) ($initialGold ?? 0) ?>, <?= htmlspecialchars(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">🏪 <?= esc($shopInfo['title']) ?></h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/shop.png" class="w-6 h-6 object-contain shrink-0" alt="магазин"><?= esc($shopInfo['title']) ?></h1>
         <a href="/game/shop" class="text-sm text-slate-400 hover:text-white">← К магазинам</a>
     </div>
 
@@ -19,7 +19,7 @@
                         <img :src="item.emoji" class="w-8 h-8 object-contain shrink-0" alt="">
                     </template>
                     <template x-if="!Game.isImage(item.emoji)">
-                        <div class="text-2xl shrink-0" x-text="item.emoji"></div>
+                        <div class="text-2xl shrink-0" x-html="item.emoji"></div>
                     </template>
                     <div class="flex-1">
                         <p class="font-semibold" :class="rarityClass(item.rarity)" x-text="item.name"></p>
@@ -48,9 +48,9 @@
     <div class="flex justify-center">
         <div class="flex gap-1">
             <button type="button" @click="prevPage()" :disabled="page <= 1"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <img src="/img/misc/left_arrow.png" alt="◀" class="w-4 h-4"> Назад</button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed"><img src="/img/misc/left_arrow.png" alt="◀" class="w-4 h-4"></button>
             <button type="button" @click="nextPage()" :disabled="page >= totalPages()"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">Вперёд                 <img src="/img/misc/right_arrow.png" alt="▶" class="w-4 h-4"></button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed"><img src="/img/misc/right_arrow.png" alt="▶" class="w-4 h-4"></button>
         </div>
     </div>
     <p class="text-center text-xs text-slate-500" x-text="'Страница ' + page + ' / ' + totalPages()"></p>

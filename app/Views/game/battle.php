@@ -3,7 +3,7 @@
 
 <div class="space-y-6" x-data="battleView(<?= (int) $monster->hp ?>, <?= (int) $monster_hp ?>, <?= (int) $character->hp ?>, <?= (int) $character->max_hp ?>)" data-back="<?= esc($back) ?>">
     <div class="text-center">
-        <div class="text-6xl mb-2"><?= esc($monster->emoji) ?></div>
+        <div class="text-6xl mb-2"><?= $monster->emoji ?></div>
         <h1 class="text-2xl font-bold"><?= esc($monster->name) ?></h1>
         <p class="text-sm text-slate-400">Уровень <?= esc($monster->level) ?></p>
     </div>

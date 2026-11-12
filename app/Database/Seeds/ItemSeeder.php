@@ -27,7 +27,7 @@ class ItemSeeder extends Seeder
             ['name' => 'Рунический меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 20, 'price' => 900, 'description' => 'Клинок, покрытый светящимися рунами.', 'emoji' => '🗡️', 'rarity' => 'elite'],
             ['name' => 'Руническая броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 17, 'price' => 950, 'description' => 'Доспех, усиленный древними рунами.', 'emoji' => '🛡️', 'rarity' => 'elite'],
             // epic
-            ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '🐉', 'rarity' => 'epic'],
+            ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '<img src="/img/monsters/dragon.png" class="w-6 h-6 object-contain" alt="Драконий меч">', 'rarity' => 'epic'],
             ['name' => 'Драконья броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 20, 'price' => 1600, 'description' => 'Чешуйчатая драконья броня.', 'emoji' => '🛡️', 'rarity' => 'epic'],
             // legendary
             ['name' => 'Меч Богов', 'type' => 'weapon', 'stat' => 'attack', 'value' => 40, 'price' => 5000, 'description' => 'Легендарный клинок богов.', 'emoji' => '⚔️', 'rarity' => 'legendary'],

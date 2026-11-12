@@ -242,7 +242,7 @@
             <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Игра</p>
 
             <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🏪</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Магазин</span>
+                <span class="text-xl shrink-0"><img src="/img/misc/shop.png" class="w-6 h-6 object-contain" alt="магазин"></span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Магазин</span>
             </a>
             <a href="/game/chests" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
                 <span class="text-xl shrink-0">🎁</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Сундуки</span>

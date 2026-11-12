@@ -8,6 +8,7 @@ description: >
   over-engineering or bloat. Levels: lite, full (default), ultra.
 argument-hint: "[lite|full|ultra|off]"
 license: MIT
+disabled: true
 ---
 
 # Ponytail

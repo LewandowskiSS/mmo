@@ -53,7 +53,7 @@
         <div class="text-sm text-slate-300">
             <template x-if="event.type === 'monster'">
                 <div class="text-center space-y-2">
-                    <div class="text-5xl" x-text="event.battle.emoji"></div>
+                    <div class="text-5xl" x-html="event.battle.emoji"></div>
                     <p class="font-bold text-lg" x-text="event.battle.name"></p>
                     <p class="text-xs text-slate-400" x-text="'Уровень ' + event.battle.level"></p>
                     <div class="h-2 bg-slate-700 rounded-full overflow-hidden">

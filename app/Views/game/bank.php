@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between">
         <div>
             <p class="text-sm text-slate-400 mb-1">Центр города</p>
-            <h1 class="text-2xl font-bold"><?= game_icon('/img/misc/bank.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain') ?> Банк</h1>
+            <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><?= game_icon('/img/misc/bank.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain shrink-0') ?> Банк</h1>
         </div>
         <a href="/town" class="text-sm text-slate-400 hover:text-white">← В город</a>
     </div>

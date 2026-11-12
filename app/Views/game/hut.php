@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between">
         <div>
             <p class="text-sm text-slate-400 mb-1">Восточная сторона</p>
-            <h1 class="text-2xl font-bold">🎁 Хижина</h1>
+            <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">🎁</span> Хижина</h1>
         </div>
         <a href="/town" class="text-sm text-slate-400 hover:text-white">← В город</a>
     </div>

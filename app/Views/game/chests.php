@@ -4,7 +4,7 @@
 <div class="space-y-6" x-data="chestsPage(<?= (int) $character->gold ?>, <?= (int) $character->bronze_keys ?>, <?= (int) $character->silver_keys ?>, <?= (int) $character->gold_keys ?>)"
      @buy-key.window="buyKey($event.detail)" @open-chest.window="openChest($event.detail)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">🎁 Сундуки</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">🎁</span> Сундуки</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 

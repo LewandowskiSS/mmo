@@ -11,7 +11,7 @@ foreach ($periods as $p => $d) {
 
 <div class="space-y-6" x-data="tasks(<?= htmlspecialchars(json_encode($periods, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($resetIn, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">📋 Задания</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">📋</span> Задания</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 

@@ -79,7 +79,7 @@ $icon = function ($e): string {
 
 <div class="space-y-6" x-data="inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold"><img src="/img/misc/bag.png" class="inline-block w-8 h-8 align-middle object-contain" alt="инвентарь"> Инвентарь</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/bag.png" class="inline-block w-8 h-8 align-middle object-contain shrink-0" alt="инвентарь"> Инвентарь</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
     </div>
 
