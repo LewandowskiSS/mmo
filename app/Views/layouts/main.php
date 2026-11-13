@@ -345,7 +345,7 @@
         <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20">
             <div class="px-4 py-2.5 flex items-center gap-3 <?= !session()->get('user_id') ? 'justify-end' : '' ?>">
                 <?php if (session()->get('user_id')): ?>
-                <button type="button" class="text-slate-300 hover:text-white text-xl leading-none" @click="toggleSidebar()" aria-label="Меню">☰</button>
+                <button type="button" class="text-slate-300 hover:text-white text-xl leading-none md:hidden" @click="toggleSidebar()" aria-label="Меню">☰</button>
                 <?php else: ?>
                 <a href="/login" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">Войти</a>
                 <a href="/register" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">Регистрация</a>
