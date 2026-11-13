@@ -3,7 +3,11 @@
 
 <div class="space-y-6" x-data="battleView(<?= (int) $monster->hp ?>, <?= (int) $monster_hp ?>, <?= (int) $character->hp ?>, <?= (int) $character->max_hp ?>)" data-back="<?= esc($back) ?>">
     <div class="text-center">
-        <div class="text-6xl mb-2"><?= $monster->emoji ?></div>
+        <div class="mb-4 flex justify-center">
+            <div class="w-32 h-32 flex items-center justify-center">
+                <?= $monster->emoji ?>
+            </div>
+        </div>
         <h1 class="text-2xl font-bold"><?= esc($monster->name) ?></h1>
         <p class="text-sm text-slate-400">Уровень <?= esc($monster->level) ?></p>
     </div>
@@ -35,7 +39,7 @@
         </template>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-2 gap-3 mt-2">
         <button type="button" :disabled="busy"
             class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold"
             @click="doAction('/game/attack')">
@@ -51,7 +55,7 @@
         <div class="relative bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full mx-4 text-center space-y-4">
             <div class="text-5xl" x-text="result.emoji"></div>
             <h2 class="text-2xl font-bold" :class="result.cls" x-text="result.title"></h2>
-            <p class="text-sm text-slate-300" x-text="result.message"></p>
+            <p class="text-sm text-slate-300" x-html="result.message"></p>
             <a href="<?= esc($back) ?>" class="block w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold text-center">Продолжить</a>
         </div>
     </div>
