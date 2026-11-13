@@ -33,6 +33,9 @@ class Game extends BaseController
         $xpNeeded = $this->xpNeeded($character->level);
 
         // Карточки на главной: выполненные задания сегодня и суммарные ключи
+        // Ensure daily tasks are assigned before counting them
+        $this->assignTasks($character);
+
         $taskRows = (new CharacterTaskModel())
             ->where('character_id', $character->id)
             ->where('period', 'daily')
@@ -49,7 +52,7 @@ class Game extends BaseController
         return view('game/dashboard', [
             'character'       => $character,
             'tasks_completed' => $tasksCompleted,
-            'tasks_total'     => count($taskRows),
+            'tasks_total'     => self::TASK_LIMITS['daily'] ?? 5,
             'keys_total'      => $keysTotal,
         ]);
     }
@@ -212,7 +215,7 @@ class Game extends BaseController
             $this->incrementCounter($character->id, 'npc_kills');
             $this->session->remove('battle');
 
-            $msg = "Победа! Ты одолел {$monster->emoji} {$monster->name}. +{$xp} XP, +{$gold} золота.";
+            $msg = "Победа! Ты одолел {$monster->emoji} " . esc($monster->name) . ". +{$xp} XP, +{$gold} золота.";
             if ($newLevel > $character->level) {
                 $msg .= " 🎉 Уровень повышен до {$newLevel}!";
             }
