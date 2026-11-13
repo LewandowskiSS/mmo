@@ -191,69 +191,141 @@
             ready ? 'transition-all duration-200' : ''
         ]">
 
-        <div class="p-4 border-b border-slate-700 flex items-center justify-between overflow-hidden" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>
-            <a href="/" class="font-bold text-lg text-emerald-400 whitespace-nowrap">⚔️ Моя ММО</a>
-            <button type="button" class="text-slate-400 hover:text-white md:hidden" @click="sidebarMobile = false">✕</button>
+        <!-- Player card (click to toggle stats panel) -->
+        <div class="p-4 border-b border-slate-700 flex items-center justify-between" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>
+            <div class="flex items-center gap-2 cursor-pointer w-full" @click="statsOpen = !statsOpen; localStorage.setItem('statsOpen', statsOpen ? '1' : '0')">
+                <img src="/img/misc/character.png" class="w-8 h-8 rounded-full" alt="avatar">
+                <div class="flex flex-col">
+                    <div class="text-white font-semibold" x-text="st.name + '#' + st.tag"></div>
+                    <div class="text-xs text-slate-400">Lv. <span x-text="st.level"></span></div>
+                </div>
+            </div>
+            <button type="button" class="text-slate-400 hover:text-white" @click.stop="statsOpen = !statsOpen; localStorage.setItem('statsOpen', statsOpen ? '1' : '0')">
+                <span x-show="!statsOpen">▼</span><span x-show="statsOpen">▲</span>
+            </button>
         </div>
 
-        <nav class="no-scrollbar p-2 md:p-3 space-y-1 text-sm flex-1 overflow-y-auto">
-            <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Основное</p>
+        <!-- Stats panel -->
+        <div class="border-b border-slate-700 p-4 text-xs space-y-3 overflow-y-auto" x-show="statsOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="col-span-3">
+                    <div class="flex justify-between mb-1"><span class="text-red-400">❤ Health</span><span x-text="st.hp + '/' + st.maxHp"></span></div>
+                    <div class="h-1.5 bg-slate-700 rounded-full"><div id="bar-hp" class="h-full bg-red-500 rounded-full transition-all" :style="'width:' + (st.maxHp ? (st.hp/st.maxHp*100) : 0) + '%'"></div></div>
+                </div>
+                <div class="col-span-3">
+                    <div class="flex justify-between mb-1"><span class="text-yellow-400">⚡ Energy</span><span x-text="st.energy + '/' + st.maxEnergy"></span></div>
+                    <div class="h-1.5 bg-slate-700 rounded-full"><div id="bar-energy" class="h-full bg-yellow-500 rounded-full transition-all" :style="'width:' + (st.maxEnergy ? (st.energy/st.maxEnergy*100) : 0) + '%'"></div></div>
+                </div>
+                <div class="col-span-3">
+                    <div class="flex justify-between mb-1"><span class="text-purple-400">★ Experience</span><span x-text="st.xpPercent + '%'"></span></div>
+                    <div class="h-1.5 bg-slate-700 rounded-full"><div id="bar-xp" class="h-full bg-purple-500 rounded-full transition-all" :style="'width:' + st.xpPercent + '%'"></div></div>
+                </div>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-slate-700/50">
+                <span class="text-amber-400">🪙 <span x-text="st.gold"></span></span>
+                <span class="text-emerald-400">💎 <span x-text="st.diamonds || 0"></span></span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+                <span>Steps: <span x-text="st.walks"></span></span>
+                <span>Lvl <span x-text="st.level"></span></span>
+            </div>
+            <div class="grid grid-cols-5 gap-2 pt-2 border-t border-slate-700/50">
+                <a href="/walk" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Walk">🚶</a>
+                <a href="/game/battle" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Battle">⚔️</a>
+                <a href="/game/inventory" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Inventory">🎒</a>
+                <a href="/game/shop" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Shop">🛒</a>
+                <a href="/game/tasks" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Tasks">📋</a>
+            </div>
+        </div>
 
-            <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Главная</span>
-            </a>
-            <a href="/town" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Город</span>
-            </a>
-            <a href="/game/inventory" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Инвентарь</span>
-            </a>
-            <a href="/game/battle" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <?= game_icon('/img/misc/fight.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Бой</span>
-            </a>
-            <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <?= game_icon('/img/misc/quests.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Квесты</span>
-            </a>
+        <nav class="no-scrollbar p-2 md:p-2 space-y-1 text-sm flex-1 overflow-y-auto">
+            <!-- Adventure -->
+            <div x-data="{ advOpen: localStorage.getItem('advOpen') !== '0' }" class="mb-1">
+                <button @click="advOpen = !advOpen; localStorage.setItem('advOpen', advOpen ? '1' : '0')"
+                    class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
+                    <span class="shrink-0">⚔️</span>
+                    <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Adventure</span>
+                    <span x-show="(!sidebarCollapsed || sidebarMobile) && advOpen" x-cloak class="ml-auto text-xs">▼</span>
+                    <span x-show="(!sidebarCollapsed || sidebarMobile) && !advOpen" x-cloak class="ml-auto text-xs">▶</span>
+                </button>
+                <div x-show="advOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
+                    <a href="/" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> Главная
+                    </a>
+                    <a href="/town" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> Город
+                    </a>
+                    <a href="/walk" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <span class="text-lg shrink-0">🚶</span> Прогулка
+                    </a>
+                    <a href="/game/battle" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <span class="text-lg shrink-0">🗡️</span> Бой
+                    </a>
+                    <a href="/game/inventory" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <span class="text-lg shrink-0">🎒</span> Инвентарь
+                    </a>
+                </div>
+            </div>
 
-            <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Персонаж</p>
+            <!-- Character -->
+            <div x-data="{ charOpen: localStorage.getItem('charOpen') !== '0' }" class="mb-1">
+                <button @click="charOpen = !charOpen; localStorage.setItem('charOpen', charOpen ? '1' : '0')"
+                    class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
+                    <span class="shrink-0">👤</span>
+                    <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Character</span>
+                    <span x-show="(!sidebarCollapsed || sidebarMobile) && charOpen" x-cloak class="ml-auto text-xs">▼</span>
+                    <span x-show="(!sidebarCollapsed || sidebarMobile) && !charOpen" x-cloak class="ml-auto text-xs">▶</span>
+                </button>
+                <div x-show="charOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
+                    <a href="/view/<?= (int)(session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Мой персонаж
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                        <span class="text-lg shrink-0">💼</span> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                        <span class="text-lg shrink-0">✨</span> Крафт <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                    </a>
+                    <a href="/game/tasks" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white relative">
+                        <span class="text-lg shrink-0">📋</span> Задания
+                        <?php if (! empty(\App\Controllers\BaseController::$layoutData['hasClaimableTasks'])): ?>
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" title="Доступны награды за задания"></span>
+                        <?php endif; ?>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                        <span class="text-lg shrink-0">🗂️</span> Коллекции <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                        <span class="text-lg shrink-0">👥</span> Гильдии <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                    </a>
+                </div>
+            </div>
 
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Мой персонаж (WIP)</span>
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">💼</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Профессия (WIP)</span>
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">✨</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Крафт (WIP)</span>
-            </a>
-            <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">📋</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Задания</span>
-                <?php if (! empty(\App\Controllers\BaseController::$layoutData['hasClaimableTasks'])): ?>
-                <span class="ml-auto w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shrink-0" title="Доступны награды за задания"></span>
-                <?php endif; ?>
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🗂️</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Коллекции (WIP)</span>
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">👥</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Гильдии (WIP)</span>
-            </a>
-
-            <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Игра</p>
-
-            <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0"><img src="/img/misc/shop.png" class="w-6 h-6 object-contain" alt="магазин"></span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Магазин</span>
-            </a>
-            <a href="/game/chests" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🎁</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Сундуки</span>
-            </a>
-            <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                <span class="text-xl shrink-0">🏆</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Топ игроков</span>
-            </a>
+            <!-- Game -->
+            <div x-data="{ gameOpen: localStorage.getItem('gameOpen') !== '0' }" class="mb-1">
+                <button @click="gameOpen = !gameOpen; localStorage.setItem('gameOpen', gameOpen ? '1' : '0')"
+                    class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
+                    <span class="shrink-0">🎮</span>
+                    <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Game</span>
+                    <span x-show="(!sidebarCollapsed || sidebarMobile) && gameOpen" x-cloak class="ml-auto text-xs">▼</span>
+                    <span x-show="(!sidebarCollapsed || sidebarMobile) && !gameOpen" x-cloak class="ml-auto text-xs">▶</span>
+                </button>
+                <div x-show="gameOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
+                    <a href="/game/shop" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <span class="text-lg shrink-0">💰</span> Магазин
+                    </a>
+                    <a href="/game/chests" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <span class="text-lg shrink-0">🎁</span> Сундуки
+                    </a>
+                    <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                        <span class="text-lg shrink-0">🏆</span> Топ игроков
+                    </a>
+                </div>
+            </div>
 
             <div class="pt-2 mt-2 border-t border-slate-700/60">
-                <a href="/logout" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200">
-                    <span class="text-xl shrink-0">🚪</span> <span class="whitespace-nowrap" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Выйти</span>
+                <a href="/logout" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200">
+                    <span class="text-lg shrink-0">🚪</span> <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Выйти</span>
                 </a>
             </div>
         </nav>
@@ -269,125 +341,14 @@
     <div class="flex flex-col min-h-screen<?= session()->get('user_id') ? ' md:pl-16' : '' ?>"
         :class="[<?= session()->get('user_id') ? "(sidebarCollapsed ? 'md:pl-16' : 'md:pl-64')" : "''" ?>, ready ? 'transition-all duration-200' : '']">
 
-        <!-- Хедер: бургер + меню профиля -->
+        <!-- Хедер: бургер (авторизован) / Войти-Регистрация (гость) -->
         <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20">
-            <div class="px-4 py-2.5 flex items-center gap-3">
+            <div class="px-4 py-2.5 flex items-center gap-3 <?= !session()->get('user_id') ? 'justify-end' : '' ?>">
                 <?php if (session()->get('user_id')): ?>
                 <button type="button" class="text-slate-300 hover:text-white text-xl leading-none" @click="toggleSidebar()" aria-label="Меню">☰</button>
-
-                <!-- Верхняя панель как в SMMO (адаптивная) -->
-                <div class="hidden md:flex items-center gap-1 text-sm ml-2">
-                    <a href="/walk" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shrink-0">
-                        Travel
-                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-white/50 text-xs leading-none">→</span>
-                    </a>
-                    <!-- Развёрнутый сайдбар: только Travel + Community -->
-                    <a href="#" class="community-link px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800">Community</a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 flex items-center gap-2 extra-link">
-                        Diamond Store
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold leading-none">Sale</span>
-                    </a>
-                    <a href="#" class="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 extra-link">Support</a>
-                </div>
-                <?php endif; ?>
-
-                <div class="flex-1"></div>
-
-                <?php if (session()->get('user_id')): ?>
-                    <!-- Поиск + иконки (адаптивно) -->
-                    <div class="hidden md:flex items-center gap-1">
-                        <div class="relative mr-1">
-                            <input x-show="searchOpen" x-cloak x-ref="searchInput"
-                                type="text" placeholder="Поиск"
-                                class="w-44 pl-3 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                            <button type="button" @click="searchOpen = !searchOpen"
-                                class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Поиск">🔍</button>
-                        </div>
-                        <div class="hidden lg:flex items-center gap-1">
-                            <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Друзья">👥</a>
-                            <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Чат">💬</a>
-                            <a href="#" class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Уведомления">🔔<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span></a>
-                        </div>
-                    </div>
-                    <div class="flex md:hidden items-center gap-1">
-                        <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Друзья">👥</a>
-                        <a href="#" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Чат">💬</a>
-                        <a href="#" class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-lg" title="Уведомления">🔔<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span></a>
-                    </div>
-
-                    <div class="relative">
-                        <button type="button" @click="toggleProfile()" class="flex items-center gap-2 hover:opacity-80" title="Мой профиль">
-                            <img src="/img/misc/character.png" class="w-6 h-6 object-contain" alt="Профиль">
-                        </button>
-                        <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false"
-                            class="absolute right-0 mt-2 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden">
-
-                            <div class="p-4 border-b border-slate-700 flex items-center gap-3">
-                                <?= game_icon('/img/misc/character.png', 'h-8 w-8') ?>
-                                <div class="flex-1">
-                                    <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="font-bold text-emerald-400 hover:text-emerald-300" x-text="st.name + '#' + st.tag"></a>
-                                    <p class="text-xs text-slate-400">Уровень <span x-text="st.level"></span></p>
-                                    <div class="mt-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-purple-500 transition-all duration-300" :style="'width:' + st.xpPercent + '%'"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-4 border-b border-slate-700 grid grid-cols-2 gap-3 text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-lg"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></span>
-                                    <div><p class="text-slate-400">Золото</p><p class="font-semibold" x-text="st.gold"></p></div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-lg"><img src="/img/misc/bank.png" class="inline-block w-4 h-4 align-middle object-contain" alt="банк"></span>
-                                    <div><p class="text-slate-400">Банк</p><p class="font-semibold" x-text="st.bank"></p></div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-lg"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 align-middle object-contain" alt="изумруд"></span>
-                                    <div><p class="text-slate-400">Изумруды</p><p class="font-semibold" x-text="st.diamonds"></p></div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-lg">👟</span>
-                                    <div><p class="text-slate-400">Прогулок</p><p class="font-semibold" x-text="st.walks"></p></div>
-                                </div>
-                            </div>
-
-                            <div class="p-4 border-b border-slate-700 space-y-3 text-xs">
-                                <div>
-                                    <div class="flex justify-between mb-1">
-                                        <span class="text-slate-300">❤️ Здоровье</span>
-                                        <span class="text-slate-400" x-text="st.hp + ' из ' + st.maxHp"></span>
-                                    </div>
-                                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-red-500 transition-all duration-300" :style="'width:' + (st.maxHp ? st.hp / st.maxHp * 100 : 0) + '%'"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between mb-1">
-                                        <span class="text-slate-300"><img src="/img/misc/energy.png" class="inline-block w-3.5 h-3.5 align-middle object-contain" alt="энергия"> Энергия <span class="text-white cursor-not-allowed" title="WIP">Пополнить</span></span>
-                                        <span class="text-slate-400" x-text="st.energy + ' из ' + st.maxEnergy"></span>
-                                    </div>
-                                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-amber-500 transition-all duration-300" :style="'width:' + (st.maxEnergy ? st.energy / st.maxEnergy * 100 : 0) + '%'"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <nav class="p-2 space-y-0.5 text-sm">
-                                <a href="/view/<?= (int) (session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><?= game_icon('/img/misc/character.png', 'h-5 w-5 shrink-0') ?> Мой профиль</a>
-                                <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> Главная</a>
-                                <a href="/game/tasks" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">⭐</span> Задания</a>
-                                <a href="/game/shop" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">💰</span> Магазин</a>
-                                <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"><span class="shrink-0">🏆</span> Топ игроков</a>
-                                <a href="/logout" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200"><span class="shrink-0">🚪</span> Выйти</a>
-                            </nav>
-                        </div>
-                    </div>
                 <?php else: ?>
-                    <div class="flex gap-2 text-sm">
-                        <a href="/login" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">Войти</a>
-                        <a href="/register" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">Регистрация</a>
-                    </div>
+                <a href="/login" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">Войти</a>
+                <a href="/register" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold">Регистрация</a>
                 <?php endif; ?>
             </div>
         </header>
