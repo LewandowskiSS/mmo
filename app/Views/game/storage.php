@@ -32,20 +32,40 @@ $typeNames = \App\Models\ItemModel::TYPE_NAMES;
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><?= game_icon('/img/misc/storage.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain shrink-0') ?> Хранилище</h1>
-        <a href="/game/inventory" class="text-sm text-slate-400 hover:text-white">← К инвентарю</a>
+        <a href="/game/inventory" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> К инвентарю</a>
     </div>
     <div class="flex gap-2 text-sm">
-        <a href="/game/inventory" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"><img src="/img/misc/bag.png" class="inline-block w-5 h-5 align-middle object-contain mr-1" alt=""> Инвентарь</a>
-        <button type="button" class="px-4 py-2 rounded-lg bg-slate-600 text-white font-semibold"><?= game_icon('/img/misc/storage.png', 'inline-block w-5 h-5 align-middle object-contain mr-1') ?> Хранилище</button>
+        <a href="/game/inventory" class="px-4 py-2 rounded-lg transition-colors <?= (uri_string() == 'game/inventory') ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700' ?>"><img src="/img/misc/bag.png" class="inline-block w-5 h-5 align-middle object-contain mr-1" alt=""> Инвентарь</a>
+        <button type="button" class="px-4 py-2 rounded-lg transition-colors <?= (uri_string() == 'game/storage') ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700' ?>"><?= game_icon('/img/misc/storage.png', 'inline-block w-5 h-5 align-middle object-contain mr-1') ?> Хранилище</button>
     </div>
     <!-- Активные фильтры (чипсы) -->
-    <?php if ($filterName !== '' || $filterRarities !== [] || $filterTypes !== []): ?>
+    <?php
+    $filterQuery = [
+        'item_name' => $filterName,
+        'rarities'  => $filterRarities,
+        'types'     => $filterTypes,
+    ];
+    $pageLink = function (int $p) use ($order_col, $order, $filterQuery): string {
+        $params = array_merge($filterQuery, ['page' => $p]);
+        if ($order_col !== '') {
+            $params['order_col'] = $order_col;
+            $params['order'] = $order;
+        }
+        return '?' . http_build_query($params);
+    };
+    $sortLink = function (string $key, string $label) use ($order_col, $order, $filterQuery): string {
+        $arrow = '';
+        if ($order_col === $key) {
+            $arrow = $order === 'asc' ? ' <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>' : ' <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+        }
+        $nextOrder = ($order_col === $key && $order === 'asc') ? 'desc' : 'asc';
+        $cls = 'text-sky-400 hover:text-sky-300';
+        $query = http_build_query(array_merge($filterQuery, ['page' => 1, 'order_col' => $key, 'order' => $nextOrder]));
+        return '<a href="/game/storage?' . $query . '" class="' . $cls . '">' . $label . $arrow . '</a>';
+    };
+    if ($filterName !== '' || $filterRarities !== [] || $filterTypes !== []):
+    ?>
         <?php
-        $filterQuery = [
-            'item_name' => $filterName,
-            'rarities'  => $filterRarities,
-            'types'     => $filterTypes,
-        ];
         $chipLink = function (array $patch) use ($filterQuery): string {
             $params = $filterQuery;
             foreach ($patch as $key => $value) {
@@ -136,27 +156,56 @@ $typeNames = \App\Models\ItemModel::TYPE_NAMES;
     <?php else: ?>
         <div class="rounded-xl border border-slate-700 bg-slate-900/50 overflow-x-auto">
             <table class="w-full text-sm">
-                <thead class="bg-slate-800/80 text-slate-300"><tr><th class="p-3 text-left">Предмет</th><th class="p-3">Количество</th><th class="p-3">Тип</th><th class="p-3">Цена</th><th class="p-3">Действие</th></tr></thead>
+                <thead class="bg-slate-800/80 text-slate-300"><tr>
+                    <th class="py-2 pr-2 text-center"><?= $sortLink('qty', 'Кол-во') ?></th>
+                    <th class="py-2 pr-2 text-left"><?= $sortLink('name', 'Имя') ?></th>
+                    <th class="py-2 pr-2 text-center"><?= $sortLink('type', 'Тип') ?></th>
+                    <th class="py-2 pr-2 text-center"><?= $sortLink('stat', 'Статы') ?></th>
+                    <th class="py-2 pr-2 text-center">Действие</th>
+                </tr></thead>
                 <tbody class="divide-y divide-slate-800">
                 <?php foreach ($items as $item): ?>
                     <tr data-storage-id="<?= (int) $item->store_id ?>">
-                        <td class="p-3">
+                        <td class="py-2.5 pr-2">
                             <?php if (str_starts_with((string) $item->emoji, '/')): ?>
-                                <img src="<?= esc($item->emoji) ?>" class="inline-block w-6 h-6 object-contain align-middle mr-2" alt="">
+                                <img src="<?= esc($item->emoji) ?>" class="inline-block w-6 h-6 object-contain align-middle ml-2" alt="">
                             <?php else: ?>
-                                <span class="mr-2"><?= esc($item->emoji) ?></span>
+                                <span class="ml-2"><?= esc($item->emoji) ?></span>
                             <?php endif; ?>
-                            <span class="<?= esc('rarity-' . $item->rarity) ?>"><?= esc($item->name) ?></span>
+                            <span class="text-xs bg-slate-700 rounded px-1.5 py-0.5 text-slate-300">x<?= (int) $item->quantity ?></span>
                         </td>
-                        <td class="p-3 text-center"><?= (int) $item->quantity ?></td>
-                        <td class="p-3 text-center"><?= esc(\App\Models\ItemModel::TYPE_NAMES[$item->type] ?? $item->type) ?></td>
-                        <td class="p-3 text-center"><?= (int) $item->price ?> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></td>
-                        <td class="p-3 text-center"><button type="button" class="rounded bg-emerald-600 px-3 py-1 text-white hover:bg-emerald-500" onclick="moveFromStorage(<?= (int) $item->store_id ?>)">📤 В инвентарь</button></td>
+                        <td class="py-2.5 pr-2 text-left"><span class="<?= esc('rarity-' . $item->rarity) ?>"><?= esc($item->name) ?></span></td>
+                        <td class="py-2.5 pr-2 text-left"><?= esc(\App\Models\ItemModel::TYPE_NAMES[$item->type] ?? $item->type) ?></td>
+                        <td class="py-2.5 text-slate-300 text-center">
+                            <?php if ($item->type !== 'consumable'): ?>
+                                +<?= (int) $item->value ?> <?= $item->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
+                                <?php if (($item->cmp ?? null) === 'up'): ?>
+                                    <svg class="inline w-3 h-3 align-middle text-emerald-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <?php elseif (($item->cmp ?? null) === 'down'): ?>
+                                    <svg class="inline w-3 h-3 align-middle text-red-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"></polyline></svg>
+                                <?php elseif (($item->cmp ?? null) === 'equal'): ?>
+                                    <span class="text-slate-500 font-bold">=</span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                +<?= (int) $item->value ?> <?= $item->stat === 'hp' ? 'HP' : 'энергии' ?>
+                            <?php endif; ?>
+                        </td>
+                        <td class="py-2.5 pr-4 text-right"><button type="button" class="rounded-lg px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-500 transition-colors cursor-pointer font-semibold" onclick="moveFromStorage(<?= (int) $item->store_id ?>)">В инвентарь</button></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
+
+        <?php if ($totalPages > 1): ?>
+        <div class="flex items-center justify-center gap-3 text-sm">
+            <a href="<?= $pageLink(max(1, $page - 1)) ?>"
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page <= 1 ? 'opacity-40 pointer-events-none' : '' ?>">                <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 12 12 18 18"></polyline></svg> Назад</a>
+            <span class="text-slate-400">Страница <?= $page ?> / <?= $totalPages ?></span>
+            <a href="<?= $pageLink(min($totalPages, $page + 1)) ?>"
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>">Вперёд                 <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 18 12 12 6 6"></polyline></svg></a>
+        </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 <script>

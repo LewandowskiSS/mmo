@@ -30,7 +30,7 @@ $sections = [
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><?= game_icon('/img/misc/map.png', 'h-6 w-6 shrink-0') ?> Город</h1>
-        <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
+        <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
     </div>
 
     <!-- Баннер города -->

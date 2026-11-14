@@ -18,8 +18,10 @@
             <span>Опыт</span>
             <span id="st-xp"><?= esc($character->xp) ?> / <?= esc($xp_needed) ?></span>
         </div>
-        <div class="h-2 bg-slate-700 rounded-full">
-            <div id="bar-xp" class="h-full bg-purple-500 rounded-full" style="width: <?= esc($xp_percent) ?>%"></div>
+        <div class="w-full max-w-[340px] mx-auto">
+            <div class="h-2 bg-slate-700 rounded-full overflow-visible">
+                <div id="bar-xp" class="h-full bg-purple-500 rounded-full" style="width: <?= esc($xp_percent) ?>%"></div>
+            </div>
         </div>
     </div>
 
@@ -30,7 +32,7 @@
                 <span id="st-hp"><?= esc($character->hp) ?> / <?= esc($character->max_hp) ?></span>
             </div>
             <div class="h-2 bg-slate-700 rounded-full">
-                <div id="bar-hp" class="h-full bg-red-500" style="width: <?= esc($hp_percent) ?>%"></div>
+                <div id="bar-hp" class="h-full bg-red-500 rounded-full" style="width: <?= esc($hp_percent) ?>%"></div>
             </div>
         </div>
         <div>
@@ -39,7 +41,7 @@
                 <span id="st-energy"><?= esc($character->energy) ?> / <?= esc($character->max_energy) ?></span>
             </div>
             <div class="h-2 bg-slate-700 rounded-full">
-                <div id="bar-energy" class="h-full bg-sky-400" style="width: <?= esc($energy_percent) ?>%"></div>
+                <div id="bar-energy" class="h-full bg-sky-400 rounded-full" style="width: <?= esc($energy_percent) ?>%"></div>
             </div>
         </div>
     </div>
@@ -53,11 +55,11 @@
         <div class="text-sm text-slate-300">
             <template x-if="event.type === 'monster'">
                 <div class="text-center space-y-2">
-                    <div class="text-5xl" x-html="event.battle.emoji"></div>
+                    <img x-show="event.type === 'monster' && event.battle.emoji" x-bind:src="event.battle.emoji" x-bind:alt="event.battle.name" class="w-32 h-32 object-contain shrink-0 mx-auto">
                     <p class="font-bold text-lg" x-text="event.battle.name"></p>
                     <p class="text-xs text-slate-400" x-text="'Уровень ' + event.battle.level"></p>
                     <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-orange-500" :style="'width:' + monsterPct() + '%'"></div>
+                        <div class="h-full bg-orange-500 rounded-full" :style="'width:' + monsterPct() + '%'"></div>
                     </div>
                     <p class="text-xs text-slate-500" x-text="event.battle.monster_hp + ' / ' + event.battle.hp"></p>
                     <div class="grid grid-cols-2 gap-3 mt-3">

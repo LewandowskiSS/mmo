@@ -113,17 +113,24 @@ body.bg-slate-900 { background-color: var(--bg-body) !important; }
 
 #bar-xp.xp-gaining {
     background: linear-gradient(90deg, #9ca3af 0%, #f4b89a 85%, #ffffff 100%) !important;
-    box-shadow: 0 0 12px rgba(244, 184, 154, 0.6), 0 0 4px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(244, 184, 154, 0.9), 0 0 8px rgba(255, 255, 255, 0.9);
 }
 
 #bar-xp.xp-gaining::after {
     content: '';
     position: absolute;
     right: 0;
-    top: -1px;
-    bottom: -1px;
-    width: 8px;
+    top: -3px;
+    bottom: -3px;
+    width: 12px;
     border-radius: 999px;
     background: #ffffff;
-    box-shadow: 0 0 8px 2px #f4b89a;
+    box-shadow: 0 0 18px 5px #f4b89a;
+}
+
+/* Автоматический размер монстров в блоке боя */
+.text-5xl img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }

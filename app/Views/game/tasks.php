@@ -12,7 +12,7 @@ foreach ($periods as $p => $d) {
 <div class="space-y-6" x-data="tasks(<?= htmlspecialchars(json_encode($periods, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($resetIn, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">📋</span> Задания</h1>
-        <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
+        <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
     </div>
 
     <div class="flex gap-2">
@@ -45,7 +45,7 @@ foreach ($periods as $p => $d) {
                 <span class="font-semibold" x-text="periods[p].percent + '%'"></span>
             </div>
             <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
-                <div class="h-full bg-emerald-500 transition-all duration-500" :style="'width:' + periods[p].percent + '%'"></div>
+                <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" :style="'width:' + periods[p].percent + '%'"></div>
             </div>
             <p class="text-xs text-slate-500"
                 x-text="periods[p].next_reward ? 'Забери сундук, чтобы получить: ' + periods[p].next_reward : '— всё получено!'"></p>
@@ -71,7 +71,7 @@ foreach ($periods as $p => $d) {
                         <p class="font-semibold" x-text="it.name"></p>
                         <p x-show="it.description" class="text-xs text-slate-400" x-text="it.description"></p>
                         <div class="mt-2 h-2 bg-slate-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-emerald-500" :style="'width:' + Math.min(100, it.progress / Math.max(1, it.target) * 100) + '%'"></div>
+                            <div class="h-full bg-emerald-500 rounded-full" :style="'width:' + Math.min(100, it.progress / Math.max(1, it.target) * 100) + '%'"></div>
                         </div>
                         <p class="text-xs text-slate-500 mt-1">
                             <span x-text="it.progress + ' / ' + it.target"></span>
@@ -92,7 +92,7 @@ foreach ($periods as $p => $d) {
                     </template>
                     <template x-if="!it.claimed && it.progress < it.target">
                         <a :href="goMap[it.type] || '/walk'"
-                            class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold whitespace-nowrap">К заданию →</a>
+                            class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold whitespace-nowrap flex items-center gap-1">К заданию <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
                     </template>
                 </li>
             </template>

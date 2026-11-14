@@ -22,25 +22,25 @@
             <p class="text-2xl mb-1">📋</p>
             <p class="font-bold"><?= (int) $tasks_completed ?>/<?= (int) $tasks_total ?></p>
             <p class="text-xs text-slate-400 mb-1">Заданий сегодня</p>
-            <a href="/game/tasks" class="text-xs text-sky-400 hover:text-sky-300">Смотреть задания →</a>
+            <a href="/game/tasks" class="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">Смотреть задания <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
         </div>
         <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <p class="text-2xl mb-1"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
             <p class="font-bold"><?= esc($character->gold) ?></p>
             <p class="text-xs text-slate-400 mb-1">Золото</p>
-            <a href="/game/shop" class="text-xs text-sky-400 hover:text-sky-300">В магазин →</a>
+            <a href="/game/shop" class="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">В магазин <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
         </div>
         <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <p class="text-2xl mb-1">🗝️</p>
             <p class="font-bold"><?= (int) $keys_total ?></p>
             <p class="text-xs text-slate-400 mb-1">Ключей</p>
-            <a href="/game/chests" class="text-xs text-sky-400 hover:text-sky-300">К сундукам →</a>
+            <a href="/game/chests" class="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">К сундукам <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
         </div>
         <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <p class="text-2xl mb-1">🏆</p>
             <p class="font-bold">Ур. <?= esc($character->level) ?></p>
             <p class="text-xs text-slate-400 mb-1">Твой прогресс</p>
-            <a href="/game/leaderboard" class="text-xs text-sky-400 hover:text-sky-300">Топ игроков →</a>
+            <a href="/game/leaderboard" class="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">Топ игроков <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
         </div>
     </div>
 </div>

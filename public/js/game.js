@@ -148,6 +148,7 @@ function layout(seed = {}) {
         sidebarMobile: false,
         profileOpen: false,
         searchOpen: false,
+        statsOpen: localStorage.getItem('statsOpen') !== '0',
         ready: false,
 
         // Живые данные профиля (обновляются с /game/state при каждом открытии меню)
@@ -156,15 +157,20 @@ function layout(seed = {}) {
             tag: seed.tag || '0000',
             gender: seed.gender || 'male',
             level: seed.level || 1,
+            xp: seed.xp || 0,
             xpPercent: seed.xpPercent || 0,
+            xpNeeded: seed.xpNeeded || 0,
             gold: seed.gold || 0,
             bank: seed.bank || 0,
             energy: seed.energy || 0,
             maxEnergy: seed.maxEnergy || 20,
             hp: seed.hp || 0,
             maxHp: seed.maxHp || 50,
+            attack: seed.attack || 0,
+            defense: seed.defense || 0,
             diamonds: seed.diamonds || 0,
             walks: seed.walks || 0,
+            nextEnergyIn: seed.nextEnergyIn || 0,
         },
 
         init() {
@@ -204,15 +210,20 @@ function layout(seed = {}) {
                 const s = await Game.get('/game/state');
                 if (!s || s.level === undefined) return;
                 this.st.level = s.level;
+                this.st.xp = s.xp || 0;
                 this.st.xpPercent = s.xp_needed ? Math.min(100, Math.round(s.xp / s.xp_needed * 100)) : 0;
+                this.st.xpNeeded = s.xp_needed || 0;
                 this.st.gold = s.gold;
                 this.st.bank = s.bank || 0;
                 this.st.energy = s.energy;
                 this.st.maxEnergy = s.max_energy;
                 this.st.hp = s.hp;
                 this.st.maxHp = s.max_hp;
+                this.st.attack = s.attack || 0;
+                this.st.defense = s.defense || 0;
                 this.st.diamonds = s.diamonds;
                 this.st.walks = s.walks || 0;
+                this.st.nextEnergyIn = s.next_energy_in || 0;
             } catch (e) {
                 // Тихо: при ошибке показываем последние известные значения
             }

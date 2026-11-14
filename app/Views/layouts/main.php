@@ -201,40 +201,106 @@
                 </div>
             </div>
             <button type="button" class="text-slate-400 hover:text-white" @click.stop="statsOpen = !statsOpen; localStorage.setItem('statsOpen', statsOpen ? '1' : '0')">
-                <span x-show="!statsOpen">▼</span><span x-show="statsOpen">▲</span>
+                <svg x-show="!statsOpen" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                <svg x-show="statsOpen" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
             </button>
+        </div>
+
+        <!-- Navigation buttons (always visible) -->
+        <div class="p-4 border-b border-slate-700" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>
+            <div class="grid grid-cols-5 gap-2">
+                <a href="/walk" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Прогулка">
+                    <span class="text-2xl">🚶</span>
+                    <span class="text-[10px] text-slate-400 mt-1">Прогулка</span>
+                </a>
+                <a href="/game/battle" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Бой">
+                    <span class="text-2xl">🗡️</span>
+                    <span class="text-[10px] text-slate-400 mt-1">Бой</span>
+                </a>
+                <a href="/game/inventory" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Инвентарь">
+                    <span class="text-2xl">🎒</span>
+                    <span class="text-[10px] text-slate-400 mt-1">Инвентарь</span>
+                </a>
+                <a href="/game/shop" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Магазин">
+                    <span class="text-2xl">💰</span>
+                    <span class="text-[10px] text-slate-400 mt-1">Магазин</span>
+                </a>
+                <a href="/game/tasks" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Задания">
+                    <span class="text-2xl">📋</span>
+                    <span class="text-[10px] text-slate-400 mt-1">Задания</span>
+                </a>
+            </div>
         </div>
 
         <!-- Stats panel -->
         <div class="border-b border-slate-700 p-4 text-xs space-y-3 overflow-y-auto" x-show="statsOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak>
-            <div class="grid grid-cols-3 gap-2">
-                <div class="col-span-3">
-                    <div class="flex justify-between mb-1"><span class="text-red-400">❤ Health</span><span x-text="st.hp + '/' + st.maxHp"></span></div>
-                    <div class="h-1.5 bg-slate-700 rounded-full"><div id="bar-hp" class="h-full bg-red-500 rounded-full transition-all" :style="'width:' + (st.maxHp ? (st.hp/st.maxHp*100) : 0) + '%'"></div></div>
+            <div class="bg-[#141416] border border-[#26262a] rounded-[10px] p-[12px] m-[8px] space-y-2">
+                <!-- Health -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 w-10">HP</span>
+                    <div class="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div id="bar-hp" class="h-full bg-red-500 transition-all" :style="'width:' + (st.maxHp ? (st.hp/st.maxHp*100) : 0) + '%'"></div>
+                    </div>
+                    <span id="st-hp" class="text-xs text-slate-300 w-16 text-right" x-text="st.hp + '/' + st.maxHp"></span>
                 </div>
-                <div class="col-span-3">
-                    <div class="flex justify-between mb-1"><span class="text-yellow-400">⚡ Energy</span><span x-text="st.energy + '/' + st.maxEnergy"></span></div>
-                    <div class="h-1.5 bg-slate-700 rounded-full"><div id="bar-energy" class="h-full bg-yellow-500 rounded-full transition-all" :style="'width:' + (st.maxEnergy ? (st.energy/st.maxEnergy*100) : 0) + '%'"></div></div>
+                <!-- Energy -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 w-10">⚡</span>
+                    <div class="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div id="bar-energy" class="h-full bg-emerald-500 transition-all" :style="'width:' + (st.maxEnergy ? (st.energy/st.maxEnergy*100) : 0) + '%'"></div>
+                    </div>
+                    <span id="st-energy" class="text-xs text-slate-300 w-16 text-right" x-text="st.energy + '/' + st.maxEnergy"></span>
+                    <button type="button" class="text-[11px] px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold" id="refill-btn">Refill</button>
                 </div>
-                <div class="col-span-3">
-                    <div class="flex justify-between mb-1"><span class="text-purple-400">★ Experience</span><span x-text="st.xpPercent + '%'"></span></div>
-                    <div class="h-1.5 bg-slate-700 rounded-full"><div id="bar-xp" class="h-full bg-purple-500 rounded-full transition-all" :style="'width:' + st.xpPercent + '%'"></div></div>
+                <!-- EXP -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 w-10">★</span>
+                    <div class="flex-1 h-1.5 bg-slate-700 rounded-full overflow-visible relative">
+                        <div id="bar-xp" class="h-full bg-purple-500 transition-all rounded-full" :style="'width:' + st.xpPercent + '%'"></div>
+                        <span class="absolute inset-0 flex items-center justify-center text-[9px] text-white font-semibold" x-text="'Lvl ' + st.level"></span>
+                    </div>
+                    <span id="st-xp" class="text-xs text-slate-300 w-20 text-right" x-text="st.xp + ' / ' + st.xpNeeded"></span>
+                </div>
+                <!-- Attack / Defense -->
+                <div class="flex items-center gap-2 text-slate-300">
+                    <span class="text-xs text-slate-400 w-10">⚔</span>
+                    <span class="flex-1">Атака</span>
+                    <span id="st-attack" class="font-semibold" x-text="st.attack"></span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-300">
+                    <span class="text-xs text-slate-400 w-10">🛡</span>
+                    <span class="flex-1">Защита</span>
+                    <span id="st-defense" class="font-semibold" x-text="st.defense"></span>
                 </div>
             </div>
-            <div class="flex justify-between pt-1 border-t border-slate-700/50">
-                <span class="text-amber-400">🪙 <span x-text="st.gold"></span></span>
-                <span class="text-emerald-400">💎 <span x-text="st.diamonds || 0"></span></span>
+
+            <!-- Currencies -->
+            <div class="flex justify-between pt-2 border-t border-[#26262a]">
+                <span class="flex items-center gap-1 text-xs text-amber-300">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a2 2 0 1 1 0 4H9.5"/></svg>
+                    <span id="st-gold" x-text="st.gold"></span>
+                </span>
+                <span class="flex items-center gap-1 text-xs text-emerald-300">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 4 9l8 13 8-13-8-7ZM4 9h16M12 2l3 7-3 13-3-13 3-7Z"/></svg>
+                    <span id="st-diamonds" x-text="st.diamonds || 0"></span>
+                </span>
             </div>
-            <div class="flex justify-between text-slate-400">
-                <span>Steps: <span x-text="st.walks"></span></span>
-                <span>Lvl <span x-text="st.level"></span></span>
+
+            <!-- Energy timer -->
+            <div class="text-center text-[10px] text-slate-500">
+                <span id="energy-timer" x-text="st.energy >= st.maxEnergy ? '🔋 полная' : ('🔋 через ' + (st.nextEnergyIn || 0) + ' с')"></span>
             </div>
-            <div class="grid grid-cols-5 gap-2 pt-2 border-t border-slate-700/50">
-                <a href="/walk" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Walk">🚶</a>
-                <a href="/game/battle" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Battle">⚔️</a>
-                <a href="/game/inventory" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Inventory">🎒</a>
-                <a href="/game/shop" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Shop">🛒</a>
-                <a href="/game/tasks" class="aspect-square flex items-center justify-center bg-slate-700/50 hover:bg-slate-600 rounded-lg" title="Tasks">📋</a>
+
+            <!-- Status -->
+            <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 pt-2 border-t border-[#26262a] text-[11px] text-slate-400">
+                <div class="flex justify-between"><span>Steps</span><span x-text="st.walks" class="text-slate-200"></span></div>
+                <div class="flex justify-between"><span>Kills</span><span x-text="st.kills || 0" class="text-slate-200"></span></div>
+                <div class="flex justify-between"><span>Quests</span><span x-text="st.quests || 0" class="text-slate-200"></span></div>
+                <div class="flex justify-between"><span>Chests</span><span x-text="st.chests || 0" class="text-slate-200"></span></div>
+            </div>
+
+            <div class="pt-2 mt-1 border-t border-[#26262a] text-[10px] text-slate-500">
+                User ID: <span class="text-slate-300"><?= (int)($layoutData['user_id'] ?? 0) ?></span>
             </div>
         </div>
 
@@ -245,8 +311,8 @@
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
                     <span class="shrink-0">⚔️</span>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Adventure</span>
-                    <span x-show="(!sidebarCollapsed || sidebarMobile) && advOpen" x-cloak class="ml-auto text-xs">▼</span>
-                    <span x-show="(!sidebarCollapsed || sidebarMobile) && !advOpen" x-cloak class="ml-auto text-xs">▶</span>
+                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && advOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && !advOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div x-show="advOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
                     <a href="/" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
@@ -255,15 +321,7 @@
                     <a href="/town" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
                         <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> Город
                     </a>
-                    <a href="/walk" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <span class="text-lg shrink-0">🚶</span> Прогулка
-                    </a>
-                    <a href="/game/battle" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <span class="text-lg shrink-0">🗡️</span> Бой
-                    </a>
-                    <a href="/game/inventory" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <span class="text-lg shrink-0">🎒</span> Инвентарь
-                    </a>
+
                 </div>
             </div>
 
@@ -273,8 +331,8 @@
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
                     <span class="shrink-0">👤</span>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Character</span>
-                    <span x-show="(!sidebarCollapsed || sidebarMobile) && charOpen" x-cloak class="ml-auto text-xs">▼</span>
-                    <span x-show="(!sidebarCollapsed || sidebarMobile) && !charOpen" x-cloak class="ml-auto text-xs">▶</span>
+                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && charOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && !charOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div x-show="charOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
                     <a href="/view/<?= (int)(session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
@@ -307,8 +365,8 @@
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
                     <span class="shrink-0">🎮</span>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Game</span>
-                    <span x-show="(!sidebarCollapsed || sidebarMobile) && gameOpen" x-cloak class="ml-auto text-xs">▼</span>
-                    <span x-show="(!sidebarCollapsed || sidebarMobile) && !gameOpen" x-cloak class="ml-auto text-xs">▶</span>
+                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && gameOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && !gameOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div x-show="gameOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
                     <a href="/game/shop" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">

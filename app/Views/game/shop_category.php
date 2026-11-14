@@ -4,7 +4,7 @@
 <div class="space-y-6" x-data="shopCategory(<?= (int) ($initialGold ?? 0) ?>, <?= htmlspecialchars(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/shop.png" class="w-6 h-6 object-contain shrink-0" alt="магазин"><?= esc($shopInfo['title']) ?></h1>
-        <a href="/game/shop" class="text-sm text-slate-400 hover:text-white">← К магазинам</a>
+        <a href="/game/shop" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> К магазинам</a>
     </div>
 
     <div class="bg-slate-800 rounded-lg p-4 text-sm text-slate-300">
@@ -48,9 +48,9 @@
     <div class="flex justify-center">
         <div class="flex gap-1">
             <button type="button" @click="prevPage()" :disabled="page <= 1"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed"><img src="/img/misc/left_arrow.png" alt="◀" class="w-4 h-4"></button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed"><svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 12 12 18 18"></polyline></svg></button>
             <button type="button" @click="nextPage()" :disabled="page >= totalPages()"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed"><img src="/img/misc/right_arrow.png" alt="▶" class="w-4 h-4"></button>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed"><svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 18 12 12 6 6"></polyline></svg></button>
         </div>
     </div>
     <p class="text-center text-xs text-slate-500" x-text="'Страница ' + page + ' / ' + totalPages()"></p>

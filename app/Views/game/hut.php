@@ -7,7 +7,7 @@
             <p class="text-sm text-slate-400 mb-1">Восточная сторона</p>
             <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">🎁</span> Хижина</h1>
         </div>
-        <a href="/town" class="text-sm text-slate-400 hover:text-white">← В город</a>
+        <a href="/town" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> В город</a>
     </div>
 
     <div class="relative overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-emerald-900/50 via-slate-800 to-slate-900">
@@ -25,7 +25,7 @@
             <a href="/game/chests" class="flex items-center gap-4 px-4 py-4 text-sm hover:bg-slate-800 transition-colors">
                 <span class="text-xl shrink-0">📦</span>
                 <span class="font-semibold text-slate-100">Сундуки</span>
-                <span class="ml-auto text-slate-500">Открывай сундуки и получай предметы →</span>
+                <span class="ml-auto text-slate-500 flex items-center gap-1">Открывай сундуки и получай предметы <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
             </a>
             <div class="flex items-center gap-4 px-4 py-4 text-sm text-slate-500">
                 <span class="text-xl shrink-0">🎁</span>
