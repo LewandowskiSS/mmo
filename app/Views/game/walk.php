@@ -18,7 +18,7 @@
             <span>Опыт</span>
             <span id="st-xp"><?= esc($character->xp) ?> / <?= esc($xp_needed) ?></span>
         </div>
-        <div class="w-full max-w-[340px] mx-auto">
+        <div class="w-full">
             <div class="h-2 bg-slate-700 rounded-full overflow-visible">
                 <div id="bar-xp" class="h-full bg-purple-500 rounded-full xp-glow"
                     style="width: <?= esc($xp_percent) ?>%"></div>

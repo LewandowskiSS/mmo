@@ -155,6 +155,15 @@
     .profile-panel { position:absolute; top:calc(100% + 6px); left:8px; right:8px; z-index:100; background:#141416; border:1px solid #27272a; border-radius:10px; padding:14px; box-shadow:0 12px 32px rgba(0,0,0,.85); max-height:calc(100dvh - 90px); overflow-y:auto; }
     .profile-label { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:5px; font-size:13px; color:#a1a1aa; flex-wrap:wrap; }
     .profile-label strong { display:inline-flex; align-items:center; gap:5px; color:#e4e4e7; font-weight:600; }
+    /* Энергия: строка значений + опциональная строка таймера. При полной энергии
+       таймер скрыт, поэтому отступ снимается и жёлтая полоса ложится вплотную. */
+    .profile-energy { margin-bottom:6px; }
+    .profile-energy-row { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:13px; line-height:1.25; white-space:nowrap; }
+    .profile-energy-row + .profile-energy-row { margin-top:3px; }
+    .profile-energy-title { display:inline-flex; align-items:center; gap:5px; color:#e4e4e7; font-weight:600; }
+    .profile-energy-value { display:inline-flex; align-items:center; gap:4px; color:#f4f4f5; font-weight:600; }
+    .profile-energy-timer { font-size:11px; font-weight:400; color:#71717a; }
+    .profile-energy-row .profile-action { margin-left:0; }
     .profile-track { width:100%; height:8px; background:#27272a; border-radius:999px; overflow:hidden; }
     .profile-track > div { height:100%; transition:width .25s ease; }
     .profile-divider { border-bottom:1px dashed rgba(255,255,255,.1); margin:12px 0; }
@@ -279,20 +288,33 @@
                 <div class="profile-label"><strong>Опыт</strong><span><span id="st-xp" x-text="st.xp + ' / ' + st.xpNeeded"></span> EXP</span></div>
                 <div class="profile-track"><div style="background:#10b981" :style="{width: Math.max(0, Math.min(100, st.xpPercent)) + '%'}"></div></div>
                 <div class="profile-divider"></div>
-                <div class="profile-label"><strong><img src="/img/misc/energy.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Энергия <small class="text-[10px] text-zinc-500 font-normal" x-text="st.energy >= st.maxEnergy ? 'полная' : (st.nextEnergyIn || 0) + ' с'"></small></strong><span><span id="st-energy" x-text="st.energy + ' / ' + st.maxEnergy"></span> EP<a href="/game/shop" class="profile-action">Пополнить</a></span></div>
+                <div class="profile-energy" :class="{ 'has-timer': st.energy < st.maxEnergy && (st.nextEnergyIn || 0) > 0 }">
+                    <div class="profile-energy-row">
+                        <span class="profile-energy-title"><img src="/img/misc/energy.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Энергия</span>
+                        <span class="profile-energy-value"><span id="st-energy" x-text="st.energy"></span> EP <a href="/game/shop" class="profile-action">Пополнить</a></span>
+                    </div>
+                    <div class="profile-energy-row" x-show="st.energy < st.maxEnergy" x-cloak>
+                        <span class="profile-energy-timer" x-show="(st.nextEnergyIn || 0) > 0" x-text="'через ' + (st.nextEnergyIn || 0) + ' с'"></span>
+                    </div>
+                </div>
                 <div class="profile-track"><div style="background:#eab308" :style="{width: Math.max(0, Math.min(100, st.maxEnergy ? st.energy / st.maxEnergy * 100 : 0)) + '%'}"></div></div>
                 <div class="profile-divider"></div>
                 <button type="button" class="profile-heading" @click="toggleProfileSection('currenciesOpen')" :aria-expanded="currenciesOpen" aria-controls="profile-currencies">Валюты<svg :style="{transform: currenciesOpen ? 'rotate(180deg)' : 'rotate(0deg)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></button>
                 <div id="profile-currencies" class="profile-accordion" :style="{gridTemplateRows: currenciesOpen ? '1fr' : '0fr'}" :inert="!currenciesOpen"><div>
-                    <div class="profile-row"><span>Золото</span><span class="profile-value"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-gold" x-text="st.gold"></span></span></div>
-                    <div class="profile-row"><span>Банк</span><span class="profile-value"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-bank" x-text="st.bank"></span></span></div>
-                    <div class="profile-row"><span>Изумруды</span><span class="profile-value"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-diamonds" x-text="st.diamonds || 0"></span><a href="/game/shop" class="profile-action" style="padding:2px 10px">Купить</a></span></div>
+                    <div class="profile-row"><span>Золото</span><span class="profile-value"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-gold" x-text="fmt(st.gold)"></span></span></div>
+                    <div class="profile-row"><span>Банк</span><span class="profile-value"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-bank" x-text="fmt(st.bank)"></span></span></div>
+                    <div class="profile-row"><span>Изумруды</span><span class="profile-value"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-diamonds" x-text="fmt(st.diamonds || 0)"></span><a href="/game/shop" class="profile-action" style="padding:2px 10px">Купить</a></span></div>
                 </div></div>
                 <div class="profile-divider" style="margin:10px 0"></div>
                 <button type="button" class="profile-heading" @click="toggleProfileSection('attributesOpen')" :aria-expanded="attributesOpen" aria-controls="profile-attributes">Характеристики<svg :style="{transform: attributesOpen ? 'rotate(180deg)' : 'rotate(0deg)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></button>
                 <div id="profile-attributes" class="profile-accordion" :style="{gridTemplateRows: attributesOpen ? '1fr' : '0fr'}" :inert="!attributesOpen"><div>
                     <div class="profile-row"><span>Атака</span><span class="profile-value"><img src="/img/misc/fight.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.attack"></span></span></div>
                     <div class="profile-row"><span>Защита</span><span class="profile-value" x-text="st.defense"></span></div>
+                    <div class="profile-row"><span>Свободные очки</span><span class="profile-value" x-text="st.freeStatPoints || 0"></span></div>
+                </div></div>
+                <div class="profile-divider" style="margin:10px 0"></div>
+                <button type="button" class="profile-heading" @click="toggleProfileSection('statisticsOpen')" :aria-expanded="statisticsOpen" aria-controls="profile-statistics">Статистика<svg :style="{transform: statisticsOpen ? 'rotate(180deg)' : 'rotate(0deg)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div id="profile-statistics" class="profile-accordion" :style="{gridTemplateRows: statisticsOpen ? '1fr' : '0fr'}" :inert="!statisticsOpen"><div>
                     <div class="profile-row"><span>Прогулки</span><span class="profile-value" x-text="st.walks"></span></div>
                     <div class="profile-row"><span>Убийства</span><span class="profile-value" x-text="st.kills || 0"></span></div>
                     <div class="profile-row"><span>Задания</span><span class="profile-value"><img src="/img/misc/quests.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.quests || 0"></span></span></div>

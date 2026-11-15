@@ -81,10 +81,26 @@ if (window.Swal && Swal.defaults) {
         xpAnimFrame = requestAnimationFrame(step);
     }
 
+    // Сокращение больших чисел: до 999999 включительно — слитно как есть (216573),
+    // 1 000 000+ — «млн» (усечение до 2 знаков: 1млн, 1.19млн, 125.55млн),
+    // 1 000 000 000+ — «млрд» (усечение до 3 знаков: 1млрд, 1.115млрд).
+    // Хвостовые нули отбрасываются сами при приведении числа к строке.
+    function formatCurrency(n) {
+        const num = Math.floor(Number(n) || 0);
+        if (num <= 999999) return String(num);
+        if (num <= 999999999) return String(Math.floor((num / 1e6) * 100) / 100) + 'млн';
+        return String(Math.floor((num / 1e9) * 1000) / 1000) + 'млрд';
+    }
+
     // Обновить статы персонажа на панели по объекту state
     function updateState(s) {
         if (!s) return;
-        const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        const setText = (id, val, raw) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = val;
+            if (raw !== undefined) el.title = raw;
+        };
         const setBar = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
 
         const xpEl = document.getElementById('st-xp');
@@ -114,13 +130,13 @@ if (window.Swal && Swal.defaults) {
         prevXp = s.xp;
         prevLevel = s.level;
 
-        setText('st-gold', s.gold);
-        if (s.bank !== undefined) setText('st-bank', s.bank);
-        if (s.diamonds !== undefined) setText('st-diamonds', s.diamonds);
+        setText('st-gold', formatCurrency(s.gold), s.gold);
+        if (s.bank !== undefined) setText('st-bank', formatCurrency(s.bank), s.bank);
+        if (s.diamonds !== undefined) setText('st-diamonds', formatCurrency(s.diamonds), s.diamonds);
         window.dispatchEvent(new CustomEvent('character-state', { detail: s }));
         setText('st-hp', s.hp + ' / ' + s.max_hp);
         setBar('bar-hp', s.max_hp ? (s.hp / s.max_hp * 100) : 0);
-        setText('st-energy', s.energy + ' / ' + s.max_energy);
+        setText('st-energy', s.energy);
         setBar('bar-energy', s.max_energy ? (s.energy / s.max_energy * 100) : 0);
         setText('st-attack', s.attack);
         setText('st-defense', s.defense);
@@ -137,7 +153,7 @@ if (window.Swal && Swal.defaults) {
         }
     }
 
-    window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS, isImage: (e) => typeof e === 'string' && e.startsWith('/') };
+    window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS, fmt: formatCurrency, isImage: (e) => typeof e === 'string' && e.startsWith('/') };
 })();
 
 // Фолбэк: если Alpine по какой-то причине не поднялся — показываем приложение
@@ -154,6 +170,7 @@ function layout(seed = {}) {
         statsOpen: localStorage.getItem('statsOpen') === '1',
         currenciesOpen: localStorage.getItem('profileCurrenciesOpen') !== '0',
         attributesOpen: localStorage.getItem('profileAttributesOpen') !== '0',
+        statisticsOpen: localStorage.getItem('sidebar_acc_statistics') !== '0',
         // Состояние аккордеонов навигации — живёт в корне, чтобы иконки
         // работали и при свёрнутом сайдбаре (разворачивают его).
         advOpen: localStorage.getItem('advOpen') === '1',
@@ -178,6 +195,7 @@ function layout(seed = {}) {
             maxHp: seed.maxHp || 50,
             attack: seed.attack || 0,
             defense: seed.defense || 0,
+            freeStatPoints: seed.freeStatPoints || 0,
             diamonds: seed.diamonds || 0,
             walks: seed.walks || 0,
             kills: seed.kills || 0,
@@ -185,6 +203,11 @@ function layout(seed = {}) {
             chests: seed.chests || 0,
             userId: seed.userId || 0,
             nextEnergyIn: seed.nextEnergyIn || 0,
+        },
+
+        // Форматирование валют в панели профиля (млн/млрд) — единый форматтер из game.js
+        fmt(n) {
+            return (window.Game && Game.fmt) ? Game.fmt(n) : String(Math.floor(Number(n) || 0));
         },
 
         init() {
@@ -223,9 +246,10 @@ function layout(seed = {}) {
         },
 
         toggleProfileSection(key) {
-            if (key !== 'currenciesOpen' && key !== 'attributesOpen') return;
+            if (key !== 'currenciesOpen' && key !== 'attributesOpen' && key !== 'statisticsOpen') return;
             this[key] = !this[key];
-            localStorage.setItem(key === 'currenciesOpen' ? 'profileCurrenciesOpen' : 'profileAttributesOpen', this[key] ? '1' : '0');
+            const storageKey = key === 'currenciesOpen' ? 'profileCurrenciesOpen' : key === 'attributesOpen' ? 'profileAttributesOpen' : 'sidebar_acc_statistics';
+            localStorage.setItem(storageKey, this[key] ? '1' : '0');
         },
 
         toggleSidebar() {

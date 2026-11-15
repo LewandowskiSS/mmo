@@ -67,8 +67,12 @@ foreach ($periods as $p => $d) {
             <template x-for="it in periods[p].items" :key="it.id">
                 <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3">
                     <div class="w-8 h-8 shrink-0 flex items-center justify-center">
-                        <img x-show="Game.isImage(it.emoji)" :src="it.emoji" alt="" class="w-8 h-8 object-contain">
-                        <span x-show="!Game.isImage(it.emoji)" class="text-2xl leading-none" x-text="it.emoji"></span>
+                        <template x-if="iconIsImage(it.emoji)">
+                            <img :src="it.emoji" alt="" class="w-8 h-8 object-contain">
+                        </template>
+                        <template x-if="!iconIsImage(it.emoji)">
+                            <span class="inline-block align-middle text-2xl leading-none" x-text="it.emoji"></span>
+                        </template>
                     </div>
                     <div class="flex-1">
                         <p class="font-semibold" x-text="it.name"></p>
@@ -121,6 +125,15 @@ function tasks(seed, resetIn) {
 
         init() {
             setInterval(() => this.tick(), 1000);
+        },
+
+        // Иконка является путём к картинке, а не текстовым эмодзи
+        iconIsImage(icon) {
+            if (typeof icon !== 'string') return false;
+            const v = icon.trim();
+            if (v === '') return false;
+            if (v.startsWith('/')) return true;
+            return /^https?:\/\//i.test(v) || /\.(png|svg|webp|ico|gif|jpe?g)$/i.test(v);
         },
 
         tick() {
@@ -226,7 +239,7 @@ function tasks(seed, resetIn) {
         async refresh(period) {
             const c = await Swal.fire({
                 title: 'Обновить задания?',
-                text: 'Новый случайный набор на этот период. Стоимость: <img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5. Доступно только если нет прогресса!',
+                html: 'Новый случайный набор на этот период. Стоимость: <img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5. Доступно только если нет прогресса!',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Обновить (<img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5)',
