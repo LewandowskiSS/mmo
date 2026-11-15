@@ -7,7 +7,7 @@
             <p class="text-sm text-slate-400 mb-1">Центр города</p>
             <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><?= game_icon('/img/misc/bank.png', 'h-8 w-8 align-middle inline-block mr-1 object-contain shrink-0') ?> Банк</h1>
         </div>
-        <a href="/town" class="text-sm text-slate-400 hover:text-white">← В город</a>
+        <a href="/town" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> В город</a>
     </div>
 
     <div class="relative overflow-hidden rounded-2xl border border-amber-700/50 bg-gradient-to-br from-amber-900/70 via-slate-800 to-slate-900">
@@ -83,9 +83,9 @@
             <p x-show="!transactions.length" class="py-6 text-center text-sm text-slate-500">Операций пока нет.</p>
         </div>
         <div x-show="totalPages > 1" class="mt-4 flex items-center justify-center gap-2">
-            <button type="button" @click="loadTransactions(page - 1)" :disabled="page <= 1" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <img src="/img/misc/left_arrow.png" alt="←" class="w-4 h-4"></button>
+            <button type="button" @click="loadTransactions(page - 1)" :disabled="page <= 1" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 12 12 18 18"></polyline></svg></button>
             <span class="text-sm text-slate-400"><span x-text="page"></span> / <span x-text="totalPages"></span></span>
-            <button type="button" @click="loadTransactions(page + 1)" :disabled="page >= totalPages" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <img src="/img/misc/right_arrow.png" alt="→" class="w-4 h-4"></button>
+            <button type="button" @click="loadTransactions(page + 1)" :disabled="page >= totalPages" class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed">                <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 18 12 12 6 6"></polyline></svg></button>
         </div>
     </section>
 </div>

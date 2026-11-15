@@ -13,8 +13,8 @@ $hpPercent = min(100, max(0, $hp / $maxHp * 100));
 
 <div class="space-y-6" x-data="healerPage(<?= $hp ?>, <?= $maxHp ?>, <?= $healCount ?>, <?= ! empty($showIntro) ? 'true' : 'false' ?>)" x-init="init()">
     <div class="flex items-center justify-between border-b border-slate-700 pb-4">
-        <h1 class="text-3xl font-bold">🧪 Целитель</h1>
-        <a href="/town" class="text-sm text-slate-400 hover:text-white">← В город</a>
+        <h1 class="text-3xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/health_potion.png" class="w-7 h-7 shrink-0 object-contain" alt="целитель"> Целитель</h1>
+        <a href="/town" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> В город</a>
     </div>
 
     <section class="rounded-xl border border-amber-700/50 bg-slate-800 p-6">
@@ -24,7 +24,7 @@ $hpPercent = min(100, max(0, $hp / $maxHp * 100));
 
         <div class="mt-6">
             <div class="mb-2 flex items-center justify-between text-sm">
-                <span class="font-semibold text-slate-200">❤️ Здоровье</span>
+                <span class="font-semibold text-slate-200 flex items-center gap-1"><img src="/img/misc/Heart.png" class="inline-block w-4 h-4 align-middle object-contain" alt="здоровье"> Здоровье</span>
                 <span class="text-slate-300"><span x-text="hp"></span> / <span x-text="maxHp"></span></span>
             </div>
             <div class="h-3 overflow-hidden rounded-full bg-slate-700" role="progressbar" aria-label="Здоровье" aria-valuemin="0" :aria-valuenow="hp" :aria-valuemax="maxHp">
@@ -48,7 +48,7 @@ $hpPercent = min(100, max(0, $hp / $maxHp * 100));
 
         <button type="button" @click="attemptHeal()" :disabled="isProcessing || healCount >= 3 || hp >= maxHp"
                 class="mt-6 w-full rounded-lg bg-emerald-600 px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-600">
-            <span x-show="!isProcessing">🧪 Восстановить здоровье</span>
+            <span x-show="!isProcessing" class="inline-flex items-center gap-1.5"><img src="/img/misc/health_potion.png" class="inline-block w-5 h-5 align-middle object-contain" alt=""> Восстановить здоровье</span>
             <span x-show="isProcessing">Обработка…</span>
         </button>
         <p class="mt-3 text-center text-xs text-slate-400">Одно лечение полностью восстанавливает HP. Не более трёх успешных лечений в календарный день.</p>

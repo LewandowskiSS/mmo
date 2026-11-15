@@ -47,10 +47,10 @@ $filterQuery = [
 $sortLink = function (string $key, string $label) use ($order_col, $order, $filterQuery): string {
     $arrow = '';
     if ($order_col === $key) {
-        $arrow = $order === 'asc' ? ' ▲' : ' ▼';
+        $arrow = $order === 'asc' ? ' <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>' : ' <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
     }
     $nextOrder = ($order_col === $key && $order === 'asc') ? 'desc' : 'asc';
-    $cls = $order_col === $key ? 'text-sky-300' : 'text-indigo-300 hover:text-sky-300';
+    $cls = $order_col === $key ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-300';
     $query = http_build_query(array_merge($filterQuery, ['page' => 1, 'order_col' => $key, 'order' => $nextOrder]));
     return '<a href="?' . esc($query) . '" class="' . $cls . '">' . $label . $arrow . '</a>';
 };
@@ -80,7 +80,7 @@ $icon = function ($e): string {
 <div class="space-y-6" x-data="inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/bag.png" class="inline-block w-8 h-8 align-middle object-contain shrink-0" alt="инвентарь"> Инвентарь</h1>
-        <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
+        <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
     </div>
 
     <!-- Активные фильтры (чипсы) -->
@@ -102,19 +102,22 @@ $icon = function ($e): string {
             <?php if ($filterName !== ''): ?>
                 <a href="<?= esc($chipLink(['item_name' => ''])) ?>"
                     class="inline-flex items-center gap-1 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3 py-1 text-xs text-indigo-200 hover:bg-indigo-500/25">
-                    🔍 Имя: <?= esc($filterName) ?> <span aria-hidden="true">×</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Имя: <?= esc($filterName) ?> <span aria-hidden="true">×</span>
                 </a>
             <?php endif; ?>
             <?php foreach ($filterRarities as $r): ?>
                 <a href="<?= esc($chipLink(['rarities' => array_values(array_diff($filterRarities, [$r]))])) ?>"
                     class="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-xs text-amber-200 hover:bg-amber-500/25">
-                    ✨ <?= esc($rarityNames[$r] ?? $r) ?> <span aria-hidden="true">×</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2z"></path></svg>
+                    <?= esc($rarityNames[$r] ?? $r) ?> <span aria-hidden="true">×</span>
                 </a>
             <?php endforeach; ?>
             <?php foreach ($filterTypes as $t): ?>
                 <a href="<?= esc($chipLink(['types' => array_values(array_diff($filterTypes, [$t]))])) ?>"
                     class="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/15 px-3 py-1 text-xs text-sky-200 hover:bg-sky-500/25">
-                    🏷 <?= esc($typeNames[$t] ?? $t) ?> <span aria-hidden="true">×</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                    <?= esc($typeNames[$t] ?? $t) ?> <span aria-hidden="true">×</span>
                 </a>
             <?php endforeach; ?>
             <a href="<?= esc($chipLink(['item_name' => '', 'rarities' => [], 'types' => []])) ?>"
@@ -130,14 +133,14 @@ $icon = function ($e): string {
             class="px-4 py-2 rounded-lg transition-colors\"><img src="/img/misc/bag.png" class="inline-block w-5 h-5 align-middle object-contain" alt="инвентарь"> Инвентарь</button>
         <button type="button" @click="view = 'equipped'"
             :class="view === 'equipped' ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
-            class="px-4 py-2 rounded-lg transition-colors">🛡️ Экипировано</button>
-        <a href="/game/storage" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"><?= game_icon('/img/misc/storage.png', 'inline-block w-5 h-5 align-middle object-contain mr-1') ?> Хранилище</a>
-        <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700">🖼 Витрина (WIP)</a>
+            class="px-4 py-2 rounded-lg transition-colors"><img src="/img/equipment/Helm.png" class="inline-block w-5 h-5 align-middle object-contain" alt="экипировано"> Экипировано</button>
+        <a href="/game/storage" class="px-4 py-2 rounded-lg transition-colors <?= (uri_string() == 'game/storage') ? 'bg-slate-600 text-white font-semibold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700' ?>"><?= game_icon('/img/misc/storage.png', 'inline-block w-5 h-5 align-middle object-contain mr-1') ?> Хранилище</a>
+        <a href="#" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 inline-flex items-center gap-1.5"><svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> Витрина (WIP)</a>
     </div>
 
     <?php if (empty($items) && empty($equippedItems) && $filterName === '' && $filterRarities === [] && $filterTypes === []): ?>
         <div class="text-center py-10 text-slate-500">
-            <p class="text-4xl mb-2">🫙</p>
+            <p class="mb-2"><img src="/img/misc/bag.png" class="w-14 h-14 mx-auto object-contain opacity-70" alt="пусто"></p>
             <p>Инвентарь пуст. Гуляй — предметы выпадают случайно!</p>
         </div>
     <?php else: ?>
@@ -211,7 +214,7 @@ $icon = function ($e): string {
         <div x-show="selected.length > 0" x-cloak class="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm">
             <span class="text-slate-300">Выбрано: <span class="font-bold" x-text="selected.length"></span></span>
             <button type="button" @click="clearSelection()" class="text-slate-400 hover:text-white text-xs">Снять выбор</button>
-            <button type="button" @click="sellSelected()" class="ml-auto px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-semibold">💰 Продать выбранное</button>
+            <button type="button" @click="sellSelected()" class="ml-auto px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-semibold inline-flex items-center gap-1.5"><img src="/img/misc/coin.png" class="w-4 h-4 shrink-0 object-contain" alt=""> Продать выбранное</button>
         </div>
 
         <table class="w-full text-sm">
@@ -233,7 +236,7 @@ $icon = function ($e): string {
             <tbody>
             <?php foreach ($items as $it): ?>
                 <?php $rc = $rarityColorMap[$it->rarity] ?? 'text-slate-300'; ?>
-                <tr class="border-b border-slate-800"
+                <tr class="border-b border-slate-800 hover:bg-slate-800/40"
                     data-inv="<?= (int) $it->inv_id ?>"
                     data-type="<?= esc($it->type) ?>"
                     data-rarity="<?= esc($it->rarity) ?>"
@@ -255,14 +258,14 @@ $icon = function ($e): string {
                     </td>
                     <td class="py-2.5 pr-2 text-slate-500">—</td>
                     <td class="py-2.5 pr-2 text-right text-amber-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <?= (int) ($it->price ?? 0) ?></td>
-                    <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
+                    <td class="py-2.5 pr-2 text-slate-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
                         <?php if ($it->type !== 'consumable'): ?>
-                            +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
+                            <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
                             <?php if ($it->cmp === 'up'): ?>
-                                <span class="text-emerald-400 font-bold">▲</span>
+                                <svg class="inline w-3 h-3 align-middle text-emerald-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                             <?php elseif ($it->cmp === 'down'): ?>
-                                <span class="text-red-400 font-bold">▼</span>
+                                <svg class="inline w-3 h-3 align-middle text-red-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                             <?php elseif ($it->cmp === 'equal'): ?>
                                 <span class="text-slate-500 font-bold">=</span>
                             <?php endif; ?>
@@ -279,14 +282,14 @@ $icon = function ($e): string {
                             <div class="relative inline-block" x-data="{ open: false }" @click.outside="open = false">
                                 <div class="flex rounded-lg overflow-hidden">
                                     <button type="button" data-action="equip" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold rounded-l-lg">Надеть</button>
-                                    <button type="button" @click.stop="open = !open" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50">⌄</button>
+                                    <button type="button" @click.stop="open = !open" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                                 </div>
                                 <div x-show="open" x-cloak @click.stop class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10 py-1">
                                     <button type="button"
                                         data-action="store"
                                         data-qty="<?= (int) $it->quantity ?>"
-                                        class="w-full text-left px-4 py-2 text-sm text-sky-300 hover:bg-slate-600 flex items-center gap-2">
-                                        <?= game_icon('/img/misc/storage.png', 'w-4 h-4 object-contain') ?> Переместить в хранилище
+                                        class="w-full text-left px-4 py-2 text-sm text-sky-300 hover:bg-slate-600 flex items-center gap-2 rounded-lg transition-colors">
+                                        Переместить в хранилище
                                     </button>
                                     <button type="button"
                                         data-action="sell"
@@ -295,7 +298,7 @@ $icon = function ($e): string {
                                         data-rarity="<?= esc($it->rarity) ?>"
                                         data-qty="<?= (int) $it->quantity ?>"
                                         class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
-                                        💰 Продать за <span class="font-semibold"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <?= (int) ($it->price ?? 0) ?></span>
+                                        <img src="/img/misc/coin.png" class="w-4 h-4 shrink-0 object-contain" alt="золото"> Продать за <span class="font-semibold"><?= (int) ($it->price ?? 0) ?></span>
                                     </button>
                                 </div>
                             </div>
@@ -309,10 +312,10 @@ $icon = function ($e): string {
         <?php if ($totalPages > 1): ?>
         <div class="flex items-center justify-center gap-3 text-sm">
             <a href="<?= $pageLink(max(1, $page - 1)) ?>"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page <= 1 ? 'opacity-40 pointer-events-none' : '' ?>">                <img src="/img/misc/left_arrow.png" alt="◀" class="w-4 h-4"> Назад</a>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page <= 1 ? 'opacity-40 pointer-events-none' : '' ?>">                <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 12 12 18 18"></polyline></svg> Назад</a>
             <span class="text-slate-400">Страница <?= $page ?> / <?= $totalPages ?></span>
             <a href="<?= $pageLink(min($totalPages, $page + 1)) ?>"
-                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>">Вперёд                 <img src="/img/misc/right_arrow.png" alt="▶" class="w-4 h-4"></a>
+                class="rounded-md bg-slate-600 px-3 py-1 text-xs hover:bg-slate-500 <?= $page >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>">Вперёд                 <svg class="inline w-3 h-3 align-middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 18 12 12 6 6"></polyline></svg></a>
         </div>
         <?php endif; ?>
 
@@ -339,7 +342,7 @@ $icon = function ($e): string {
             <tbody>
             <?php foreach ($equippedItems as $it): ?>
                 <?php $rc = $rarityColorMap[$it->rarity] ?? 'text-slate-300'; ?>
-                <tr class="border-b border-slate-800" data-inv="<?= (int) $it->inv_id ?>">
+                <tr class="border-b border-slate-800 hover:bg-slate-800/40" data-inv="<?= (int) $it->inv_id ?>">
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-1">
                             <?= $icon($it->emoji) ?>
@@ -347,9 +350,9 @@ $icon = function ($e): string {
                         </span>
                     </td>
                     <td class="py-2.5 pr-2 <?= esc($rc) ?>"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
-                    <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
+                    <td class="py-2.5 pr-2 text-slate-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
-                        +<?= (int) $it->value ?> <?= $it->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
+                        <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
                     </td>
                     <td class="py-2.5 text-right">
                         <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
@@ -501,9 +504,9 @@ function inventoryFilters(sellableIds = []) {
                     showCancelButton: true,
                     confirmButtonText: 'Переместить',
                     cancelButtonText: 'Отмена',
-                    background: '#1e293b',
-                    color: '#e2e8f0',
-                    confirmButtonColor: '#0ea5e9',
+                    background: '#374151',
+                    color: '#f3f4f6',
+                    confirmButtonColor: '#fecdd3',
                     cancelButtonColor: '#64748b',
                     didOpen: () => {
                         const input = document.getElementById('store-qty');
@@ -512,6 +515,8 @@ function inventoryFilters(sellableIds = []) {
                         document.getElementById('store-all').addEventListener('click', () => {
                             input.value = qty;
                         });
+                        const confirmBtn = document.querySelector('.swal2-confirm');
+                        if (confirmBtn) confirmBtn.style.color = '#1c1917';
                     },
                     preConfirm: () => {
                         const val = parseInt(document.getElementById('store-qty').value, 10);

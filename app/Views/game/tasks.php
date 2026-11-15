@@ -11,7 +11,7 @@ foreach ($periods as $p => $d) {
 
 <div class="space-y-6" x-data="tasks(<?= htmlspecialchars(json_encode($periods, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($resetIn, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">📋</span> Задания</h1>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/quests.png" class="w-6 h-6 shrink-0 object-contain" alt="задания"> Задания</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
     </div>
 
@@ -66,7 +66,10 @@ foreach ($periods as $p => $d) {
         <ul class="space-y-3">
             <template x-for="it in periods[p].items" :key="it.id">
                 <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3">
-                    <div class="text-2xl" x-text="it.emoji"></div>
+                    <div class="w-8 h-8 shrink-0 flex items-center justify-center">
+                        <img x-show="Game.isImage(it.emoji)" :src="it.emoji" alt="" class="w-8 h-8 object-contain">
+                        <span x-show="!Game.isImage(it.emoji)" class="text-2xl leading-none" x-text="it.emoji"></span>
+                    </div>
                     <div class="flex-1">
                         <p class="font-semibold" x-text="it.name"></p>
                         <p x-show="it.description" class="text-xs text-slate-400" x-text="it.description"></p>
@@ -99,7 +102,7 @@ foreach ($periods as $p => $d) {
         </ul>
 
         <div class="flex items-center justify-between text-xs text-slate-500 px-1">
-            <button type="button" @click="refresh(p)" class="text-violet-400 hover:text-violet-300">🔄 Обновить задания (<img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5)</button>
+                <button type="button" @click="refresh(p)" class="text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg> Обновить задания (<img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5)</button>
             <span>До новых заданий: <span class="text-slate-300" x-text="fmt(timers[p])"></span></span>
         </div>
     </div>

@@ -126,6 +126,8 @@ $icon = function ($e): string {
                                 <span class="inline-flex items-center gap-1 <?= $rcMap[$f->rarity] ?? 'text-slate-300' ?>">
                                     <?php if (str_starts_with((string) $f->emoji, '/')): ?>
                                         <img src="<?= esc($f->emoji) ?>" class="w-4 h-4 object-contain" alt="">
+                                    <?php elseif (! empty($f->emoji)): ?>
+                                        <span class="leading-none"><?= esc($f->emoji) ?></span>
                                     <?php endif; ?>
                                     <?= esc($f->message) ?>
                                 </span>
@@ -177,7 +179,7 @@ $icon = function ($e): string {
                     <span class="font-bold"><?= $hpPct ?>%</span>
                 </div>
                 <div class="h-2.5 bg-slate-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-red-500" style="width: <?= $hpPct ?>%"></div>
+                    <div class="h-full bg-red-500 rounded-full" style="width: <?= $hpPct ?>%"></div>
                 </div>
             </div>
         </div>

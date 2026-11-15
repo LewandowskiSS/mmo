@@ -4,8 +4,8 @@
 <div class="space-y-6" x-data="chestsPage(<?= (int) $character->gold ?>, <?= (int) $character->bronze_keys ?>, <?= (int) $character->silver_keys ?>, <?= (int) $character->gold_keys ?>)"
      @buy-key.window="buyKey($event.detail)" @open-chest.window="openChest($event.detail)">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><span class="text-2xl shrink-0">🎁</span> Сундуки</h1>
-        <a href="/" class="text-sm text-slate-400 hover:text-white">← Назад</a>
+        <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/chest.png" class="w-6 h-6 shrink-0 object-contain" alt="сундуки"> Сундуки</h1>
+        <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
     </div>
 
     <div class="bg-slate-800 rounded-lg p-4">
@@ -51,7 +51,7 @@
                             <button type="button" :disabled="buying"
                                 @click="$dispatch('buy-key', { key_type: '<?= esc($chest->key_type) ?>', quantity: buyQty, unit_price: <?= (int) $chest->key_price ?> })"
                                 class="flex-1 px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-500 disabled:opacity-50 text-white text-sm font-semibold whitespace-nowrap">
-                                <span x-show="!buying" class="inline-flex items-center gap-1">Купить 🗝️ <span x-text="<?= (int) $chest->key_price ?> * buyQty"></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt=""></span>
+                                <span x-show="!buying" class="inline-flex items-center gap-1">Купить <img src="/img/keys/<?= esc($chest->key_type) ?>.png" class="inline-block w-4 h-4 align-middle object-contain" alt="ключ"> <span x-text="<?= (int) $chest->key_price ?> * buyQty"></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt=""></span>
                                 <span x-show="buying" x-cloak>Покупаем..</span>
                             </button>
                             <div class="flex rounded-md overflow-hidden border border-slate-600 shrink-0">
@@ -63,7 +63,7 @@
                             <button type="button" :disabled="opening"
                                 @click="$dispatch('open-chest', { chest_id: <?= (int) $chest->id ?>, key_type: '<?= esc($chest->key_type) ?>', quantity: openQty })"
                                 class="flex-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-900 text-sm font-bold whitespace-nowrap">
-                                <span x-show="!opening">Открыть 🔑</span>
+                                <span x-show="!opening" class="inline-flex items-center gap-1">Открыть <img src="/img/keys/<?= esc($chest->key_type) ?>.png" class="inline-block w-4 h-4 align-middle object-contain" alt="ключ"></span>
                                 <span x-show="opening" x-cloak>Открываем..</span>
                             </button>
                             <div class="flex rounded-md overflow-hidden border border-slate-600 shrink-0">

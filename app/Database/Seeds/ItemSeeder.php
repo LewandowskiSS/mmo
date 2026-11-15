@@ -14,11 +14,11 @@ class ItemSeeder extends Seeder
             // common
             ['name' => 'Деревянный меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 3, 'price' => 50, 'description' => 'Простой, но надёжный меч.', 'emoji' => '🗡️', 'rarity' => 'common'],
             ['name' => 'Кожаная броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 3, 'price' => 60, 'description' => 'Лёгкая кожаная броня.', 'emoji' => '🥋', 'rarity' => 'common'],
-            ['name' => 'Зелье здоровья', 'type' => 'consumable', 'stat' => 'hp', 'value' => 30, 'price' => 25, 'description' => 'Восстанавливает 30 HP.', 'emoji' => '🧪', 'rarity' => 'common'],
+            ['name' => 'Зелье здоровья', 'type' => 'consumable', 'stat' => 'hp', 'value' => 30, 'price' => 25, 'description' => 'Восстанавливает 30 HP.', 'emoji' => '/img/misc/health_potion.png', 'rarity' => 'common'],
             // uncommon
             ['name' => 'Железный меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 8, 'price' => 200, 'description' => 'Кованый железный клинок.', 'emoji' => '⚔️', 'rarity' => 'uncommon'],
             ['name' => 'Стальная броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 8, 'price' => 220, 'description' => 'Тяжёлая стальная броня.', 'emoji' => '🛡️', 'rarity' => 'uncommon'],
-            ['name' => 'Зелье энергии', 'type' => 'consumable', 'stat' => 'energy', 'value' => 10, 'price' => 40, 'description' => 'Восстанавливает 10 энергии.', 'emoji' => '⚡', 'rarity' => 'uncommon'],
+            ['name' => 'Зелье энергии', 'type' => 'consumable', 'stat' => 'energy', 'value' => 10, 'price' => 40, 'description' => 'Восстанавливает 10 энергии.', 'emoji' => '/img/misc/energy_potion.png', 'rarity' => 'uncommon'],
             // rare
             ['name' => 'Мифриловый меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 15, 'price' => 500, 'description' => 'Лёгкий и острый мифриловый клинок.', 'emoji' => '🗡️', 'rarity' => 'rare'],
             ['name' => 'Мифриловая броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 12, 'price' => 550, 'description' => 'Броня из звонкого мифрила.', 'emoji' => '🛡️', 'rarity' => 'rare'],
@@ -27,7 +27,7 @@ class ItemSeeder extends Seeder
             ['name' => 'Рунический меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 20, 'price' => 900, 'description' => 'Клинок, покрытый светящимися рунами.', 'emoji' => '🗡️', 'rarity' => 'elite'],
             ['name' => 'Руническая броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 17, 'price' => 950, 'description' => 'Доспех, усиленный древними рунами.', 'emoji' => '🛡️', 'rarity' => 'elite'],
             // epic
-            ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '<img src="/img/monsters/dragon.png" class="w-6 h-6 object-contain" alt="Драконий меч">', 'rarity' => 'epic'],
+            ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '/img/monsters/dragon.png', 'rarity' => 'epic'],
             ['name' => 'Драконья броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 20, 'price' => 1600, 'description' => 'Чешуйчатая драконья броня.', 'emoji' => '🛡️', 'rarity' => 'epic'],
             // legendary
             ['name' => 'Меч Богов', 'type' => 'weapon', 'stat' => 'attack', 'value' => 40, 'price' => 5000, 'description' => 'Легендарный клинок богов.', 'emoji' => '⚔️', 'rarity' => 'legendary'],

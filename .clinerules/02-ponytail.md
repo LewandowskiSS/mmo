@@ -1,3 +1,6 @@
+---
+disabled: true
+---
 # Ponytail Rules (Lazy Senior Engineer Mode)
 
 The best code is the code you never wrote.

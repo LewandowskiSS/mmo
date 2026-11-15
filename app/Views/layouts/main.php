@@ -152,6 +152,34 @@
     @keyframes mythic-glow { from { filter: drop-shadow(#ff9e00 0 0 .2px) drop-shadow(#ff6d00 0 0 3px); } to { filter: drop-shadow(#fff0a6 0 0 1px) drop-shadow(#ff3d00 0 0 9px); } }
     @keyframes ancient-shift { 0%, 100% { background-position: 15% 35%; } 50% { background-position: 85% 65%; } }
 
+    .profile-panel { position:absolute; top:calc(100% + 6px); left:8px; right:8px; z-index:100; background:#141416; border:1px solid #27272a; border-radius:10px; padding:14px; box-shadow:0 12px 32px rgba(0,0,0,.85); max-height:calc(100dvh - 90px); overflow-y:auto; }
+    .profile-label { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:5px; font-size:13px; color:#a1a1aa; flex-wrap:wrap; }
+    .profile-label strong { display:inline-flex; align-items:center; gap:5px; color:#e4e4e7; font-weight:600; }
+    .profile-track { width:100%; height:8px; background:#27272a; border-radius:999px; overflow:hidden; }
+    .profile-track > div { height:100%; transition:width .25s ease; }
+    .profile-divider { border-bottom:1px dashed rgba(255,255,255,.1); margin:12px 0; }
+    .profile-heading { width:100%; cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:4px 0; color:#e4e4e7; font-weight:700; font-size:13px; }
+    .profile-heading svg { width:16px; height:16px; transition:transform .25s ease; }
+    .profile-accordion { display:grid; transition:grid-template-rows .25s ease; }
+    .profile-accordion > div { min-height:0; overflow:hidden; }
+    .profile-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px; color:#a1a1aa; }
+    .profile-value { display:inline-flex; align-items:center; gap:5px; color:#f4f4f5; font-weight:500; }
+    .profile-action { background:#6366f1; color:#fff; font-size:11px; font-weight:600; padding:3px 10px; border-radius:6px; margin-left:8px; white-space:nowrap; }
+    @media (prefers-reduced-motion:reduce) { .profile-accordion, .profile-heading svg, .profile-track > div { transition:none; } }
+    /* Свечение XP-бара: только пульсация тени, геометрия полосы не меняется */
+    .xp-glow {
+        box-shadow: 0 0 5px rgba(168, 85, 247, 0.85), 0 0 12px rgba(168, 85, 247, 0.40);
+        animation: xp-glow-pulse 2.4s ease-in-out infinite alternate;
+        will-change: box-shadow;
+    }
+    @keyframes xp-glow-pulse {
+        from { box-shadow: 0 0 4px rgba(168, 85, 247, 0.70), 0 0 9px rgba(168, 85, 247, 0.30); }
+        to   { box-shadow: 0 0 8px rgba(203, 125, 255, 0.95), 0 0 18px rgba(168, 85, 247, 0.55); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .xp-glow { animation: none; }
+    }
+
     @keyframes ancient-texture-shift {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
@@ -172,15 +200,55 @@
     'tag'       => \App\Controllers\BaseController::$layoutData['characterTag'] ?? '0000',
     'gender'    => \App\Controllers\BaseController::$layoutData['characterGender'] ?? 'male',
     'level'     => (int) (\App\Controllers\BaseController::$layoutData['characterLevel'] ?? 1),
+    'xp'        => (int) (\App\Controllers\BaseController::$layoutData['characterXp'] ?? 0),
+    'xpNeeded'  => (int) (\App\Controllers\BaseController::$layoutData['characterXpNeeded'] ?? 0),
     'xpPercent' => (int) (\App\Controllers\BaseController::$layoutData['characterXpPercent'] ?? 0),
     'gold'      => (int) (\App\Controllers\BaseController::$layoutData['characterGold'] ?? 0),
+    'bank'      => (int) (\App\Controllers\BaseController::$layoutData['characterBank'] ?? 0),
     'energy'    => (int) (\App\Controllers\BaseController::$layoutData['characterEnergy'] ?? 0),
     'maxEnergy' => (int) (\App\Controllers\BaseController::$layoutData['characterMaxEnergy'] ?? 20),
     'hp'        => (int) (\App\Controllers\BaseController::$layoutData['characterHp'] ?? 0),
     'maxHp'     => (int) (\App\Controllers\BaseController::$layoutData['characterMaxHp'] ?? 50),
+    'attack'    => (int) (\App\Controllers\BaseController::$layoutData['characterAttack'] ?? 0),
+    'defense'   => (int) (\App\Controllers\BaseController::$layoutData['characterDefense'] ?? 0),
     'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
     'walks'     => (int) (\App\Controllers\BaseController::$layoutData['characterWalks'] ?? 0),
+    'kills'     => (int) (\App\Controllers\BaseController::$layoutData['characterKills'] ?? 0),
+    'quests'    => (int) (\App\Controllers\BaseController::$layoutData['characterQuests'] ?? 0),
+    'chests'    => (int) (\App\Controllers\BaseController::$layoutData['characterChests'] ?? 0),
+    'userId'    => (int) (\App\Controllers\BaseController::$layoutData['userId'] ?? 0),
 ]), ENT_QUOTES, 'UTF-8') ?>)">
+
+    <!-- SVG sprite: sidebar action icons -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+        <symbol id="icon-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 8Z"/>
+            <path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>
+        </symbol>
+        <symbol id="icon-sword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 3.5 20.5 3.5 20.5 9.5 11 19 5 13 14.5 3.5Z"/>
+            <path d="M5 13 3.5 14.5 9.5 20.5 11 19"/>
+            <path d="M3 21 6.5 17.5"/>
+        </symbol>
+        <symbol id="icon-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3 3 5.5v15L9 18l6 3 6-2.5v-15L15 6 9 3Z"/>
+            <path d="M9 3v15M15 6v15"/>
+        </symbol>
+        <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="8" r="3.2"/>
+            <path d="M2.5 20a6.5 6.5 0 0 1 13 0"/>
+            <path d="M16.5 5.4a3.2 3.2 0 0 1 0 5.2"/>
+            <path d="M18 14.4a6.5 6.5 0 0 1 3.5 5.6"/>
+        </symbol>
+        <symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a8 8 0 0 1-8 8H4l1.8-3.2A8 8 0 1 1 21 12Z"/>
+            <path d="M8.5 11h7M8.5 14.5h4"/>
+        </symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2.5v2.2M12 19.3v2.2M4.2 7.3l1.9 1.1M17.9 15.6l1.9 1.1M4.2 16.7l1.9-1.1M17.9 8.4l1.9-1.1"/>
+        </symbol>
+    </svg>
 
     <!-- Сайдбар: расширенный (десктоп) / полоса иконок (свернут) / оверлей (мобайл). Только для авторизованных -->
     <?php if (session()->get('user_id')): ?>
@@ -191,125 +259,78 @@
             ready ? 'transition-all duration-200' : ''
         ]">
 
-        <!-- Player card (click to toggle stats panel) -->
-        <div class="p-4 border-b border-slate-700 flex items-center justify-between" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>
-            <div class="flex items-center gap-2 cursor-pointer w-full" @click="statsOpen = !statsOpen; localStorage.setItem('statsOpen', statsOpen ? '1' : '0')">
+        <!-- Sidebar top wrapper (relative for overlay panel) -->
+        <div class="relative" x-show="!sidebarCollapsed || sidebarMobile" x-cloak @click.outside="closeStats()" @keydown.escape.window="closeStats()">
+            <!-- Player banner (click toggles overlay panel) -->
+            <button type="button" class="w-full flex items-center gap-2 px-4 py-3 border-b border-slate-700 cursor-pointer hover:bg-slate-700/50 transition-colors"
+                @click="toggleStats()" :aria-expanded="statsOpen" aria-controls="profile-panel">
                 <img src="/img/misc/character.png" class="w-8 h-8 rounded-full" alt="avatar">
-                <div class="flex flex-col">
-                    <div class="text-white font-semibold" x-text="st.name + '#' + st.tag"></div>
+                <div class="flex flex-col min-w-0 text-left">
+                    <div class="text-white font-semibold truncate" x-text="st.name + '#' + st.tag"></div>
                     <div class="text-xs text-slate-400">Lv. <span x-text="st.level"></span></div>
                 </div>
-            </div>
-            <button type="button" class="text-slate-400 hover:text-white" @click.stop="statsOpen = !statsOpen; localStorage.setItem('statsOpen', statsOpen ? '1' : '0')">
-                <svg x-show="!statsOpen" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                <svg x-show="statsOpen" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                <svg class="ml-auto w-4 h-4 text-slate-400 transition-transform" :class="statsOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
-        </div>
 
-        <!-- Navigation buttons (always visible) -->
-        <div class="p-4 border-b border-slate-700" x-show="!sidebarCollapsed || sidebarMobile" x-cloak>
-            <div class="grid grid-cols-5 gap-2">
-                <a href="/walk" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Прогулка">
-                    <span class="text-2xl">🚶</span>
-                    <span class="text-[10px] text-slate-400 mt-1">Прогулка</span>
-                </a>
-                <a href="/game/battle" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Бой">
-                    <span class="text-2xl">🗡️</span>
-                    <span class="text-[10px] text-slate-400 mt-1">Бой</span>
-                </a>
-                <a href="/game/inventory" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Инвентарь">
-                    <span class="text-2xl">🎒</span>
-                    <span class="text-[10px] text-slate-400 mt-1">Инвентарь</span>
-                </a>
-                <a href="/game/shop" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Магазин">
-                    <span class="text-2xl">💰</span>
-                    <span class="text-[10px] text-slate-400 mt-1">Магазин</span>
-                </a>
-                <a href="/game/tasks" class="flex flex-col items-center justify-center aspect-square rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Задания">
-                    <span class="text-2xl">📋</span>
-                    <span class="text-[10px] text-slate-400 mt-1">Задания</span>
-                </a>
+            <!-- Stats overlay panel (hidden by default, overlays buttons/nav) -->
+            <div id="profile-panel" class="profile-panel no-scrollbar" x-show="statsOpen" x-transition.opacity.duration.150ms x-cloak>
+                <div class="profile-label"><strong><img src="/img/misc/Heart.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Здоровье</strong><span><span id="st-hp" x-text="st.hp + ' / ' + st.maxHp"></span> HP (<span x-text="st.maxHp ? Math.round(st.hp / st.maxHp * 100) : 0"></span>%)</span></div>
+                <div class="profile-track" style="margin-bottom:12px"><div style="background:#ef4444" :style="{width: Math.max(0, Math.min(100, st.maxHp ? st.hp / st.maxHp * 100 : 0)) + '%'}"></div></div>
+                <div class="profile-label"><strong>Опыт</strong><span><span id="st-xp" x-text="st.xp + ' / ' + st.xpNeeded"></span> EXP</span></div>
+                <div class="profile-track"><div style="background:#10b981" :style="{width: Math.max(0, Math.min(100, st.xpPercent)) + '%'}"></div></div>
+                <div class="profile-divider"></div>
+                <div class="profile-label"><strong><img src="/img/misc/energy.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Энергия <small class="text-[10px] text-zinc-500 font-normal" x-text="st.energy >= st.maxEnergy ? 'полная' : (st.nextEnergyIn || 0) + ' с'"></small></strong><span><span id="st-energy" x-text="st.energy + ' / ' + st.maxEnergy"></span> EP<a href="/game/shop" class="profile-action">Пополнить</a></span></div>
+                <div class="profile-track"><div style="background:#eab308" :style="{width: Math.max(0, Math.min(100, st.maxEnergy ? st.energy / st.maxEnergy * 100 : 0)) + '%'}"></div></div>
+                <div class="profile-divider"></div>
+                <button type="button" class="profile-heading" @click="toggleProfileSection('currenciesOpen')" :aria-expanded="currenciesOpen" aria-controls="profile-currencies">Валюты<svg :style="{transform: currenciesOpen ? 'rotate(180deg)' : 'rotate(0deg)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div id="profile-currencies" class="profile-accordion" :style="{gridTemplateRows: currenciesOpen ? '1fr' : '0fr'}" :inert="!currenciesOpen"><div>
+                    <div class="profile-row"><span>Золото</span><span class="profile-value"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-gold" x-text="st.gold"></span></span></div>
+                    <div class="profile-row"><span>Банк</span><span class="profile-value"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-bank" x-text="st.bank"></span></span></div>
+                    <div class="profile-row"><span>Изумруды</span><span class="profile-value"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span id="st-diamonds" x-text="st.diamonds || 0"></span><a href="/game/shop" class="profile-action" style="padding:2px 10px">Купить</a></span></div>
+                </div></div>
+                <div class="profile-divider" style="margin:10px 0"></div>
+                <button type="button" class="profile-heading" @click="toggleProfileSection('attributesOpen')" :aria-expanded="attributesOpen" aria-controls="profile-attributes">Характеристики<svg :style="{transform: attributesOpen ? 'rotate(180deg)' : 'rotate(0deg)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div id="profile-attributes" class="profile-accordion" :style="{gridTemplateRows: attributesOpen ? '1fr' : '0fr'}" :inert="!attributesOpen"><div>
+                    <div class="profile-row"><span>Атака</span><span class="profile-value"><img src="/img/misc/fight.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.attack"></span></span></div>
+                    <div class="profile-row"><span>Защита</span><span class="profile-value" x-text="st.defense"></span></div>
+                    <div class="profile-row"><span>Прогулки</span><span class="profile-value" x-text="st.walks"></span></div>
+                    <div class="profile-row"><span>Убийства</span><span class="profile-value" x-text="st.kills || 0"></span></div>
+                    <div class="profile-row"><span>Задания</span><span class="profile-value"><img src="/img/misc/quests.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.quests || 0"></span></span></div>
+                    <div class="profile-row"><span>Сундуки</span><span class="profile-value"><img src="/img/misc/chest.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.chests || 0"></span></span></div>
+                </div></div>
+                <div class="profile-divider" style="margin:10px 0"></div>
+                <div style="text-align:center;font-size:12px;color:#a1a1aa;display:flex;justify-content:center;align-items:center;gap:6px">User ID: <b style="color:#fff" x-text="st.userId || 0"></b><span title="Идентификатор вашего аккаунта" style="width:16px;height:16px;border-radius:50%;background:#3f3f46;color:#d4d4d8;display:inline-flex;align-items:center;justify-content:center;font-size:11px">?</span></div>
             </div>
         </div>
 
-        <!-- Stats panel -->
-        <div class="border-b border-slate-700 p-4 text-xs space-y-3 overflow-y-auto" x-show="statsOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak>
-            <div class="bg-[#141416] border border-[#26262a] rounded-[10px] p-[12px] m-[8px] space-y-2">
-                <!-- Health -->
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-400 w-10">HP</span>
-                    <div class="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                        <div id="bar-hp" class="h-full bg-red-500 transition-all" :style="'width:' + (st.maxHp ? (st.hp/st.maxHp*100) : 0) + '%'"></div>
-                    </div>
-                    <span id="st-hp" class="text-xs text-slate-300 w-16 text-right" x-text="st.hp + '/' + st.maxHp"></span>
-                </div>
-                <!-- Energy -->
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-400 w-10">⚡</span>
-                    <div class="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                        <div id="bar-energy" class="h-full bg-emerald-500 transition-all" :style="'width:' + (st.maxEnergy ? (st.energy/st.maxEnergy*100) : 0) + '%'"></div>
-                    </div>
-                    <span id="st-energy" class="text-xs text-slate-300 w-16 text-right" x-text="st.energy + '/' + st.maxEnergy"></span>
-                    <button type="button" class="text-[11px] px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold" id="refill-btn">Refill</button>
-                </div>
-                <!-- EXP -->
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-400 w-10">★</span>
-                    <div class="flex-1 h-1.5 bg-slate-700 rounded-full overflow-visible relative">
-                        <div id="bar-xp" class="h-full bg-purple-500 transition-all rounded-full" :style="'width:' + st.xpPercent + '%'"></div>
-                        <span class="absolute inset-0 flex items-center justify-center text-[9px] text-white font-semibold" x-text="'Lvl ' + st.level"></span>
-                    </div>
-                    <span id="st-xp" class="text-xs text-slate-300 w-20 text-right" x-text="st.xp + ' / ' + st.xpNeeded"></span>
-                </div>
-                <!-- Attack / Defense -->
-                <div class="flex items-center gap-2 text-slate-300">
-                    <span class="text-xs text-slate-400 w-10">⚔</span>
-                    <span class="flex-1">Атака</span>
-                    <span id="st-attack" class="font-semibold" x-text="st.attack"></span>
-                </div>
-                <div class="flex items-center gap-2 text-slate-300">
-                    <span class="text-xs text-slate-400 w-10">🛡</span>
-                    <span class="flex-1">Защита</span>
-                    <span id="st-defense" class="font-semibold" x-text="st.defense"></span>
-                </div>
+        <!-- Row of 6 action buttons (normal flow, outside overlay panel) -->
+        <div class="grid grid-cols-6 gap-1.5 px-2.5 py-2 border-b border-slate-700">
+                <a href="/walk" title="Прогулка" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
+                    <img src="/img/misc/map.png" class="w-5 h-5 object-contain" alt="">
+                </a>
+                <a href="/game/battle" title="Бой" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
+                    <img src="/img/misc/fight.png" class="w-5 h-5 object-contain" alt="">
+                </a>
+                <a href="/game/inventory" title="Инвентарь" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
+                    <img src="/img/misc/bag.png" class="w-5 h-5 object-contain" alt="">
+                </a>
+                <a href="/game/shop" title="Магазин" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
+                    <img src="/img/misc/shop.png" class="w-5 h-5 object-contain" alt="">
+                </a>
+                <a href="/game/tasks" title="Задания" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
+                    <img src="/img/misc/quests.png" class="w-5 h-5 object-contain" alt="">
+                </a>
+                <a href="/town" title="Город" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
+                    <img src="/img/misc/map.png" class="w-5 h-5 object-contain" alt="">
+                </a>
             </div>
-
-            <!-- Currencies -->
-            <div class="flex justify-between pt-2 border-t border-[#26262a]">
-                <span class="flex items-center gap-1 text-xs text-amber-300">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a2 2 0 1 1 0 4H9.5"/></svg>
-                    <span id="st-gold" x-text="st.gold"></span>
-                </span>
-                <span class="flex items-center gap-1 text-xs text-emerald-300">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 4 9l8 13 8-13-8-7ZM4 9h16M12 2l3 7-3 13-3-13 3-7Z"/></svg>
-                    <span id="st-diamonds" x-text="st.diamonds || 0"></span>
-                </span>
-            </div>
-
-            <!-- Energy timer -->
-            <div class="text-center text-[10px] text-slate-500">
-                <span id="energy-timer" x-text="st.energy >= st.maxEnergy ? '🔋 полная' : ('🔋 через ' + (st.nextEnergyIn || 0) + ' с')"></span>
-            </div>
-
-            <!-- Status -->
-            <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 pt-2 border-t border-[#26262a] text-[11px] text-slate-400">
-                <div class="flex justify-between"><span>Steps</span><span x-text="st.walks" class="text-slate-200"></span></div>
-                <div class="flex justify-between"><span>Kills</span><span x-text="st.kills || 0" class="text-slate-200"></span></div>
-                <div class="flex justify-between"><span>Quests</span><span x-text="st.quests || 0" class="text-slate-200"></span></div>
-                <div class="flex justify-between"><span>Chests</span><span x-text="st.chests || 0" class="text-slate-200"></span></div>
-            </div>
-
-            <div class="pt-2 mt-1 border-t border-[#26262a] text-[10px] text-slate-500">
-                User ID: <span class="text-slate-300"><?= (int)($layoutData['user_id'] ?? 0) ?></span>
-            </div>
-        </div>
 
         <nav class="no-scrollbar p-2 md:p-2 space-y-1 text-sm flex-1 overflow-y-auto">
             <!-- Adventure -->
-            <div x-data="{ advOpen: localStorage.getItem('advOpen') !== '0' }" class="mb-1">
-                <button @click="advOpen = !advOpen; localStorage.setItem('advOpen', advOpen ? '1' : '0')"
+            <div class="mb-1">
+                <button @click="toggleSection('adv')" title="Adventure"
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
-                    <span class="shrink-0">⚔️</span>
+                    <?= game_icon('/img/misc/fight.png', 'h-4 w-4') ?>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Adventure</span>
                     <svg x-show="(!sidebarCollapsed || sidebarMobile) && advOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                     <svg x-show="(!sidebarCollapsed || sidebarMobile) && !advOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -326,10 +347,10 @@
             </div>
 
             <!-- Character -->
-            <div x-data="{ charOpen: localStorage.getItem('charOpen') !== '0' }" class="mb-1">
-                <button @click="charOpen = !charOpen; localStorage.setItem('charOpen', charOpen ? '1' : '0')"
+            <div class="mb-1">
+                <button @click="toggleSection('char')" title="Character"
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
-                    <span class="shrink-0">👤</span>
+                    <?= game_icon('/img/misc/character.png', 'h-4 w-4') ?>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Character</span>
                     <svg x-show="(!sidebarCollapsed || sidebarMobile) && charOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                     <svg x-show="(!sidebarCollapsed || sidebarMobile) && !charOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -339,51 +360,51 @@
                         <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Мой персонаж
                     </a>
                     <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <span class="text-lg shrink-0">💼</span> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
                     </a>
                     <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <span class="text-lg shrink-0">✨</span> Крафт <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        <?= game_icon('/img/misc/emerald.png', 'h-5 w-5') ?> Крафт <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
                     </a>
                     <a href="/game/tasks" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white relative">
-                        <span class="text-lg shrink-0">📋</span> Задания
+                        <img src="/img/misc/quests.png" class="w-5 h-5 object-contain shrink-0" alt=""> Задания
                         <?php if (! empty(\App\Controllers\BaseController::$layoutData['hasClaimableTasks'])): ?>
                         <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" title="Доступны награды за задания"></span>
                         <?php endif; ?>
                     </a>
                     <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <span class="text-lg shrink-0">🗂️</span> Коллекции <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        <?= game_icon('/img/misc/chest.png', 'h-5 w-5') ?> Коллекции <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
                     </a>
                     <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <span class="text-lg shrink-0">👥</span> Гильдии <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Гильдии <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
                     </a>
                 </div>
             </div>
 
             <!-- Game -->
-            <div x-data="{ gameOpen: localStorage.getItem('gameOpen') !== '0' }" class="mb-1">
-                <button @click="gameOpen = !gameOpen; localStorage.setItem('gameOpen', gameOpen ? '1' : '0')"
+            <div class="mb-1">
+                <button @click="toggleSection('game')" title="Game"
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
-                    <span class="shrink-0">🎮</span>
+                    <?= game_icon('/img/misc/main.png', 'h-4 w-4') ?>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Game</span>
                     <svg x-show="(!sidebarCollapsed || sidebarMobile) && gameOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                     <svg x-show="(!sidebarCollapsed || sidebarMobile) && !gameOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div x-show="gameOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
                     <a href="/game/shop" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <span class="text-lg shrink-0">💰</span> Магазин
+                        <img src="/img/misc/shop.png" class="w-5 h-5 object-contain shrink-0" alt=""> Магазин
                     </a>
                     <a href="/game/chests" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <span class="text-lg shrink-0">🎁</span> Сундуки
+                        <img src="/img/misc/chest.png" class="w-5 h-5 object-contain shrink-0" alt=""> Сундуки
                     </a>
                     <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <span class="text-lg shrink-0">🏆</span> Топ игроков
+                        <?= game_icon('/img/misc/coin.png', 'h-5 w-5') ?> Топ игроков
                     </a>
                 </div>
             </div>
 
             <div class="pt-2 mt-2 border-t border-slate-700/60">
                 <a href="/logout" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200">
-                    <span class="text-lg shrink-0">🚪</span> <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Выйти</span>
+                    <?= game_icon('/img/misc/right_arrow.png', 'h-5 w-5') ?> <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Выйти</span>
                 </a>
             </div>
         </nav>
@@ -432,7 +453,7 @@
         </main>
 
         <footer class="text-center text-xs text-slate-600 py-6">
-            ⚔️ Моя ММО · v<?= esc(trim((string) @file_get_contents(ROOTPATH . 'VERSION'))) ?>
+            <span class="inline-flex items-center gap-1 align-middle"><img src="/img/misc/fight.png" class="w-3.5 h-3.5 object-contain" alt=""> Моя ММО · v<?= esc(trim((string) @file_get_contents(ROOTPATH . 'VERSION'))) ?></span>
         </footer>
     </div>
 

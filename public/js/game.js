@@ -115,6 +115,9 @@ if (window.Swal && Swal.defaults) {
         prevLevel = s.level;
 
         setText('st-gold', s.gold);
+        if (s.bank !== undefined) setText('st-bank', s.bank);
+        if (s.diamonds !== undefined) setText('st-diamonds', s.diamonds);
+        window.dispatchEvent(new CustomEvent('character-state', { detail: s }));
         setText('st-hp', s.hp + ' / ' + s.max_hp);
         setBar('bar-hp', s.max_hp ? (s.hp / s.max_hp * 100) : 0);
         setText('st-energy', s.energy + ' / ' + s.max_energy);
@@ -144,11 +147,18 @@ setTimeout(function () { document.body.classList.add('app-ready'); }, 1000);
 function layout(seed = {}) {
     return {
         // Читаем сохранённое состояние сразу, чтобы первая отрисовка была финальной (без прыжка)
-        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') !== '0',
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === '1',
         sidebarMobile: false,
         profileOpen: false,
         searchOpen: false,
-        statsOpen: localStorage.getItem('statsOpen') !== '0',
+        statsOpen: localStorage.getItem('statsOpen') === '1',
+        currenciesOpen: localStorage.getItem('profileCurrenciesOpen') !== '0',
+        attributesOpen: localStorage.getItem('profileAttributesOpen') !== '0',
+        // Состояние аккордеонов навигации — живёт в корне, чтобы иконки
+        // работали и при свёрнутом сайдбаре (разворачивают его).
+        advOpen: localStorage.getItem('advOpen') === '1',
+        charOpen: localStorage.getItem('charOpen') === '1',
+        gameOpen: localStorage.getItem('gameOpen') === '1',
         ready: false,
 
         // Живые данные профиля (обновляются с /game/state при каждом открытии меню)
@@ -170,6 +180,10 @@ function layout(seed = {}) {
             defense: seed.defense || 0,
             diamonds: seed.diamonds || 0,
             walks: seed.walks || 0,
+            kills: seed.kills || 0,
+            quests: seed.quests || 0,
+            chests: seed.chests || 0,
+            userId: seed.userId || 0,
             nextEnergyIn: seed.nextEnergyIn || 0,
         },
 
@@ -187,6 +201,31 @@ function layout(seed = {}) {
             this.$watch('sidebarCollapsed', syncWide);
             // Поиск: скрыт по умолчанию, открывается по кнопке-лупе
             this.searchOpen = false;
+            window.addEventListener('character-state', (event) => this.applyProfileState(event.detail));
+            if (this.statsOpen) this.refreshProfile();
+            setInterval(() => {
+                if (this.st.nextEnergyIn > 0) {
+                    this.st.nextEnergyIn--;
+                    if (this.st.nextEnergyIn === 0) this.refreshProfile();
+                }
+            }, 1000);
+        },
+
+        closeStats() {
+            this.statsOpen = false;
+            localStorage.setItem('statsOpen', '0');
+        },
+
+        toggleStats() {
+            this.statsOpen = !this.statsOpen;
+            localStorage.setItem('statsOpen', this.statsOpen ? '1' : '0');
+            if (this.statsOpen) this.refreshProfile();
+        },
+
+        toggleProfileSection(key) {
+            if (key !== 'currenciesOpen' && key !== 'attributesOpen') return;
+            this[key] = !this[key];
+            localStorage.setItem(key === 'currenciesOpen' ? 'profileCurrenciesOpen' : 'profileAttributesOpen', this[key] ? '1' : '0');
         },
 
         toggleSidebar() {
@@ -196,6 +235,25 @@ function layout(seed = {}) {
                 this.sidebarCollapsed = !this.sidebarCollapsed;
                 localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? '1' : '0');
             }
+        },
+
+        // Клик по иконке раздела в свёрнутом сайдбаре: разворачиваем панель
+        // и открываем нужную секцию. В развёрнутом — обычный аккордеон.
+        toggleSection(key) {
+            const flag = key + 'Open';
+
+            if (window.innerWidth < 768) {
+                this.sidebarMobile = true;
+            } else if (this.sidebarCollapsed) {
+                this.sidebarCollapsed = false;
+                localStorage.setItem('sidebarCollapsed', '0');
+                this[flag] = true;
+                localStorage.setItem(flag, '1');
+                return;
+            }
+
+            this[flag] = !this[flag];
+            localStorage.setItem(flag, this[flag] ? '1' : '0');
         },
 
         toggleProfile() {
@@ -209,12 +267,20 @@ function layout(seed = {}) {
             try {
                 const s = await Game.get('/game/state');
                 if (!s || s.level === undefined) return;
+                this.applyProfileState(s);
+            } catch (e) {
+                // Тихо: при ошибке показываем последние известные значения
+            }
+        },
+
+        applyProfileState(s) {
+                if (!s || s.level === undefined) return;
                 this.st.level = s.level;
                 this.st.xp = s.xp || 0;
                 this.st.xpPercent = s.xp_needed ? Math.min(100, Math.round(s.xp / s.xp_needed * 100)) : 0;
                 this.st.xpNeeded = s.xp_needed || 0;
                 this.st.gold = s.gold;
-                this.st.bank = s.bank || 0;
+                this.st.bank = s.bank ?? this.st.bank;
                 this.st.energy = s.energy;
                 this.st.maxEnergy = s.max_energy;
                 this.st.hp = s.hp;
@@ -223,10 +289,11 @@ function layout(seed = {}) {
                 this.st.defense = s.defense || 0;
                 this.st.diamonds = s.diamonds;
                 this.st.walks = s.walks || 0;
+                this.st.kills = s.npc_kills || 0;
+                this.st.quests = s.quests_done || 0;
+                this.st.chests = s.chests_opened || 0;
+                this.st.userId = s.user_id || this.st.userId || 0;
                 this.st.nextEnergyIn = s.next_energy_in || 0;
-            } catch (e) {
-                // Тихо: при ошибке показываем последние известные значения
-            }
         },
     };
 }

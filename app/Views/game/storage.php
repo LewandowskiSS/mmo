@@ -82,19 +82,22 @@ $typeNames = \App\Models\ItemModel::TYPE_NAMES;
             <?php if ($filterName !== ''): ?>
                 <a href="<?= esc($chipLink(['item_name' => ''])) ?>"
                     class="inline-flex items-center gap-1 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3 py-1 text-xs text-indigo-200 hover:bg-indigo-500/25">
-                    🔍 Имя: <?= esc($filterName) ?> <span aria-hidden="true">×</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Имя: <?= esc($filterName) ?> <span aria-hidden="true">×</span>
                 </a>
             <?php endif; ?>
             <?php foreach ($filterRarities as $r): ?>
                 <a href="<?= esc($chipLink(['rarities' => array_values(array_diff($filterRarities, [$r]))])) ?>"
                     class="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-xs text-amber-200 hover:bg-amber-500/25">
-                    ✨ <?= esc($rarityNames[$r] ?? $r) ?> <span aria-hidden="true">×</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2z"></path></svg>
+                    <?= esc($rarityNames[$r] ?? $r) ?> <span aria-hidden="true">×</span>
                 </a>
             <?php endforeach; ?>
             <?php foreach ($filterTypes as $t): ?>
                 <a href="<?= esc($chipLink(['types' => array_values(array_diff($filterTypes, [$t]))])) ?>"
                     class="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/15 px-3 py-1 text-xs text-sky-200 hover:bg-sky-500/25">
-                    🏷 <?= esc($typeNames[$t] ?? $t) ?> <span aria-hidden="true">×</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                    <?= esc($typeNames[$t] ?? $t) ?> <span aria-hidden="true">×</span>
                 </a>
             <?php endforeach; ?>
             <a href="<?= esc($chipLink(['item_name' => '', 'rarities' => [], 'types' => []])) ?>"
@@ -178,7 +181,7 @@ $typeNames = \App\Models\ItemModel::TYPE_NAMES;
                         <td class="py-2.5 pr-2 text-left"><?= esc(\App\Models\ItemModel::TYPE_NAMES[$item->type] ?? $item->type) ?></td>
                         <td class="py-2.5 text-slate-300 text-center">
                             <?php if ($item->type !== 'consumable'): ?>
-                                +<?= (int) $item->value ?> <?= $item->stat === 'attack' ? '⚔ атаки' : '🛡 защиты' ?>
+                                <span class="inline-flex items-center gap-1">+<?= (int) $item->value ?> <?php if ($item->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
                                 <?php if (($item->cmp ?? null) === 'up'): ?>
                                     <svg class="inline w-3 h-3 align-middle text-emerald-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                 <?php elseif (($item->cmp ?? null) === 'down'): ?>

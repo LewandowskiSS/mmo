@@ -20,7 +20,8 @@
         </div>
         <div class="w-full max-w-[340px] mx-auto">
             <div class="h-2 bg-slate-700 rounded-full overflow-visible">
-                <div id="bar-xp" class="h-full bg-purple-500 rounded-full" style="width: <?= esc($xp_percent) ?>%"></div>
+                <div id="bar-xp" class="h-full bg-purple-500 rounded-full xp-glow"
+                    style="width: <?= esc($xp_percent) ?>%"></div>
             </div>
         </div>
     </div>
@@ -28,7 +29,7 @@
     <div class="grid grid-cols-2 gap-4">
         <div>
             <div class="flex justify-between text-xs text-slate-400 mb-1">
-                <span class="inline-flex items-center gap-1"><img src="/img/misc/Heart.png" alt="❤" class="w-3.5 h-3.5 object-contain">Здоровье</span>
+                <span class="inline-flex items-center gap-1"><img src="/img/misc/Heart.png" alt="здоровье" class="w-3.5 h-3.5 object-contain">Здоровье</span>
                 <span id="st-hp"><?= esc($character->hp) ?> / <?= esc($character->max_hp) ?></span>
             </div>
             <div class="h-2 bg-slate-700 rounded-full">
@@ -47,15 +48,18 @@
     </div>
 
     <div class="grid grid-cols-2 gap-3 text-sm">
-        <div class="bg-slate-800 rounded-lg p-3 flex justify-between"><span class="text-slate-400">⚔️ Атака</span><span id="st-attack" class="font-semibold"><?= esc($character->attack) ?></span></div>
-        <div class="bg-slate-800 rounded-lg p-3 flex justify-between"><span class="text-slate-400">🛡️ Защита</span><span id="st-defense" class="font-semibold"><?= esc($character->defense) ?></span></div>
+        <div class="bg-slate-800 rounded-lg p-3 flex justify-between items-center"><span class="text-slate-400 inline-flex items-center gap-1.5"><img src="/img/misc/fight.png" class="w-4 h-4 shrink-0 object-contain" alt="атака"> Атака</span><span id="st-attack" class="font-semibold"><?= esc($character->attack) ?></span></div>
+        <div class="bg-slate-800 rounded-lg p-3 flex justify-between items-center"><span class="text-slate-400 inline-flex items-center gap-1.5"><img src="/img/equipment/Iron%20Armor.png" class="w-4 h-4 shrink-0 object-contain" alt="защита"> Защита</span><span id="st-defense" class="font-semibold"><?= esc($character->defense) ?></span></div>
     </div>
 
     <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
         <div class="text-sm text-slate-300">
             <template x-if="event.type === 'monster'">
                 <div class="text-center space-y-2">
-                    <img x-show="event.type === 'monster' && event.battle.emoji" x-bind:src="event.battle.emoji" x-bind:alt="event.battle.name" class="w-32 h-32 object-contain shrink-0 mx-auto">
+                    <div class="w-32 h-32 flex items-center justify-center mx-auto">
+                        <img x-show="Game.isImage(event.battle.emoji)" x-bind:src="event.battle.emoji" x-bind:alt="event.battle.name" class="w-32 h-32 object-contain shrink-0">
+                        <div x-show="!Game.isImage(event.battle.emoji)" class="text-6xl leading-none" x-text="event.battle.emoji"></div>
+                    </div>
                     <p class="font-bold text-lg" x-text="event.battle.name"></p>
                     <p class="text-xs text-slate-400" x-text="'Уровень ' + event.battle.level"></p>
                     <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -63,8 +67,8 @@
                     </div>
                     <p class="text-xs text-slate-500" x-text="event.battle.monster_hp + ' / ' + event.battle.hp"></p>
                     <div class="grid grid-cols-2 gap-3 mt-3">
-                        <a href="/game/battle" class="py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-center">⚔️ Атаковать</a>
-                        <button type="button" class="py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold" @click="doAction('/game/skip')">⏭ Пропустить</button>
+                        <a href="/game/battle" class="py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold inline-flex items-center justify-center gap-1.5"><img src="/img/misc/fight.png" class="w-4 h-4 shrink-0 object-contain" alt=""> Атаковать</a>
+                        <button type="button" class="py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold inline-flex items-center justify-center gap-1.5" @click="doAction('/game/skip')"><img src="/img/misc/right_arrow.png" class="w-4 h-4 shrink-0 object-contain" alt=""> Пропустить</button>
                     </div>
                 </div>
             </template>

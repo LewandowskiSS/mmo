@@ -215,7 +215,7 @@ class Game extends BaseController
             $this->incrementCounter($character->id, 'npc_kills');
             $this->session->remove('battle');
 
-            $msg = "Победа! Ты одолел {$monster->emoji} " . esc($monster->name) . ". +{$xp} XP, +{$gold} золота.";
+            $msg = "Победа! Ты одолел {$monster->name}. +{$xp} XP, +{$gold} золота.";
             if ($newLevel > $character->level) {
                 $msg .= " 🎉 Уровень повышен до {$newLevel}!";
             }
@@ -598,7 +598,6 @@ class Game extends BaseController
         $sortMap = [
             'qty' => 'storage.quantity',
             'name' => 'items.name',
-            'price' => 'items.price',
             'type' => 'items.type',
             'stat' => 'items.value',
         ];
@@ -621,6 +620,39 @@ class Game extends BaseController
             ->orderBy($sortMap[$orderCol] ?? 'storage.id', $order)
             ->orderBy('storage.id', 'ASC')
             ->findAll($perPage, $offset);
+
+        // Надетые предметы (для индикатора сравнения в хранилище)
+        $equippedItems = (new InventoryModel())
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
+            ->join('items', 'items.id = inventory.item_id')
+            ->where('inventory.character_id', $character->id)
+            ->where('inventory.equipped', 1)
+            ->orderBy('inventory.id', 'ASC')
+            ->findAll();
+
+        $equippedValue = [];
+        foreach ($equippedItems as $eq) {
+            $equippedValue[$eq->type] = (int) $eq->value;
+        }
+
+        foreach ($items as $it) {
+            if ($it->type === 'consumable') {
+                $it->cmp = null;
+                continue;
+            }
+
+            $current = $equippedValue[$it->type] ?? null;
+
+            if ($current === null) {
+                $it->cmp = 'up'; // ничего не надето — апгрейд
+            } elseif ((int) $it->value > $current) {
+                $it->cmp = 'up';
+            } elseif ((int) $it->value < $current) {
+                $it->cmp = 'down';
+            } else {
+                $it->cmp = 'equal';
+            }
+        }
 
         $counts = [];
         foreach ((new StorageModel())->select('items.rarity AS rarity')->join('items', 'items.id = storage.item_id')->where('storage.character_id', $character->id)->findAll() as $row) {
@@ -732,7 +764,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "{$item->emoji} {$item->name} — надето",
+            'message' => $this->iconPrefix($item->emoji) . "{$item->name} — надето",
         ]);
     }
 
@@ -793,7 +825,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Использовано: {$item->emoji} {$item->name}",
+            'message' => 'Использовано: ' . $this->iconPrefix($item->emoji) . $item->name,
             'state'   => $this->characterState($character),
         ]);
     }
@@ -844,7 +876,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Продано: {$item->emoji} {$item->name} (+{$price} золота)",
+            'message' => 'Продано: ' . $this->iconPrefix($item->emoji) . "{$item->name} (+{$price} золота)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -970,7 +1002,7 @@ class Game extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => "Куплено: {$item->emoji} {$item->name} (-{$item->price} золота)",
+            'message' => 'Куплено: ' . $this->iconPrefix($item->emoji) . "{$item->name} (-{$item->price} золота)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -1531,6 +1563,7 @@ class Game extends BaseController
             'quests_done'    => (int) ($character->quests_done ?? 0),
             'player_kills'   => (int) ($character->player_kills ?? 0),
             'chests_opened'  => (int) ($character->chests_opened ?? 0),
+            'user_id'        => (int) ($character->user_id ?? 0),
         ];
     }
 
@@ -1833,7 +1866,7 @@ class Game extends BaseController
                 $item = $this->randomItemBySilverChest();
                 if ($item) {
                     $this->giveItem($character->id, $item->id);
-                    return "+{$m['amount']} золота + {$item->emoji} {$item->name}";
+                    return "+{$m['amount']} золота + " . $this->iconPrefix($item->emoji) . $item->name;
                 }
                 return "+{$m['amount']} золота";
             }
@@ -1958,6 +1991,21 @@ class Game extends BaseController
         ]);
     }
 
+    /**
+     * Префикс иконки для текстовых сообщений (toast/лента).
+     * Путь к картинке в текст не подставляется — иконка рендерится отдельно.
+     */
+    private function iconPrefix($emoji): string
+    {
+        $emoji = (string) $emoji;
+
+        if ($emoji === '' || str_starts_with($emoji, '/')) {
+            return '';
+        }
+
+        return $emoji . ' ';
+    }
+
     private function consumeStep($character): void
     {
         (new CharacterModel())->update($character->id, [
@@ -1993,7 +2041,7 @@ class Game extends BaseController
         return [
             'success' => true,
             'type'    => 'monster',
-            'message' => "Ты наткнулся на {$monster->emoji} {$monster->name}!",
+            'message' => "Ты наткнулся на {$monster->name}!",
             'battle'  => [
                 'monster_id' => (int) $monster->id,
                 'name'       => $monster->name,

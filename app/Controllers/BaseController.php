@@ -89,7 +89,11 @@ abstract class BaseController extends Controller
                     'characterTag'       => $character->tag ?? '0000',
                     'characterGender'    => $character->gender ?? 'male',
                     'characterLevel'     => (int) $character->level,
+                    'characterXp'        => (int) $character->xp,
+                    'characterXpNeeded'  => (int) $xpNeeded,
                     'characterXpPercent' => min(100, (int) round($character->xp / $xpNeeded * 100)),
+                    'characterAttack'    => (int) ($character->attack ?? 0),
+                    'characterDefense'   => (int) ($character->defense ?? 0),
                     'characterGold'      => (int) $character->gold,
                     'characterBank'      => (int) ($character->bank_balance ?? 0),
                     'characterEnergy'    => (int) $character->energy,
@@ -98,6 +102,10 @@ abstract class BaseController extends Controller
                     'characterMaxHp'     => (int) $character->max_hp,
                     'characterDiamonds'  => (int) ($character->diamonds ?? 0),
                     'characterWalks'     => (int) ($character->steps_total ?? 0),
+                    'characterKills'     => (int) ($character->npc_kills ?? 0),
+                    'characterQuests'    => (int) ($character->quests_done ?? 0),
+                    'characterChests'    => (int) ($character->chests_opened ?? 0),
+                    'userId'             => (int) session()->get('user_id'),
                     'hasClaimableTasks'  => $hasClaimableTasks,
                 ];
             }

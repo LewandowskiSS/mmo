@@ -4,12 +4,18 @@
 <div class="space-y-6" x-data="battleView(<?= (int) $monster->hp ?>, <?= (int) $monster_hp ?>, <?= (int) $character->hp ?>, <?= (int) $character->max_hp ?>)" data-back="<?= esc($back) ?>">
     <div class="text-center">
         <div class="mb-4 flex justify-center">
-            <div class="w-32 h-32 flex items-center justify-center">
-                <?= $monster->emoji ?>
+            <div class="w-32 h-32 flex items-center justify-center mx-auto">
+                <?php if (str_starts_with((string) $monster->emoji, '/')): ?>
+                    <img src="<?= esc($monster->emoji) ?>" class="w-32 h-32 object-contain shrink-0 mx-auto" alt="<?= esc($monster->name) ?>">
+                <?php else: ?>
+                    <div class="text-6xl leading-none text-center"><?= esc($monster->emoji) ?></div>
+                <?php endif; ?>
             </div>
         </div>
-        <h1 class="text-2xl font-bold"><?= esc($monster->name) ?></h1>
-        <p class="text-sm text-slate-400">Уровень <?= esc($monster->level) ?></p>
+        <div class="flex flex-col items-center gap-1">
+            <h1 class="text-2xl font-bold"><?= esc($monster->name) ?></h1>
+            <p class="text-sm text-slate-400">Уровень <?= esc($monster->level) ?></p>
+        </div>
     </div>
 
     <div class="space-y-3">
@@ -19,7 +25,7 @@
                 <span x-text="hp + ' / ' + maxHp"></span>
             </div>
             <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
-                <div class="h-full bg-red-500" :style="'width:' + (maxHp ? (hp / maxHp * 100) : 0) + '%'"></div>
+                <div class="h-full bg-red-500 rounded-full" :style="'width:' + (maxHp ? (hp / maxHp * 100) : 0) + '%'"></div>
             </div>
         </div>
         <div>
@@ -28,14 +34,21 @@
                 <span x-text="monsterHp + ' / ' + maxMonsterHp"></span>
             </div>
             <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
-                <div class="h-full bg-orange-500" :style="'width:' + (maxMonsterHp ? (monsterHp / maxMonsterHp * 100) : 0) + '%'"></div>
+                <div class="h-full bg-orange-500 rounded-full" :style="'width:' + (maxMonsterHp ? (monsterHp / maxMonsterHp * 100) : 0) + '%'"></div>
             </div>
         </div>
     </div>
 
-    <div class="space-y-1 text-sm h-32 overflow-y-auto bg-slate-800/50 rounded-lg p-3" x-ref="log">
-        <template x-for="line in logs" :key="line">
-            <p class="text-slate-300" x-text="'⚔️ ' + line"></p>
+    <div class="space-y-1 text-sm h-32 overflow-y-auto no-scrollbar bg-slate-800/50 rounded-lg p-3" x-ref="log">
+        <template x-for="(line, i) in logs" :key="i">
+            <p class="text-slate-300"
+               x-enter="opacity-0 translate-y-1"
+               x-enter-active="transition-all duration-150 ease-out"
+               x-enter-to="opacity-100 translate-y-0"
+               x-leave="opacity-100 translate-y-0"
+               x-leave-active="transition-all duration-150 ease-in"
+               x-leave-to="opacity-0 translate-y-1"
+               x-text="'• ' + line"></p>
         </template>
     </div>
 
@@ -43,17 +56,17 @@
         <button type="button" :disabled="busy"
             class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold"
             @click="doAction('/game/attack')">
-            <span x-show="!busy">⚔️ Атаковать</span>
-            <span x-show="busy" x-cloak>⚔️ Атакуем..</span>
+            <span x-show="!busy" class="inline-flex items-center justify-center gap-1.5"><img src="/img/misc/fight.png" class="w-5 h-5 shrink-0 object-contain" alt=""> Атаковать</span>
+            <span x-show="busy" x-cloak class="inline-flex items-center justify-center gap-1.5"><img src="/img/misc/fight.png" class="w-5 h-5 shrink-0 object-contain" alt=""> Атакуем..</span>
         </button>
-        <button type="button" :disabled="busy" class="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-100 font-bold" @click="doAction('/game/flee')">💨 Сбежать</button>
+        <button type="button" :disabled="busy" class="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-100 font-bold" @click="doAction('/game/flee')"><span class="inline-flex items-center justify-center gap-1.5"><img src="/img/misc/walk_sprite.png" class="w-5 h-5 shrink-0 object-contain" alt=""> Сбежать</span></button>
     </div>
 
     <template x-if="result">
     <div class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/70" @click="result = null"></div>
         <div class="relative bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full mx-4 text-center space-y-4">
-            <div class="text-5xl" x-text="result.emoji"></div>
+            <img :src="result.icon" class="w-14 h-14 mx-auto object-contain" alt="">
             <h2 class="text-2xl font-bold" :class="result.cls" x-text="result.title"></h2>
             <p class="text-sm text-slate-300" x-html="result.message"></p>
             <a href="<?= esc($back) ?>" class="block w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold text-center">Продолжить</a>
@@ -107,8 +120,9 @@ function battleView(maxMonsterHpInit, monsterHpInit, hpInit, maxHpInit) {
                         title: 'Нет энергии',
                         text: data.message,
                         confirmButtonText: 'Выйти из боя',
-                        background: '#1e293b',
-                        color: '#e2e8f0',
+                        background: '#2d3436',
+                        color: '#d1d5db',
+                        confirmButtonColor: '#fda4af',
                     }).then(() => {
                         const el = document.querySelector('[data-back]');
                         if (el && el.dataset.back) {
@@ -127,12 +141,12 @@ function battleView(maxMonsterHpInit, monsterHpInit, hpInit, maxHpInit) {
                     setTimeout(() => { this.busy = false; }, 1500);
                 } else if (data.result === 'win' || data.result === 'lose' || data.result === 'flee') {
                     const map = {
-                        win:  { emoji: '🏆', title: 'Победа!', cls: 'text-emerald-400' },
-                        lose: { emoji: '💀', title: 'Поражение', cls: 'text-red-400' },
-                        flee: { emoji: '💨', title: 'Побег', cls: 'text-slate-300' },
+                        win:  { icon: '/img/misc/chest.png', title: 'Победа!', cls: 'text-emerald-400' },
+                        lose: { icon: '/img/misc/Heart.png', title: 'Поражение', cls: 'text-red-400' },
+                        flee: { icon: '/img/misc/walk_sprite.png', title: 'Побег', cls: 'text-slate-300' },
                     };
                     const info = map[data.result] || map.win;
-                    this.result = { emoji: info.emoji, title: info.title, cls: info.cls, message: data.message };
+                    this.result = { icon: info.icon, title: info.title, cls: info.cls, message: data.message };
                 }
             } catch (e) {
                 Game.toast('Ошибка соединения', 'error');
