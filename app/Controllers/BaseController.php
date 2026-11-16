@@ -100,6 +100,7 @@ abstract class BaseController extends Controller
                     'characterMaxEnergy' => (int) $character->max_energy,
                     'characterHp'        => (int) $character->hp,
                     'characterMaxHp'     => (int) $character->max_hp,
+                    'characterHpNextIn'  => $this->hpNextInFor($character),
                     'characterDiamonds'  => (int) ($character->diamonds ?? 0),
                     'characterWalks'     => (int) ($character->steps_total ?? 0),
                     'characterKills'     => (int) ($character->npc_kills ?? 0),
@@ -114,6 +115,16 @@ abstract class BaseController extends Controller
 
     // Данные лейаута (доступны в шаблонах через статический вызов).
     public static array $layoutData = [];
+
+    // Секунды до следующего +1 HP (0, если здоровье полное или таймер ещё не запущен).
+    private function hpNextInFor($character): int
+    {
+        if ((int) $character->hp >= (int) $character->max_hp || empty($character->last_hp_at)) {
+            return 0;
+        }
+        $elapsed = time() - strtotime($character->last_hp_at);
+        return max(0, 180 - ($elapsed % 180));
+    }
 
     protected function isLoggedIn(): bool
     {

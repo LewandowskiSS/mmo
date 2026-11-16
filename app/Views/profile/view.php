@@ -28,6 +28,19 @@ $icon = function ($e): string {
     }
     return '<span class="text-xl">' . esc($e) . '</span>';
 };
+// Сокращение чисел как в public/js/game.js: 216573 → 1.88млн → 1.115млрд
+$numShort = function ($n): string {
+    $n = (int) $n;
+    if ($n >= 1000000000) {
+        $v = intdiv($n, 1000000) / 1000;
+        return rtrim(rtrim(number_format($v, 3, '.', ''), '0'), '.') . 'млрд';
+    }
+    if ($n >= 1000000) {
+        $v = intdiv($n, 10000) / 100;
+        return rtrim(rtrim(number_format($v, 2, '.', ''), '0'), '.') . 'млн';
+    }
+    return (string) $n;
+};
 ?>
 
 <div class="space-y-6" x-data="{ tab: 'profile', bioEdit: false }">
@@ -185,14 +198,13 @@ $icon = function ($e): string {
         </div>
 
         <div class="bg-slate-800 rounded-lg divide-y divide-slate-700/60 text-sm">
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> Золото</span><span class="font-semibold text-amber-400" id="pf-gold"><?= number_format((int) $character->gold, 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400"><img src="/img/misc/emerald.png" class="inline-block w-4 h-4 align-middle object-contain" alt="изумруд"> Изумруды</span><span class="font-semibold" id="pf-diamonds"><?= (int) ($character->diamonds ?? 0) ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👟 Прогулок</span><span class="font-semibold" id="pf-walks"><?= number_format((int) ($character->steps_total ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">📦 Сундуков открыто</span><span class="font-semibold" id="pf-chests"><?= number_format((int) ($character->chests_opened ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">✅ Выполнено заданий</span><span class="font-semibold" id="pf-quests"><?= number_format((int) ($character->quests_done ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🧟 Убито монстров</span><span class="font-semibold" id="pf-kills"><?= number_format((int) ($character->npc_kills ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👑 Убито боссов</span><span class="font-semibold" id="pf-bosskills"><?= number_format((int) ($character->boss_kills ?? 0), 0, ',', ' ') ?></span></div>
-            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">⚔️ Побед над игроками</span><span class="font-semibold" id="pf-playerkills"><?= number_format((int) ($character->player_kills ?? 0), 0, ',', ' ') ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> Золото</span><span class="font-semibold text-amber-400" id="pf-gold" title="<?= number_format((int) $character->gold, 0, ',', ' ') ?>"><?= $numShort($character->gold) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👟 Прогулок</span><span class="font-semibold" id="pf-walks" title="<?= number_format((int) ($character->steps_total ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->steps_total ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">📦 Сундуков открыто</span><span class="font-semibold" id="pf-chests" title="<?= number_format((int) ($character->chests_opened ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->chests_opened ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">✅ Выполнено заданий</span><span class="font-semibold" id="pf-quests" title="<?= number_format((int) ($character->quests_done ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->quests_done ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">🧟 Убито монстров</span><span class="font-semibold" id="pf-kills" title="<?= number_format((int) ($character->npc_kills ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->npc_kills ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👑 Убито боссов</span><span class="font-semibold" id="pf-bosskills" title="<?= number_format((int) ($character->boss_kills ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->boss_kills ?? 0) ?></span></div>
+            <div class="flex justify-between px-4 py-3"><span class="text-slate-400">⚔️ Побед над игроками</span><span class="font-semibold" id="pf-playerkills" title="<?= number_format((int) ($character->player_kills ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->player_kills ?? 0) ?></span></div>
         </div>
     </div>
 
@@ -457,7 +469,20 @@ window.drawComments = function (list, comments, profileId) {
 (function () {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     const bar = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
-    const fmt = (n) => Number(n).toLocaleString('ru-RU');
+    // Сокращение чисел как в public/js/game.js
+    const short = (n) => {
+        const v = Number(n) || 0;
+        const trim = (x, d) => x.toFixed(d).replace(/\.?0+$/, '');
+        if (v >= 1000000000) return trim(Math.floor(v / 1000000) / 1000, 3) + 'млрд';
+        if (v >= 1000000) return trim(Math.floor(v / 10000) / 100, 2) + 'млн';
+        return String(v);
+    };
+    const setNum = (id, n) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = short(n);
+        el.title = Number(n || 0).toLocaleString('ru-RU');
+    };
 
     function update(s) {
         if (!s) return;
@@ -468,14 +493,13 @@ window.drawComments = function (list, comments, profileId) {
         set('pf-maxhp', s.max_hp);
         set('pf-hppct', (s.max_hp ? Math.round(s.hp / s.max_hp * 100) : 0) + '%');
         bar('pf-hpbar', s.max_hp ? (s.hp / s.max_hp * 100) : 0);
-        set('pf-gold', fmt(s.gold));
-        set('pf-diamonds', s.diamonds);
-        set('pf-walks', fmt(s.walks));
-        set('pf-chests', fmt(s.chests_opened));
-        set('pf-quests', fmt(s.quests_done));
-        set('pf-kills', fmt(s.npc_kills));
-        set('pf-bosskills', fmt(s.boss_kills));
-        set('pf-playerkills', fmt(s.player_kills));
+        setNum('pf-gold', s.gold);
+        setNum('pf-walks', s.walks);
+        setNum('pf-chests', s.chests_opened);
+        setNum('pf-quests', s.quests_done);
+        setNum('pf-kills', s.npc_kills);
+        setNum('pf-bosskills', s.boss_kills);
+        setNum('pf-playerkills', s.player_kills);
     }
 
     async function poll() {

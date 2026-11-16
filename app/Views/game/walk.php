@@ -1,14 +1,31 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>)">
+<?php
+// Сокращение золота на сервере — та же логика, что Game.fmt() в public/js/game.js.
+// до 999999 — как есть; 1e6+ — «млн» (2 знака, усечение); 1e9+ — «млрд» (3 знака, усечение).
+$gold_raw  = (int) $character->gold;
+$gold_dec  = $gold_raw <= 999999999 ? 2 : 3;
+$gold_num  = $gold_raw <= 999999
+    ? $gold_raw
+    : ($gold_raw <= 999999999 ? floor($gold_raw / 1e6 * 100) / 100 : floor($gold_raw / 1e9 * 1000) / 1000);
+$gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.')
+    . ($gold_raw <= 999999 ? '' : ($gold_raw <= 999999999 ? 'млн' : 'млрд'));
+?>
+
+<div class="relative mt-2 rounded-lg overflow-hidden p-4 sm:p-6 flex flex-col justify-between" style="min-height: 35rem; background: linear-gradient(to bottom, rgba(0,0,0,0.88), rgba(0,0,0,0.65)), url('<?= esc($location->image ?? '/img/locations/quiet_valley.png') ?>'); background-size: cover; background-position: bottom center;">
+    <div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>, <?= $gold_raw ?>)">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold"><?= esc($character->name) ?></h1>
-            <p class="text-sm text-slate-400">Уровень <span id="st-level"><?= esc($character->level) ?></span></p>
+            <h1 class="text-2xl font-bold text-white"><?= esc($character->name) ?></h1>
+            <p class="text-sm text-slate-300">Уровень <span id="st-level"><?= esc($character->level) ?></span></p>
+            <p class="text-xs text-amber-300/90 font-semibold mt-0.5 inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 1 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                <?= esc($location->name ?? 'Тихая долина') ?>
+            </p>
         </div>
         <div class="text-right">
-            <p class="text-2xl font-bold text-amber-400"><span id="st-gold"><?= esc($character->gold) ?></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
+            <p class="text-2xl font-bold text-amber-400" :title="String(gold)"><span x-text="fmtGold(gold)"><?= esc($gold_text) ?></span> <img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"></p>
             <p class="text-xs text-slate-400">золото</p>
         </div>
     </div>
@@ -42,7 +59,8 @@
                 <span id="st-energy"><?= esc($character->energy) ?> / <?= esc($character->max_energy) ?></span>
             </div>
             <div class="h-2 bg-slate-700 rounded-full">
-                <div id="bar-energy" class="h-full bg-sky-400 rounded-full" style="width: <?= esc($energy_percent) ?>%"></div>
+                <!-- Цвет синхронизирован с баром энергии в панели профиля (#eab308 = bg-yellow-500) -->
+                <div id="bar-energy" class="h-full bg-yellow-500 rounded-full" style="width: <?= esc($energy_percent) ?>%"></div>
             </div>
         </div>
     </div>
@@ -52,7 +70,7 @@
         <div class="bg-slate-800 rounded-lg p-3 flex justify-between items-center"><span class="text-slate-400 inline-flex items-center gap-1.5"><img src="/img/equipment/Iron%20Armor.png" class="w-4 h-4 shrink-0 object-contain" alt="защита"> Защита</span><span id="st-defense" class="font-semibold"><?= esc($character->defense) ?></span></div>
     </div>
 
-    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+    <div class="bg-neutral-950/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
         <div class="text-sm text-slate-300">
             <template x-if="event.type === 'monster'">
                 <div class="text-center space-y-2">
@@ -115,9 +133,10 @@
     }
 </style>
 <script>
-function gameDashboard(initialEnergy) {
+function gameDashboard(initialEnergy, initialGold) {
     return {
         energy: initialEnergy,
+        gold: Math.floor(Number(initialGold) || 0),
         walking: false,
         event: { type: 'text', message: 'Нажми «Прогулка», чтобы отправиться в путь.' },
 
@@ -125,6 +144,14 @@ function gameDashboard(initialEnergy) {
             const b = this.event.battle;
             if (!b) return 0;
             return Math.max(0, Math.min(100, (b.monster_hp / b.hp) * 100));
+        },
+
+        // Сокращение золота: до 999999 — как есть, 1e6+ — «млн» (2 знака), 1e9+ — «млрд» (3 знака)
+        fmtGold(n) {
+            const num = Math.floor(Number(n) || 0);
+            if (num <= 999999) return String(num);
+            if (num <= 999999999) return String(Math.floor((num / 1e6) * 100) / 100) + 'млн';
+            return String(Math.floor((num / 1e9) * 1000) / 1000) + 'млрд';
         },
 
         eventClass() {
@@ -163,6 +190,7 @@ function gameDashboard(initialEnergy) {
                 const data = await Game.post(url);
                 if (data.state) {
                     this.energy = data.state.energy;
+                    this.gold = Math.floor(Number(data.state.gold) || 0);
                     Game.updateState(data.state);
                 }
                 this.event = data;
@@ -176,6 +204,7 @@ function gameDashboard(initialEnergy) {
             if (document.hidden) return;
             Game.get('/game/state').then((state) => {
                 this.energy = state.energy;
+                this.gold = Math.floor(Number(state.gold) || 0);
                 Game.updateState(state);
             }).catch(() => {});
         },

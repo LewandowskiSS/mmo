@@ -164,8 +164,8 @@
     .profile-energy-value { display:inline-flex; align-items:center; gap:4px; color:#f4f4f5; font-weight:600; }
     .profile-energy-timer { font-size:11px; font-weight:400; color:#71717a; }
     .profile-energy-row .profile-action { margin-left:0; }
-    .profile-track { width:100%; height:8px; background:#27272a; border-radius:999px; overflow:hidden; }
-    .profile-track > div { height:100%; transition:width .25s ease; }
+    .profile-track { width:100%; height:8px; background:#27272a; border-radius:999px; overflow:visible; }
+    .profile-track > div { height:100%; border-radius:999px; transition:width .25s ease; }
     .profile-divider { border-bottom:1px dashed rgba(255,255,255,.1); margin:12px 0; }
     .profile-heading { width:100%; cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:4px 0; color:#e4e4e7; font-weight:700; font-size:13px; }
     .profile-heading svg { width:16px; height:16px; transition:transform .25s ease; }
@@ -175,6 +175,11 @@
     .profile-value { display:inline-flex; align-items:center; gap:5px; color:#f4f4f5; font-weight:500; }
     .profile-action { background:#6366f1; color:#fff; font-size:11px; font-weight:600; padding:3px 10px; border-radius:6px; margin-left:8px; white-space:nowrap; }
     @media (prefers-reduced-motion:reduce) { .profile-accordion, .profile-heading svg, .profile-track > div { transition:none; } }
+    /* Аккордеоны навигации сайдбара — та же схема, что и в панели профиля */
+    .nav-accordion { display:grid; grid-template-rows:1fr; transition:grid-template-rows .25s ease; }
+    .nav-accordion:not(.is-open) { grid-template-rows:0fr; }
+    .nav-accordion > div { min-height:0; overflow:hidden; }
+    @media (prefers-reduced-motion:reduce) { .nav-accordion { transition:none; } }
     /* Свечение XP-бара: только пульсация тени, геометрия полосы не меняется */
     .xp-glow {
         box-shadow: 0 0 5px rgba(168, 85, 247, 0.85), 0 0 12px rgba(168, 85, 247, 0.40);
@@ -218,6 +223,7 @@
     'maxEnergy' => (int) (\App\Controllers\BaseController::$layoutData['characterMaxEnergy'] ?? 20),
     'hp'        => (int) (\App\Controllers\BaseController::$layoutData['characterHp'] ?? 0),
     'maxHp'     => (int) (\App\Controllers\BaseController::$layoutData['characterMaxHp'] ?? 50),
+    'hpNextIn'  => (int) (\App\Controllers\BaseController::$layoutData['characterHpNextIn'] ?? 0),
     'attack'    => (int) (\App\Controllers\BaseController::$layoutData['characterAttack'] ?? 0),
     'defense'   => (int) (\App\Controllers\BaseController::$layoutData['characterDefense'] ?? 0),
     'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
@@ -285,8 +291,11 @@
             <div id="profile-panel" class="profile-panel no-scrollbar" x-show="statsOpen" x-transition.opacity.duration.150ms x-cloak>
                 <div class="profile-label"><strong><img src="/img/misc/Heart.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Здоровье</strong><span><span id="st-hp" x-text="st.hp + ' / ' + st.maxHp"></span> HP (<span x-text="st.maxHp ? Math.round(st.hp / st.maxHp * 100) : 0"></span>%)</span></div>
                 <div class="profile-track" style="margin-bottom:12px"><div style="background:#ef4444" :style="{width: Math.max(0, Math.min(100, st.maxHp ? st.hp / st.maxHp * 100 : 0)) + '%'}"></div></div>
+                <div class="profile-energy-row" x-show="st.hp < st.maxHp" x-cloak>
+                    <span class="profile-energy-timer" x-show="(st.hpNextIn || 0) > 0" x-text="'через ' + (st.hpNextIn || 0) + ' с'"></span>
+                </div>
                 <div class="profile-label"><strong>Опыт</strong><span><span id="st-xp" x-text="st.xp + ' / ' + st.xpNeeded"></span> EXP</span></div>
-                <div class="profile-track"><div style="background:#10b981" :style="{width: Math.max(0, Math.min(100, st.xpPercent)) + '%'}"></div></div>
+                <div class="profile-track"><div class="xp-glow" style="background:#a855f7" :style="{width: Math.max(0, Math.min(100, st.xpPercent)) + '%'}"></div></div>
                 <div class="profile-divider"></div>
                 <div class="profile-energy" :class="{ 'has-timer': st.energy < st.maxEnergy && (st.nextEnergyIn || 0) > 0 }">
                     <div class="profile-energy-row">
@@ -354,17 +363,19 @@
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
                     <?= game_icon('/img/misc/fight.png', 'h-4 w-4') ?>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Adventure</span>
-                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && advOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && !advOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <svg x-show="!sidebarCollapsed || sidebarMobile" x-cloak :class="advOpen ? 'rotate-180' : ''"
+                        class="ml-auto w-4 h-4 text-slate-400 transition-transform duration-200"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
-                <div x-show="advOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
-                    <a href="/" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> Главная
-                    </a>
-                    <a href="/town" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> Город
-                    </a>
-
+                <div class="nav-accordion" :class="(advOpen && (!sidebarCollapsed || sidebarMobile)) ? 'is-open' : ''">
+                    <div class="pt-1 space-y-0.5">
+                        <a href="/" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> Главная
+                        </a>
+                        <a href="/town" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> Город
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -374,31 +385,34 @@
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
                     <?= game_icon('/img/misc/character.png', 'h-4 w-4') ?>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Character</span>
-                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && charOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && !charOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <svg x-show="!sidebarCollapsed || sidebarMobile" x-cloak :class="charOpen ? 'rotate-180' : ''"
+                        class="ml-auto w-4 h-4 text-slate-400 transition-transform duration-200"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
-                <div x-show="charOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
-                    <a href="/view/<?= (int)(session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Мой персонаж
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <?= game_icon('/img/misc/emerald.png', 'h-5 w-5') ?> Крафт <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
-                    </a>
-                    <a href="/game/tasks" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white relative">
-                        <img src="/img/misc/quests.png" class="w-5 h-5 object-contain shrink-0" alt=""> Задания
-                        <?php if (! empty(\App\Controllers\BaseController::$layoutData['hasClaimableTasks'])): ?>
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" title="Доступны награды за задания"></span>
-                        <?php endif; ?>
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <?= game_icon('/img/misc/chest.png', 'h-5 w-5') ?> Коллекции <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                        <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Гильдии <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
-                    </a>
+                <div class="nav-accordion" :class="(charOpen && (!sidebarCollapsed || sidebarMobile)) ? 'is-open' : ''">
+                    <div class="pt-1 space-y-0.5">
+                        <a href="/view/<?= (int)(session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Мой персонаж
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                            <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                            <?= game_icon('/img/misc/emerald.png', 'h-5 w-5') ?> Крафт <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        </a>
+                        <a href="/game/tasks" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white relative">
+                            <img src="/img/misc/quests.png" class="w-5 h-5 object-contain shrink-0" alt=""> Задания
+                            <?php if (! empty(\App\Controllers\BaseController::$layoutData['hasClaimableTasks'])): ?>
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" title="Доступны награды за задания"></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                            <?= game_icon('/img/misc/chest.png', 'h-5 w-5') ?> Коллекции <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
+                            <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Гильдии <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -408,19 +422,22 @@
                     class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white text-xs uppercase tracking-wider font-semibold">
                     <?= game_icon('/img/misc/main.png', 'h-4 w-4') ?>
                     <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Game</span>
-                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && gameOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    <svg x-show="(!sidebarCollapsed || sidebarMobile) && !gameOpen" x-cloak class="ml-auto w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <svg x-show="!sidebarCollapsed || sidebarMobile" x-cloak :class="gameOpen ? 'rotate-180' : ''"
+                        class="ml-auto w-4 h-4 text-slate-400 transition-transform duration-200"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
-                <div x-show="gameOpen && (!sidebarCollapsed || sidebarMobile)" x-cloak class="mt-1 space-y-0.5">
-                    <a href="/game/shop" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <img src="/img/misc/shop.png" class="w-5 h-5 object-contain shrink-0" alt=""> Магазин
-                    </a>
-                    <a href="/game/chests" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <img src="/img/misc/chest.png" class="w-5 h-5 object-contain shrink-0" alt=""> Сундуки
-                    </a>
-                    <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                        <?= game_icon('/img/misc/coin.png', 'h-5 w-5') ?> Топ игроков
-                    </a>
+                <div class="nav-accordion" :class="(gameOpen && (!sidebarCollapsed || sidebarMobile)) ? 'is-open' : ''">
+                    <div class="pt-1 space-y-0.5">
+                        <a href="/game/shop" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <img src="/img/misc/shop.png" class="w-5 h-5 object-contain shrink-0" alt=""> Магазин
+                        </a>
+                        <a href="/game/chests" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <img src="/img/misc/chest.png" class="w-5 h-5 object-contain shrink-0" alt=""> Сундуки
+                        </a>
+                        <a href="/game/leaderboard" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <?= game_icon('/img/misc/coin.png', 'h-5 w-5') ?> Топ игроков
+                        </a>
+                    </div>
                 </div>
             </div>
 

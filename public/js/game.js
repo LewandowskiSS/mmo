@@ -151,6 +151,11 @@ if (window.Swal && Swal.defaults) {
         if (energyTimer) {
             energyTimer.textContent = (s.energy >= s.max_energy) ? '🔋 полная' : ('🔋 через ' + s.next_energy_in + ' c');
         }
+
+        const hpTimer = document.getElementById('hp-timer');
+        if (hpTimer) {
+            hpTimer.textContent = (s.hp >= s.max_hp) ? '' : ('❤️ через ' + (s.hp_next_in || 0) + ' c');
+        }
     }
 
     window.Game = { csrfToken, post, get, toast, updateState, COOLDOWN_MS, fmt: formatCurrency, isImage: (e) => typeof e === 'string' && e.startsWith('/') };
@@ -203,6 +208,7 @@ function layout(seed = {}) {
             chests: seed.chests || 0,
             userId: seed.userId || 0,
             nextEnergyIn: seed.nextEnergyIn || 0,
+            hpNextIn: seed.hpNextIn || 0,
         },
 
         // Форматирование валют в панели профиля (млн/млрд) — единый форматтер из game.js
@@ -230,6 +236,17 @@ function layout(seed = {}) {
                 if (this.st.nextEnergyIn > 0) {
                     this.st.nextEnergyIn--;
                     if (this.st.nextEnergyIn === 0) this.refreshProfile();
+                }
+            }, 1000);
+            // Живой таймер пассивной регенерации HP: +1 HP каждые 180 с
+            setInterval(() => {
+                if (this.st.hpNextIn > 0) {
+                    this.st.hpNextIn--;
+                    if (this.st.hpNextIn === 0 && this.st.hp < this.st.maxHp) {
+                        this.st.hp = Math.min(this.st.maxHp, this.st.hp + 1);
+                        if (this.st.hp < this.st.maxHp) this.st.hpNextIn = 180;
+                        this.refreshProfile();
+                    }
                 }
             }, 1000);
         },
@@ -318,6 +335,7 @@ function layout(seed = {}) {
                 this.st.chests = s.chests_opened || 0;
                 this.st.userId = s.user_id || this.st.userId || 0;
                 this.st.nextEnergyIn = s.next_energy_in || 0;
+                this.st.hpNextIn = s.hp_next_in || 0;
         },
     };
 }

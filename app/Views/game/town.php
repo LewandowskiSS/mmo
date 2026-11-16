@@ -41,7 +41,7 @@ $sections = [
                 <h2 class="text-3xl font-bold mb-2">Симплтопия</h2>
                 <p class="text-slate-300 mb-5">Общая земля SimpleMMO. Место, где может случиться всё что угодно (и, вероятно, случится).</p>
                 <div class="flex flex-wrap justify-center gap-2">
-                    <a href="#" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold">Сменить локацию</a>
+                    <a href="/locations" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold">Сменить локацию</a>
                     <a href="#" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">Доска объявлений</a>
                     <a href="#" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">События сообщества</a>
                     <a href="#" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">Заявки на поставку</a>

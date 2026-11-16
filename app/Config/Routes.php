@@ -67,3 +67,7 @@ $routes->get('game/bankState', 'Game::bankState');
 $routes->get('game/bankTransactions', 'Game::bankTransactions');
 $routes->post('game/bank/deposit', 'Game::bankDeposit');
 $routes->post('game/bank/withdraw', 'Game::bankWithdraw');
+
+// Локации
+$routes->get('locations', 'Game::locations');
+$routes->post('locations/travel', 'Game::travelLocation');

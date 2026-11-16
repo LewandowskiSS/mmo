@@ -12,6 +12,7 @@ use App\Models\EventLogModel;
 use App\Models\FlavorTextModel;
 use App\Models\InventoryModel;
 use App\Models\ItemModel;
+use App\Models\LocationModel;
 use App\Models\MonsterModel;
 use App\Models\StorageModel;
 
@@ -19,6 +20,7 @@ class Game extends BaseController
 {
     // 1 энергия восстанавливается за это число секунд.
     private const ENERGY_REGEN_SECONDS = 180;
+    private const HP_REGEN_SECONDS = 180;
     private const INVENTORY_CAPACITY = 10000;
 
     public function index()
@@ -29,6 +31,7 @@ class Game extends BaseController
         }
 
         $character = $this->regenEnergy($character);
+        $character = $this->regenHp($character);
 
         $xpNeeded = $this->xpNeeded($character->level);
 
@@ -65,10 +68,13 @@ class Game extends BaseController
         }
 
         $character = $this->regenEnergy($character);
+        $character = $this->regenHp($character);
         $xpNeeded  = $this->xpNeeded($character->level);
+        $location  = $this->currentLocation($character);
 
         return view('game/walk', [
             'character'      => $character,
+            'location'       => $location,
             'xp_needed'      => $xpNeeded,
             'xp_percent'     => min(100, (int) round($character->xp / $xpNeeded * 100)),
             'hp_percent'     => (int) round($character->hp / $character->max_hp * 100),
@@ -103,6 +109,88 @@ class Game extends BaseController
         $this->incrementCounter($character->id, 'steps_total');
 
         return $this->response->setJSON($this->walkEvent($character));
+    }
+
+    public function locations()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return redirect()->to('/login');
+        }
+
+        return view('game/locations', [
+            'character'         => $character,
+            'locations'         => (new LocationModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
+            'currentLocationId' => (int) ($character->location_id ?? 1),
+        ]);
+    }
+
+    public function travelLocation()
+    {
+        $character = $this->currentCharacter();
+        if (! $character) {
+            return $this->response->setStatusCode(401)->setJSON(['ok' => false, 'message' => 'Не авторизован']);
+        }
+
+        $locationId = (int) $this->request->getPost('location_id');
+        if ($locationId <= 0) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Не указана локация']);
+        }
+
+        if ($locationId === (int) ($character->location_id ?? 1)) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Ты уже находишься в этой локации']);
+        }
+
+        $location = (new LocationModel())->find($locationId);
+        if (! $location) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Локация не найдена']);
+        }
+
+        if ((int) $location->is_wip === 1) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Локация в разработке (WIP)']);
+        }
+
+        if ((int) $character->level < (int) $location->min_level) {
+            return $this->response->setJSON(['ok' => false, 'message' => "Нужен уровень {$location->min_level}"]);
+        }
+
+        $cost = (int) $location->travel_cost;
+        if ($cost > 0 && (int) $character->gold < $cost) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Недостаточно золота']);
+        }
+
+        (new CharacterModel())->update($character->id, [
+            'location_id' => $location->id,
+            'gold'        => (int) $character->gold - $cost,
+        ]);
+
+        $this->logEvent($character->id, 'walk', "Ты отправился в путь: {$location->name}.");
+
+        return $this->response->setJSON([
+            'ok'         => true,
+            'message'    => 'Ты прибыл в новую локацию!',
+            'location'   => [
+                'id'     => (int) $location->id,
+                'slug'   => $location->slug,
+                'name'   => $location->name,
+                'image'  => $location->image,
+            ],
+            'state'      => $this->characterState($character),
+        ]);
+    }
+
+    private function currentLocation($character): ?object
+    {
+        $locationModel = new LocationModel();
+        $locationId = (int) ($character->location_id ?? 1);
+        $location = $locationId > 0 ? $locationModel->find($locationId) : null;
+
+        // Если локация не найдена — используем локацию с id = 1 («Тихая долина»)
+        if (! $location) {
+            $location = $locationModel->find(1);
+        }
+
+        return $location;
     }
 
     public function skip()
@@ -411,8 +499,9 @@ class Game extends BaseController
         }
 
         (new CharacterModel())->update($character->id, [
-            'hp'   => $character->max_hp,
-            'gold' => $character->gold - $cost,
+            'hp'         => $character->max_hp,
+            'gold'       => $character->gold - $cost,
+            'last_hp_at' => null,
         ]);
 
         return $this->response->setJSON([
@@ -811,7 +900,11 @@ class Game extends BaseController
 
         if ($item->stat === 'hp') {
             $newHp = min($character->max_hp, $character->hp + (int) $item->value);
-            $charModel->update($character->id, ['hp' => $newHp]);
+            $data  = ['hp' => $newHp];
+            if ($newHp >= $character->max_hp) {
+                $data['last_hp_at'] = null;
+            }
+            $charModel->update($character->id, $data);
         } elseif ($item->stat === 'energy') {
             $newEnergy = min($character->max_energy, $character->energy + (int) $item->value);
             $charModel->update($character->id, ['energy' => $newEnergy, 'last_energy_at' => date('Y-m-d H:i:s')]);
@@ -1539,6 +1632,7 @@ class Game extends BaseController
     {
         $character = (new CharacterModel())->find($character->id);
         $character = $this->regenEnergy($character);
+        $character = $this->regenHp($character);
 
         return [
             'level'          => (int) $character->level,
@@ -1557,6 +1651,7 @@ class Game extends BaseController
             'gold_keys'      => (int) ($character->gold_keys ?? 0),
             'diamonds'       => (int) ($character->diamonds ?? 0),
             'next_energy_in' => $this->secondsUntilNextEnergy($character),
+            'hp_next_in'     => $this->secondsUntilNextHp($character),
             'walks'          => (int) ($character->steps_total ?? 0),
             'npc_kills'      => (int) ($character->npc_kills ?? 0),
             'boss_kills'     => (int) ($character->boss_kills ?? 0),
@@ -1598,6 +1693,60 @@ class Game extends BaseController
 
             $character->energy         = $newEnergy;
             $character->last_energy_at = $newLast;
+        }
+
+        return $character;
+    }
+
+    private function secondsUntilNextHp($character): int
+    {
+        if ($character->hp >= $character->max_hp || ! $character->last_hp_at) {
+            return 0;
+        }
+
+        $elapsed = time() - strtotime($character->last_hp_at);
+
+        return max(0, self::HP_REGEN_SECONDS - ($elapsed % self::HP_REGEN_SECONDS));
+    }
+
+    private function regenHp($character)
+    {
+        if ($character->hp >= $character->max_hp) {
+            if ($character->last_hp_at !== null) {
+                (new CharacterModel())->update($character->id, ['last_hp_at' => null]);
+                $character->last_hp_at = null;
+            }
+
+            return $character;
+        }
+
+        if ($character->last_hp_at === null) {
+            $now = date('Y-m-d H:i:s');
+            (new CharacterModel())->update($character->id, ['last_hp_at' => $now]);
+            $character->last_hp_at = $now;
+
+            return $character;
+        }
+
+        $elapsed = time() - strtotime($character->last_hp_at);
+        $ticks   = intdiv($elapsed, self::HP_REGEN_SECONDS);
+
+        if ($ticks >= 1) {
+            $newHp   = min($character->max_hp, $character->hp + $ticks);
+            $newLast = date('Y-m-d H:i:s', strtotime($character->last_hp_at) + $ticks * self::HP_REGEN_SECONDS);
+
+            (new CharacterModel())->update($character->id, [
+                'hp'         => $newHp,
+                'last_hp_at' => $newLast,
+            ]);
+
+            $character->hp         = $newHp;
+            $character->last_hp_at = $newLast;
+
+            if ($newHp >= $character->max_hp) {
+                (new CharacterModel())->update($character->id, ['last_hp_at' => null]);
+                $character->last_hp_at = null;
+            }
         }
 
         return $character;
@@ -1724,6 +1873,7 @@ class Game extends BaseController
             $data['level']      = $level;
             $data['max_hp']     = 50 + ($level - 1) * 10;
             $data['hp']         = $data['max_hp'];
+            $data['last_hp_at'] = null;
             $data['attack']     = 5 + ($level - 1) * 2;
             $data['defense']    = 2 + ($level - 1);
         }
@@ -1737,8 +1887,9 @@ class Game extends BaseController
     {
         $goldLost = (int) floor($character->gold * 0.2);
         (new CharacterModel())->update($character->id, [
-            'hp'   => $character->max_hp,
-            'gold' => max(0, $character->gold - $goldLost),
+            'hp'         => $character->max_hp,
+            'gold'       => max(0, $character->gold - $goldLost),
+            'last_hp_at' => null,
         ]);
         return $goldLost;
     }
@@ -2056,42 +2207,22 @@ class Game extends BaseController
 
     private function walkEvent($character): array
     {
-        $roll = random_int(1, 100);
+        $location = $this->currentLocation($character);
+        $chanceText    = (int) ($location->chance_text ?? 80);
+        $chanceItem    = (int) ($location->chance_item ?? 10);
+        $chanceMonster = (int) ($location->chance_monster ?? 10);
 
-        // 40% — монстр
-        if ($roll <= 40) {
+        // Нормализуем веса на случай расхождения в сумме
+        $totalWeight = max(1, $chanceText + $chanceItem + $chanceMonster);
+        $roll        = random_int(1, $totalWeight);
+
+        // Монстр
+        if ($roll <= $chanceMonster) {
             return $this->battleResponse($character, $this->spawnMonster($character->level));
         }
 
-        // 35% — текст
-        if ($roll <= 75) {
-            $text = $this->randomFlavorText();
-            $this->logEvent($character->id, 'walk', $text);
-
-            return [
-                'success' => true,
-                'type'    => 'text',
-                'message' => $text,
-                'state'   => $this->characterState($character),
-            ];
-        }
-
-        // 12% — золото
-        if ($roll <= 87) {
-            $gold = random_int(1, 5) + $character->level;
-            (new CharacterModel())->update($character->id, ['gold' => $character->gold + $gold]);
-            $this->logEvent($character->id, 'gold', "Найдено {$gold} золота");
-
-            return [
-                'success' => true,
-                'type'    => 'gold',
-                'message' => "Ты нашёл {$gold} золота! 💰",
-                'state'   => $this->characterState($character),
-            ];
-        }
-
-        // 8% — предмет. Редчайшие предметы имеют отдельный шанс внутри дропа.
-        if ($roll <= 95) {
+        // Предмет. Редчайшие предметы имеют отдельный шанс внутри дропа.
+        if ($roll <= $chanceMonster + $chanceItem) {
             $items = (new ItemModel())->where('type !=', 'pet')->findAll();
             $rareRoll = random_int(1, 10000);
             $rareRarity = $rareRoll === 1 ? 'ancient' : ($rareRoll <= 4 ? 'mythic' : null);
@@ -2115,25 +2246,14 @@ class Game extends BaseController
             ];
         }
 
-        // 3% — ключ
-        if ($roll <= 98) {
-            (new CharacterModel())->update($character->id, ['bronze_keys' => ((int) ($character->bronze_keys ?? 0)) + 1]);
-            $this->logEvent($character->id, 'key', 'Найден бронзовый ключ');
+        // Текст (оставшаяся вероятность)
+        $text = $this->randomFlavorText();
+        $this->logEvent($character->id, 'walk', $text);
 
-            return [
-                'success' => true,
-                'type'    => 'key',
-                'message' => 'Ты нашёл бронзовый ключ! 🔑',
-                'state'   => $this->characterState($character),
-            ];
-        }
-
-        // 2% — ничего
-        $this->logEvent($character->id, 'walk', 'Ты прогулялся по округе, но ничего не нашёл.');
         return [
             'success' => true,
-            'type'    => 'nothing',
-            'message' => 'Ты прогулялся по округе, но ничего не нашёл.',
+            'type'    => 'text',
+            'message' => $text,
             'state'   => $this->characterState($character),
         ];
     }

@@ -56,7 +56,8 @@ foreach ($periods as $p => $d) {
                         :class="m.claimable ? 'text-amber-400 hover:text-amber-300' : (m.claimed ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300')"
                         class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg"
                         :style="m.claimable ? 'box-shadow: 0 0 0 2px rgba(250,204,21,.45), 0 0 14px rgba(250,204,21,.25)' : ''">
-                        <img :src="'/img/chests/' + m.icon + '.ico'" :alt="m.percent + '%'" class="w-6 h-6 object-contain">
+                        <!-- Иконка вехи: только через iconHtml() — путь/маппинг → <img>, иначе текст. :src с сырым эмодзи не используется -->
+                        <div class="w-6 h-6 shrink-0 flex items-center justify-center" x-html="iconHtml(m.icon, 'w-6 h-6', 'text-xl')"></div>
                         <span x-text="m.percent + '%'"></span>
                     </button>
                 </template>
@@ -66,14 +67,8 @@ foreach ($periods as $p => $d) {
         <ul class="space-y-3">
             <template x-for="it in periods[p].items" :key="it.id">
                 <li class="bg-slate-800 rounded-lg p-4 flex items-center gap-3">
-                    <div class="w-8 h-8 shrink-0 flex items-center justify-center">
-                        <template x-if="iconIsImage(it.emoji)">
-                            <img :src="it.emoji" alt="" class="w-8 h-8 object-contain">
-                        </template>
-                        <template x-if="!iconIsImage(it.emoji)">
-                            <span class="inline-block align-middle text-2xl leading-none" x-text="it.emoji"></span>
-                        </template>
-                    </div>
+                    <!-- Иконка: путь к картинке → <img>, иначе текст-эмодзи. Эмодзи никогда не попадает в src -->
+                    <div class="w-8 h-8 shrink-0 flex items-center justify-center" x-html="iconHtml(it.emoji)"></div>
                     <div class="flex-1">
                         <p class="font-semibold" x-text="it.name"></p>
                         <p x-show="it.description" class="text-xs text-slate-400" x-text="it.description"></p>
@@ -127,13 +122,71 @@ function tasks(seed, resetIn) {
             setInterval(() => this.tick(), 1000);
         },
 
-        // Иконка является путём к картинке, а не текстовым эмодзи
+        // Эмодзи из БД → PNG из /img/misc/ (чтобы в src никогда не попадал символ)
+        iconMap: {
+            '⚔️': '/img/misc/fight.png', '🗡️': '/img/misc/fight.png',
+            '💀': '/img/misc/fight.png', '🐗': '/img/misc/fight.png',
+            '🎒': '/img/misc/bag.png',
+            '👣': '/img/misc/map.png', '🚶': '/img/misc/map.png',
+            '🗺️': '/img/misc/map.png', '🧭': '/img/misc/map.png',
+            '🏆': '/img/misc/quests.png', '🥇': '/img/misc/quests.png',
+            '🗝️': '/img/misc/chest.png', '🎁': '/img/misc/chest.png',
+            '💎': '/img/misc/emerald.png', '💰': '/img/misc/coin.png',
+            '❤️': '/img/misc/Heart.png', '⚡': '/img/misc/energy.png'
+        },
+
+        // Значение — путь к файлу-иконке (а не одиночный эмодзи)?
         iconIsImage(icon) {
             if (typeof icon !== 'string') return false;
             const v = icon.trim();
             if (v === '') return false;
-            if (v.startsWith('/')) return true;
+            if (v.startsWith('/') || v.startsWith('./')) return true;
             return /^https?:\/\//i.test(v) || /\.(png|svg|webp|ico|gif|jpe?g)$/i.test(v);
+        },
+
+        // Итоговый src иконки: путь как есть, эмодзи — через маппинг, иначе ''
+        iconSrc(icon) {
+            const v = typeof icon === 'string' ? icon.trim() : '';
+            if (v === '') return '';
+            if (this.iconIsImage(v)) return v;
+            if (this.iconMap[v]) return this.iconMap[v];
+            // Нормализация: убираем селектор вариации U+FE0F и пробелы
+            const plain = v.replace(/\uFE0F/g, '').trim();
+            if (this.iconMap[plain]) return this.iconMap[plain];
+            const withVs = plain + '\uFE0F';
+            if (this.iconMap[withVs]) return this.iconMap[withVs];
+            return '';
+        },
+
+        // Экранирование для вставки через x-html
+        escHtml(s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+
+        // HTML иконки: путь/маппинг → <img>, иначе текст. Эмодзи в src не попадает никогда.
+        iconHtml(icon, sizeClass, textClass) {
+            const v = typeof icon === 'string' ? icon.trim() : '';
+            const src = this.iconSrc(v) || (/^[a-z0-9_-]{1,32}$/i.test(v) ? '/img/chests/' + v + '.ico' : '');
+            if (src !== '') {
+                return '<img src="' + this.escHtml(src) + '" alt="" class="' + this.escHtml(sizeClass || 'w-8 h-8') + ' object-contain">';
+            }
+            // Неизвестный символ — только текст, без атрибута src (иначе браузер запросит /game/<эмодзи>)
+            return '<span class="inline-block align-middle ' + this.escHtml(textClass || 'text-2xl') + ' leading-none">' + this.escHtml(v) + '</span>';
+        },
+
+        // Иконка вехи: ключ bronze/silver/gold → /img/chests/*.ico, эмодзи → '' (без ключа в URL)
+        chestIcon(icon) {
+            const v = typeof icon === 'string' ? icon.trim() : '';
+            if (v === '') return '';
+            if (this.iconIsImage(v)) return v;
+            // Только безопасный ascii-ключ (bronze|silver|gold) превращаем в путь
+            if (/^[a-z0-9_-]{1,32}$/i.test(v)) return '/img/chests/' + v + '.ico';
+            return this.iconSrc(v);
         },
 
         tick() {
