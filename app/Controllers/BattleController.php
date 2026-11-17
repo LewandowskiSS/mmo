@@ -89,15 +89,6 @@ class BattleController extends Game
             ]);
         }
 
-        if ((int) $character->energy < 1) {
-            return $this->response->setJSON([
-                'success' => false,
-                'type'    => 'no_energy',
-                'message' => 'Нет энергии для атаки! Подожди, пока она восстановится.',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
         if ((int) $character->hp <= 0) {
             return $this->response->setJSON([
                 'success' => false,
@@ -112,7 +103,6 @@ class BattleController extends Game
         $monsterHp -= $dmg;
 
         $charModel = new CharacterModel();
-        $charModel->update($character->id, ['energy' => (int) $character->energy - 1]);
 
         $sessionModel = new BattleSessionModel();
         $now          = date('Y-m-d H:i:s');

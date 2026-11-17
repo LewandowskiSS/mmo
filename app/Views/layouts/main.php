@@ -207,7 +207,18 @@
     @media (prefers-reduced-motion: reduce) {
         .rarity-ancient-textured { animation: none; }
         .rarity-celestial, .rarity-exotic, .rarity-mythic, .rarity-ancient { animation: none; }
-    }</style>
+    }
+
+    /* Единый графитовый стиль модалок SweetAlert2 (вместо дефолтного синего #1e293b) */
+    .swal2-popup {
+        background: #171717 !important;
+        color: #f5f5f5 !important;
+        border: 1px solid #262626 !important;
+        border-radius: 0.75rem !important;
+    }
+    .swal2-popup .swal2-title { color: #f5f5f5 !important; }
+    .swal2-popup .swal2-html-content { color: #d4d4d8 !important; }
+    </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen app-shell" x-data="layout(<?= htmlspecialchars(json_encode([
     'name'      => \App\Controllers\BaseController::$layoutData['characterName'] ?? 'Игрок',

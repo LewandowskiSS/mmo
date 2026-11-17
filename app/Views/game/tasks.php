@@ -48,7 +48,7 @@ foreach ($periods as $p => $d) {
                 <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" :style="'width:' + periods[p].percent + '%'"></div>
             </div>
             <p class="text-xs text-slate-500"
-                x-text="periods[p].next_reward ? 'Забери сундук, чтобы получить: ' + periods[p].next_reward : '— всё получено!'"></p>
+                x-html="periods[p].next_reward ? 'Забери сундук, чтобы получить: ' + periods[p].next_reward : '— всё получено!'"></p>
 
             <div class="flex justify-between pt-1">
                 <template x-for="m in periods[p].milestones" :key="m.percent">
@@ -252,24 +252,22 @@ function tasks(seed, resetIn) {
 
         async showMilestone(period, m) {
             if (m.claimed) {
-                Swal.fire({ icon: 'info', title: 'Порог ' + m.percent + '%', text: 'Награда уже получена.', background: '#1e293b', color: '#e2e8f0', confirmButtonText: 'Ок', confirmButtonColor: '#64748b' });
+                Swal.fire({ icon: 'info', title: 'Порог ' + m.percent + '%', text: 'Награда уже получена.', confirmButtonText: 'Ок', confirmButtonColor: '#64748b' });
                 return;
             }
 
             if (!m.claimable) {
-                Swal.fire({ icon: 'info', title: 'Порог ' + m.percent + '%', text: 'Награда: ' + m.label + '. Порог ещё не достигнут.', background: '#1e293b', color: '#e2e8f0', confirmButtonText: 'Ок', confirmButtonColor: '#64748b' });
+                Swal.fire({ icon: 'info', title: 'Порог ' + m.percent + '%', html: 'Награда: ' + m.label + '. Порог ещё не достигнут.', confirmButtonText: 'Ок', confirmButtonColor: '#64748b' });
                 return;
             }
 
             const c = await Swal.fire({
                 title: 'Награда за ' + m.percent + '%',
-                text: 'Ты получишь: ' + m.label,
+                html: 'Ты получишь: ' + m.label,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Забрать',
                 cancelButtonText: 'Отмена',
-                background: '#1e293b',
-                color: '#e2e8f0',
                 confirmButtonColor: '#f59e0b',
                 cancelButtonColor: '#64748b',
             });
@@ -279,7 +277,7 @@ function tasks(seed, resetIn) {
             try {
                 const data = await Game.post('/game/claimMilestone', { percent: m.percent, period: period });
                 if (data.success) {
-                    Swal.fire({ icon: 'success', title: 'Награда получена!', text: data.message, background: '#1e293b', color: '#e2e8f0', confirmButtonColor: '#10b981' });
+                    Swal.fire({ icon: 'success', title: 'Награда получена!', html: data.message, confirmButtonColor: '#10b981' });
                     await this.reloadState();
                 } else {
                     Game.toast(data.message, 'error');
@@ -297,8 +295,6 @@ function tasks(seed, resetIn) {
                 showCancelButton: true,
                 confirmButtonText: 'Обновить (<img src="/img/misc/emerald.png" class="inline-block w-3 h-3 align-middle object-contain" alt="изумруд"> 5)',
                 cancelButtonText: 'Отмена',
-                background: '#1e293b',
-                color: '#e2e8f0',
                 confirmButtonColor: '#8b5cf6',
                 cancelButtonColor: '#64748b',
             });

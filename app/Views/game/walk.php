@@ -130,7 +130,7 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
         <div class="text-center"><img src="/img/ores/copper_ore.png" class="w-20 h-20 object-contain mx-auto" alt="Медная руда"><div class="text-lg font-bold rarity-common">Медная руда</div><div class="text-white font-semibold">Горное дело</div><div class="text-sm text-slate-400">Уровень 1</div></div>
         <div class="mt-5 text-sm"><div class="flex justify-between border-b border-neutral-700 py-2"><span>Уровень горного дела</span><b x-text="event?.mining_level ?? 1"></b></div><div class="flex justify-between border-b border-neutral-700 py-2"><span>Экипировано</span><span class="flex items-center gap-1" :class="(event?.pickaxe) ? 'rarity-' + event.pickaxe.rarity : 'text-slate-500'"><img x-show="event?.pickaxe" :src="event?.pickaxe ? event.pickaxe.image : ''" class="w-5 h-5 object-contain"><span x-text="event?.pickaxe ? event.pickaxe.name : 'Кирка не надета'"></span></span></div><div class="flex justify-between py-2"><span>Осталось руды</span><b x-text="event?.remaining_strikes ?? 0"></b></div></div>
         <div class="mt-5"><div class="flex justify-between text-sm"><b x-text="miningPercent() + '%'" class="text-white"></b><span x-text="(Math.max(0, Number(event?.mining_xp_needed || 50) - Number(event?.mining_xp || 0)) + ' опыта осталось')" class="text-slate-400"></span></div><div class="h-2 bg-neutral-700 rounded-full mt-2"><div class="h-full bg-emerald-500 rounded-full" :style="'width:' + miningPercent() + '%' "></div></div></div>
-        <button type="button" @click="mine('/mining/mine', 'single')" :disabled="busy || miningCooldown > 0 || !event?.pickaxe || energy < 1 || !event?.remaining_strikes" class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold w-full py-2.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">
+        <button type="button" @click="mine('/mining/mine', 'single')" :disabled="busy || miningCooldown > 0 || !event?.pickaxe || !event?.remaining_strikes" class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold w-full py-2.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">
             <template x-if="miningCooldown > 0 && miningMode === 'single'"><span>Добываем...</span></template>
             <template x-if="!(miningCooldown > 0 && miningMode === 'single')"><span class="inline-flex items-center justify-center gap-1.5"><img src="/img/tools/stone_pickaxe.png" class="w-4 h-4 shrink-0 object-contain" alt="">Добыть</span></template>
         </button>
@@ -143,7 +143,7 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
                 <div class="h-1 bg-emerald-400 rounded-full mining-cooldown-run" :style="'animation-duration:' + miningCooldown + 's'"></div>
             </div>
         </template>
-        <p class="text-center text-xs text-slate-500 mt-2">Это действие требует 1 энергии</p>
+        <p class="text-center text-xs text-slate-500 mt-2">Обычная добыча не тратит энергию · «Добыть всё» расходует 1 энергию за руду</p>
     </div>
 </div>
 

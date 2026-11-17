@@ -309,12 +309,6 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                             this.toastBattle(d.message, 'info');
                             return;
                         }
-                        if (d.type === 'no_energy') {
-                            this.stopCooldown();
-                            this.toastBattle(d.message, 'info', '/img/misc/energy.png');
-                            return;
-                        }
-
                         if (d.result === 'continue') {
                             this.monster.hp = d.monster_hp;
                             this.player.hp = d.player_hp;

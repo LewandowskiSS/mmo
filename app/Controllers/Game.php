@@ -1928,12 +1928,16 @@ class Game extends BaseController
 
         $mult = ['weekly' => 3, 'monthly' => 8][$period] ?? 1;
 
+        // PNG-иконки в подписях вех: золото/изумруды рендерятся через <img>, а не сырые эмодзи
+        $emeraldIcon = '<img src="' . base_url('img/misc/emerald.png') . '" class="w-4 h-4 inline-block align-text-bottom" alt="Изумруды">';
+        $coinIcon    = '<img src="' . base_url('img/misc/coin.png') . '" class="w-4 h-4 inline-block align-text-bottom" alt="Золото">';
+
         foreach ($base as &$m) {
             $m['amount'] = (int) ($m['amount'] * $mult);
             $m['label']  = match ($m['type']) {
-                'gold'      => "{$m['amount']} золота",
-                'diamonds'  => "{$m['amount']} изумрудов",
-                'gold_item' => "{$m['amount']} золота + предмет",
+                'gold'      => $coinIcon . ' ' . $m['amount'] . ' золота',
+                'diamonds'  => $emeraldIcon . ' ' . $m['amount'] . ' изумрудов',
+                'gold_item' => $coinIcon . ' ' . $m['amount'] . ' золота + предмет',
                 default     => "{$m['amount']}",
             };
         }
@@ -1944,6 +1948,10 @@ class Game extends BaseController
 
     private function milestoneReward($percent, $character, string $period = 'daily'): string
     {
+        // PNG-иконки в тексте награды (модалки /game/tasks показывают его через html:)
+        $emeraldIcon = '<img src="' . base_url('img/misc/emerald.png') . '" class="w-4 h-4 inline-block align-text-bottom" alt="Изумруды">';
+        $coinIcon    = '<img src="' . base_url('img/misc/coin.png') . '" class="w-4 h-4 inline-block align-text-bottom" alt="Золото">';
+
         foreach ($this->taskMilestones($period) as $m) {
             if ($m['percent'] !== $percent) {
                 continue;
@@ -1951,12 +1959,12 @@ class Game extends BaseController
 
             if ($m['type'] === 'gold') {
                 (new CharacterModel())->update($character->id, ['gold' => $character->gold + $m['amount']]);
-                return "+{$m['amount']} золота";
+                return '+' . $m['amount'] . ' золота ' . $coinIcon;
             }
 
             if ($m['type'] === 'diamonds') {
                 (new CharacterModel())->update($character->id, ['diamonds' => ((int) ($character->diamonds ?? 0)) + $m['amount']]);
-                return "+{$m['amount']} 💎";
+                return '+' . $m['amount'] . ' изумрудов ' . $emeraldIcon;
             }
 
             if ($m['type'] === 'gold_item') {
@@ -1966,9 +1974,9 @@ class Game extends BaseController
                 $item = $this->randomItemBySilverChest();
                 if ($item) {
                     $this->giveItem($character->id, $item->id);
-                    return "+{$m['amount']} золота + " . $this->iconPrefix($item->emoji) . $item->name;
+                    return '+' . $m['amount'] . ' золота ' . $coinIcon . ' + ' . $this->iconPrefix($item->emoji) . $item->name;
                 }
-                return "+{$m['amount']} золота";
+                return '+' . $m['amount'] . ' золота ' . $coinIcon;
             }
         }
 

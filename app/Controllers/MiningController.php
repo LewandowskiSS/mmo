@@ -14,7 +14,8 @@ class MiningController extends Game
 
     public function mine()
     {
-        return $this->mineAmount(1);
+        // Обычная добыча не тратит энергию (включая 0), только 2-секундный кулдаун.
+        return $this->mineAmount(1, false);
     }
 
     public function mineAll()
@@ -26,10 +27,10 @@ class MiningController extends Game
 
         $session = (new MiningSessionModel())->where('character_id', $character->id)->first();
         $amount = $session ? min((int) $session->remaining_strikes, (int) $character->energy) : 0;
-        return $amount > 0 ? $this->mineAmount($amount) : $this->jsonError('Недостаточно энергии или залежь исчерпана.');
+        return $amount > 0 ? $this->mineAmount($amount, true) : $this->jsonError('Недостаточно энергии или залежь исчерпана.');
     }
 
-    private function mineAmount(int $amount)
+    private function mineAmount(int $amount, bool $consumeEnergy = false)
     {
         $character = $this->currentMiningCharacter();
         if (! $character) {
@@ -64,9 +65,18 @@ class MiningController extends Game
         if (! $pickaxe) {
             return $this->rollbackError($db, 'Нужна экипированная кирка.');
         }
-        $amount = min($amount, (int) $session->remaining_strikes, (int) $character->energy);
-        if ($amount < 1) {
-            return $this->rollbackError($db, 'Недостаточно энергии.');
+        if ($consumeEnergy) {
+            // Массовая добыча: 1 ед. энергии за каждую добытую руду.
+            $amount = min($amount, (int) $session->remaining_strikes, (int) $character->energy);
+            if ($amount < 1) {
+                return $this->rollbackError($db, 'Недостаточно энергии.');
+            }
+        } else {
+            // Обычная добыча: энергия не тратится (работает даже при 0 энергии).
+            $amount = min($amount, (int) $session->remaining_strikes);
+            if ($amount < 1) {
+                return $this->rollbackError($db, 'Залежь уже исчерпана.');
+            }
         }
 
         $ore = (new ItemModel())->where('name', 'Медная руда')->where('type', 'material')->first();
@@ -89,7 +99,11 @@ class MiningController extends Game
             $miningLevel++;
             $miningLevelsGained++;
         }
-        $data = ['energy' => (int) $character->energy - $amount, 'last_energy_at' => date('Y-m-d H:i:s'), 'mining_level' => $miningLevel, 'mining_xp' => $miningXp];
+        $data = ['mining_level' => $miningLevel, 'mining_xp' => $miningXp];
+        if ($consumeEnergy) {
+            $data['energy'] = (int) $character->energy - $amount;
+            $data['last_energy_at'] = date('Y-m-d H:i:s');
+        }
         (new CharacterModel())->update($character->id, $data);
         $remaining = (int) $session->remaining_strikes - $amount;
         $db->table('mining_sessions')->where('id', $session->id)->update(['remaining_strikes' => $remaining, 'mined_total' => (int) $session->mined_total + $amount, 'last_mined_at' => date('Y-m-d H:i:s')]);
