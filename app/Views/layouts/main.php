@@ -292,9 +292,6 @@
             <div id="profile-panel" class="profile-panel no-scrollbar" x-show="statsOpen" x-transition.opacity.duration.150ms x-cloak>
                 <div class="profile-label"><strong><img src="/img/misc/Heart.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Здоровье</strong><span><span id="st-hp" x-text="st.hp + ' / ' + st.maxHp"></span> HP (<span x-text="st.maxHp ? Math.round(st.hp / st.maxHp * 100) : 0"></span>%)</span></div>
                 <div class="profile-track" style="margin-bottom:12px"><div style="background:#ef4444" :style="{width: Math.max(0, Math.min(100, st.maxHp ? st.hp / st.maxHp * 100 : 0)) + '%'}"></div></div>
-                <div class="profile-energy-row" x-show="st.hp < st.maxHp" x-cloak>
-                    <span class="profile-energy-timer" x-show="(st.hpNextIn || 0) > 0" x-text="'через ' + (st.hpNextIn || 0) + ' с'"></span>
-                </div>
                 <div class="profile-label"><strong>Опыт</strong><span><span id="st-xp" x-text="st.xp + ' / ' + st.xpNeeded"></span> EXP</span></div>
                 <div class="profile-track"><div class="xp-glow" style="background:#a855f7" :style="{width: Math.max(0, Math.min(100, st.xpPercent)) + '%'}"></div></div>
                 <div class="profile-divider"></div>

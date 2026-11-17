@@ -114,7 +114,7 @@ function tasks(seed, resetIn) {
         tab: 'daily',
         periodKeys: ['daily', 'weekly', 'monthly'],
         periodTitles: { daily: 'Ежедневные', weekly: 'Еженедельные', monthly: 'Ежемесячные' },
-        goMap: { walk: '/walk', kill: '/walk', win: '/walk', item: '/walk' },
+        goMap: { walk: '/walk', kill: '/walk', win: '/walk', item: '/walk', mine: '/walk', kill_monster: '/walk' },
         periods: seed,
         timers: resetIn,
 

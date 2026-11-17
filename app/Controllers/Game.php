@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\BattleLogModel;
 use App\Models\CharacterModel;
 use App\Models\BankTransactionModel;
+use App\Models\BattleSessionModel;
 use App\Models\CharacterTaskModel;
 use App\Models\ChestModel;
 use App\Models\DailyTaskModel;
@@ -190,7 +191,7 @@ class Game extends BaseController
         ]);
     }
 
-    private function currentLocation($character): ?object
+    protected function currentLocation($character): ?object
     {
         $locationModel = new LocationModel();
         $locationId = (int) ($character->location_id ?? 1);
@@ -248,184 +249,17 @@ class Game extends BaseController
             return redirect()->to('/login');
         }
 
-        $battle = $this->session->get('battle');
-        if (! $this->validBattle($battle)) {
-            $this->session->remove('battle');
-            return redirect()->to('/')->with('info', 'Сейчас нет активного боя.');
+        $active = (new BattleSessionModel())
+            ->where('character_id', $character->id)
+            ->where('status', 'active')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if ($active) {
+            return redirect()->to('/battle/' . $active->battle_hash);
         }
 
-        $monster = $this->getBattleMonster($battle);
-
-        // Куда вернуться после боя — на страницу, с которой пришёл игрок
-        $back = (string) $this->request->getServer('HTTP_REFERER');
-        if ($back === '' || strpos($back, 'mmo.local') === false) {
-            $back = '/walk';
-        }
-
-        return view('game/battle', [
-            'character'  => $character,
-            'monster'    => $monster,
-            'monster_hp' => (int) $battle['monster_hp'],
-            'log'        => $this->session->getFlashdata('battle_log') ?? [],
-            'back'       => $back,
-        ]);
-    }
-
-    public function attack()
-    {
-        $character = $this->currentCharacter();
-        if (! $character) {
-            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
-        }
-
-        $battle = $this->session->get('battle');
-        if (! $this->validBattle($battle)) {
-            $this->session->remove('battle');
-            return $this->response->setJSON(['success' => false, 'result' => 'no_battle', 'message' => 'Нет активного боя']);
-        }
-
-        $monster   = $this->getBattleMonster($battle);
-        $monsterHp = (int) $battle['monster_hp'];
-        $stats     = $this->effectiveStats($character);
-
-        // Атака требует 1 энергии
-        if ((int) $character->energy < 1) {
-            return $this->response->setJSON([
-                'success' => false,
-                'type'    => 'no_energy',
-                'message' => 'Нет энергии для атаки! Подожди, пока она восстановится.',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-        (new CharacterModel())->update($character->id, ['energy' => (int) $character->energy - 1]);
-
-        // Игрок бьёт монстра
-        $dmg       = $this->calcDamage($stats['attack'], $monster->defense);
-        $monsterHp -= $dmg;
-
-        if ($monsterHp <= 0) {
-            $xp       = (int) $monster->xp_reward;
-            $gold     = random_int($monster->gold_min, $monster->gold_max);
-            $newLevel = $this->grantRewards($character, $xp, $gold);
-            $this->logBattle($character->id, $monster->id, 'win', $xp, $gold);
-            $this->logEvent($character->id, 'battle', "Победа над {$monster->name}", null, $monster->emoji);
-            $this->progressTask($character->id, 'kill');
-            $this->progressTask($character->id, 'win');
-            $this->incrementCounter($character->id, 'npc_kills');
-            $this->session->remove('battle');
-
-            $msg = "Победа! Ты одолел {$monster->name}. +{$xp} XP, +{$gold} золота.";
-            if ($newLevel > $character->level) {
-                $msg .= " 🎉 Уровень повышен до {$newLevel}!";
-            }
-
-            return $this->response->setJSON([
-                'success' => true,
-                'result'  => 'win',
-                'message' => $msg,
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // Монстр бьёт в ответ
-        $mDmg  = $this->calcDamage($monster->attack, $stats['defense']);
-        $newHp = max(0, $character->hp - $mDmg);
-        (new CharacterModel())->update($character->id, ['hp' => $newHp]);
-
-        if ($newHp <= 0) {
-            $goldLost = $this->applyDeath($character);
-            $this->logBattle($character->id, $monster->id, 'lose', 0, 0);
-            $this->logEvent($character->id, 'battle', "Поражение от {$monster->name}", null, $monster->emoji);
-            $this->session->remove('battle');
-
-            return $this->response->setJSON([
-                'success' => true,
-                'result'  => 'lose',
-                'message' => "Поражение! Ты пал в бою и потерял {$goldLost} золота. Здоровье восстановлено.",
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        $this->session->set('battle', [
-            'monster_id' => $monster->id,
-            'name'       => $monster->name,
-            'emoji'      => $monster->emoji,
-            'level'      => $monster->level,
-            'max_hp'     => $monster->hp,
-            'attack'     => $monster->attack,
-            'defense'    => $monster->defense,
-            'xp_reward'  => $monster->xp_reward,
-            'gold_min'   => $monster->gold_min,
-            'gold_max'   => $monster->gold_max,
-            'monster_hp' => $monsterHp,
-        ]);
-
-        return $this->response->setJSON([
-            'success'    => true,
-            'result'     => 'continue',
-            'monster_hp' => $monsterHp,
-            'log'        => [
-                "Ты нанёс {$dmg} урона.",
-                "{$monster->name} нанёс тебе {$mDmg} урона.",
-            ],
-            'state'      => $this->characterState($character),
-        ]);
-    }
-
-    public function flee()
-    {
-        $character = $this->currentCharacter();
-        if (! $character) {
-            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'message' => 'Не авторизован']);
-        }
-
-        $battle = $this->session->get('battle');
-        if (! $this->validBattle($battle)) {
-            $this->session->remove('battle');
-            return $this->response->setJSON(['success' => false, 'result' => 'no_battle', 'message' => 'Нет активного боя']);
-        }
-
-        $monster = $this->getBattleMonster($battle);
-
-        if (random_int(1, 100) <= 50) {
-            $this->logBattle($character->id, $monster->id, 'flee', 0, 0);
-            $this->logEvent($character->id, 'battle', "Сбежал от {$monster->name}", null, $monster->emoji);
-            $this->session->remove('battle');
-
-            return $this->response->setJSON([
-                'success' => true,
-                'result'  => 'flee',
-                'message' => 'Ты сбежал с поля боя.',
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        // Побег не удался — монстр бьёт
-        $stats = $this->effectiveStats($character);
-        $mDmg  = $this->calcDamage($monster->attack, $stats['defense']);
-        $newHp = max(0, $character->hp - $mDmg);
-        (new CharacterModel())->update($character->id, ['hp' => $newHp]);
-
-        if ($newHp <= 0) {
-            $goldLost = $this->applyDeath($character);
-            $this->logBattle($character->id, $monster->id, 'lose', 0, 0);
-            $this->logEvent($character->id, 'battle', "Поражение от {$monster->name}", null, $monster->emoji);
-            $this->session->remove('battle');
-
-            return $this->response->setJSON([
-                'success' => true,
-                'result'  => 'lose',
-                'message' => "Не удалось сбежать! Ты пал в бою и потерял {$goldLost} золота.",
-                'state'   => $this->characterState($character),
-            ]);
-        }
-
-        return $this->response->setJSON([
-            'success' => true,
-            'result'  => 'fail',
-            'message' => "Не удалось сбежать! {$monster->name} нанёс тебе {$mDmg} урона.",
-            'state'   => $this->characterState($character),
-        ]);
+        return redirect()->to('/walk');
     }
 
     public function healer()
@@ -1772,7 +1606,7 @@ class Game extends BaseController
 
     // ---------- Приватные помощники ----------
 
-    private function characterState($character): array
+    protected function characterState($character): array
     {
         $character = (new CharacterModel())->find($character->id);
         $character = $this->regenEnergy($character);
@@ -1821,7 +1655,7 @@ class Game extends BaseController
         return max(0, self::ENERGY_REGEN_SECONDS - ($elapsed % self::ENERGY_REGEN_SECONDS));
     }
 
-    private function regenEnergy($character)
+    protected function regenEnergy($character)
     {
         if (! $character->last_energy_at || $character->energy >= $character->max_energy) {
             return $character;
@@ -1857,7 +1691,7 @@ class Game extends BaseController
         return max(0, self::HP_REGEN_SECONDS - ($elapsed % self::HP_REGEN_SECONDS));
     }
 
-    private function regenHp($character)
+    protected function regenHp($character)
     {
         if ($character->hp >= $character->max_hp) {
             if ($character->last_hp_at !== null) {
@@ -1900,7 +1734,7 @@ class Game extends BaseController
         return $character;
     }
 
-    private function spawnMonster($playerLevel)
+    protected function spawnMonster($playerLevel)
     {
         $monsters = (new MonsterModel())
             ->where('min_level <=', $playerLevel)
@@ -1925,45 +1759,12 @@ class Game extends BaseController
         return $monster;
     }
 
-    private function validBattle($battle): bool
-    {
-        return is_array($battle)
-            && isset(
-                $battle['monster_id'],
-                $battle['name'],
-                $battle['emoji'],
-                $battle['max_hp'],
-                $battle['attack'],
-                $battle['defense'],
-                $battle['xp_reward'],
-                $battle['gold_min'],
-                $battle['gold_max'],
-                $battle['monster_hp']
-            );
-    }
-
-    private function getBattleMonster($battle): object
-    {
-        return (object) [
-            'id'         => (int) $battle['monster_id'],
-            'name'       => $battle['name'],
-            'emoji'      => $battle['emoji'],
-            'level'      => (int) $battle['level'],
-            'hp'         => (int) $battle['max_hp'],
-            'attack'     => (int) $battle['attack'],
-            'defense'    => (int) $battle['defense'],
-            'xp_reward'  => (int) $battle['xp_reward'],
-            'gold_min'   => (int) $battle['gold_min'],
-            'gold_max'   => (int) $battle['gold_max'],
-        ];
-    }
-
-    private function calcDamage($attack, $defense): int
+    protected function calcDamage($attack, $defense): int
     {
         return max(1, (int) $attack - (int) $defense + random_int(0, 5));
     }
 
-    private function effectiveStats($character): array
+    protected function effectiveStats($character): array
     {
         $attack  = (int) $character->attack;
         $defense = (int) $character->defense;
@@ -2006,7 +1807,7 @@ class Game extends BaseController
         return 50 + ((int) $level - 1) * 25;
     }
 
-    private function grantRewards($character, $xp, $gold): int
+    protected function grantRewards($character, $xp, $gold): int
     {
         $charModel = new CharacterModel();
         $level     = (int) $character->level;
@@ -2031,7 +1832,7 @@ class Game extends BaseController
         return $level;
     }
 
-    private function applyDeath($character): int
+    protected function applyDeath($character): int
     {
         $goldLost = (int) floor($character->gold * 0.2);
         (new CharacterModel())->update($character->id, [
@@ -2042,7 +1843,7 @@ class Game extends BaseController
         return $goldLost;
     }
 
-    private function logBattle($characterId, $monsterId, $result, $xp, $gold): void
+    protected function logBattle($characterId, $monsterId, $result, $xp, $gold): void
     {
         (new BattleLogModel())->insert([
             'character_id' => $characterId,
@@ -2053,7 +1854,7 @@ class Game extends BaseController
         ]);
     }
 
-    private function incrementCounter($characterId, string $field, int $amount = 1): void
+    protected function incrementCounter($characterId, string $field, int $amount = 1): void
     {
         if ($amount === 0) {
             return;
@@ -2065,7 +1866,7 @@ class Game extends BaseController
         (new CharacterModel())->update($characterId, [$field => (int) ($char->$field ?? 0) + $amount]);
     }
 
-    private function giveItem($characterId, $itemId): void
+    protected function giveItem($characterId, $itemId): void
     {
         $inventory = new InventoryModel();
 
@@ -2174,7 +1975,7 @@ class Game extends BaseController
         return '';
     }
 
-    private function progressTask($characterId, $type)
+    protected function progressTask($characterId, $type, int $amount = 1, ?int $monsterId = null)
     {
         $character = (new CharacterModel())->find($characterId);
         if (! $character) {
@@ -2184,6 +1985,7 @@ class Game extends BaseController
         $this->assignTasks($character);
 
         $charTaskModel = new CharacterTaskModel();
+        $amount        = max(1, $amount);
 
         foreach (self::TASK_PERIODS as $period) {
             $rows = $charTaskModel
@@ -2196,9 +1998,17 @@ class Game extends BaseController
                 ->findAll();
 
             foreach ($rows as $row) {
-                if (! $row->claimed) {
-                    $charTaskModel->update($row->id, ['progress' => (int) $row->progress + 1]);
+                if ($row->claimed) {
+                    continue;
                 }
+                // kill_monster: засчитываем только задания на конкретного монстра
+                if ($type === 'kill_monster' && $monsterId === null) {
+                    continue;
+                }
+                if ($type === 'kill_monster' && (int) ($row->target_monster_id ?? 0) !== $monsterId) {
+                    continue;
+                }
+                $charTaskModel->update($row->id, ['progress' => (int) $row->progress + $amount]);
             }
         }
     }
@@ -2235,20 +2045,38 @@ class Game extends BaseController
         }
 
         shuffle($pool);
-        $limit = self::TASK_LIMITS[$period] ?? 5;
-        $chosen = array_slice($pool, 0, min($limit, count($pool)));
+
+        $limit   = self::TASK_LIMITS[$period] ?? 5;
+        $chosen  = [];
+        $usedSig = [];
+        foreach ($pool as $task) {
+            if (count($chosen) >= $limit) {
+                break;
+            }
+            // Сигнатура: для kill_monster — type:target_monster_id, иначе — type.
+            // В одном периоде не может быть двух заданий с одинаковой сигнатурой
+            // (два win, два walk, два mine или охота на одного и того же монстра).
+            $monsterId = $task->target_monster_id ?? null;
+            $signature = $task->type . ':' . ($monsterId !== null ? (int) $monsterId : 0);
+            if (isset($usedSig[$signature])) {
+                continue;
+            }
+            $usedSig[$signature] = true;
+            $chosen[] = $task;
+        }
 
         foreach ($chosen as $task) {
             $charTaskModel->insert([
-                'character_id' => $character->id,
-                'task_id'      => $task->id,
-                'progress'     => 0,
-                'claimed'      => 0,
-                'task_date'    => $key,
-                'period'       => $period,
-                'target'       => $this->scaleTaskTarget((int) $task->target, (int) $character->level),
-                'reward_gold'  => $this->scaleTaskReward((int) $task->reward_gold, (int) $character->level),
-                'reward_xp'    => $this->scaleTaskXp((int) $task->reward_xp, (int) $character->level),
+                'character_id'      => $character->id,
+                'task_id'           => $task->id,
+                'target_monster_id' => $task->target_monster_id ?? null,
+                'progress'          => 0,
+                'claimed'           => 0,
+                'task_date'         => $key,
+                'period'            => $period,
+                'target'            => $this->scaleTaskTarget((int) $task->target, (int) $character->level),
+                'reward_gold'       => $this->scaleTaskReward((int) $task->reward_gold, (int) $character->level),
+                'reward_xp'         => $this->scaleTaskXp((int) $task->reward_xp, (int) $character->level),
             ]);
         }
     }
@@ -2279,7 +2107,7 @@ class Game extends BaseController
         return $keyType . '_keys';
     }
 
-    private function logEvent($characterId, $type, $message, $rarity = null, $emoji = null): void
+    protected function logEvent($characterId, $type, $message, $rarity = null, $emoji = null): void
     {
         (new EventLogModel())->insert([
             'character_id' => $characterId,
@@ -2294,7 +2122,7 @@ class Game extends BaseController
      * Префикс иконки для текстовых сообщений (toast/лента).
      * Путь к картинке в текст не подставляется — иконка рендерится отдельно.
      */
-    private function iconPrefix($emoji): string
+    protected function iconPrefix($emoji): string
     {
         $emoji = (string) $emoji;
 
@@ -2323,25 +2151,39 @@ class Game extends BaseController
 
     private function battleResponse($character, $monster): array
     {
-        $this->session->set('battle', [
-            'monster_id' => $monster->id,
-            'name'       => $monster->name,
-            'emoji'      => $monster->emoji,
-            'level'      => $monster->level,
-            'max_hp'     => $monster->hp,
-            'attack'     => $monster->attack,
-            'defense'    => $monster->defense,
-            'xp_reward'  => $monster->xp_reward,
-            'gold_min'   => $monster->gold_min,
-            'gold_max'   => $monster->gold_max,
-            'monster_hp' => $monster->hp,
+        $location = $this->currentLocation($character);
+
+        // Сбрасываем предыдущие активные бои персонажа, чтобы оставался один.
+        db_connect()->table('battle_sessions')
+            ->where('character_id', $character->id)
+            ->where('status', 'active')
+            ->update(['status' => 'fled']);
+
+        $battleHash = hash('sha256', $character->id . '|' . $monster->id . '|' . microtime(true) . '|' . random_bytes(16));
+
+        $sessionId = (new BattleSessionModel())->insert([
+            'battle_hash'    => $battleHash,
+            'character_id'   => (int) $character->id,
+            'location_id'    => (int) ($location->id ?? 1),
+            'monster_id'     => (int) $monster->id,
+            'monster_name'   => $monster->name,
+            'monster_emoji'  => $monster->emoji,
+            'monster_level'  => (int) $monster->level,
+            'monster_hp'     => (int) $monster->hp,
+            'monster_max_hp' => (int) $monster->hp,
+            'monster_attack' => (int) $monster->attack,
+            'monster_defense'=> (int) $monster->defense,
+            'status'         => 'active',
+            'created_at'     => date('Y-m-d H:i:s'),
         ]);
 
         return [
-            'success' => true,
-            'type'    => 'monster',
-            'message' => "Ты наткнулся на {$monster->name}!",
-            'battle'  => [
+            'success'    => true,
+            'type'       => 'monster',
+            'message'    => "Ты наткнулся на {$monster->name}!",
+            'battle_url'  => site_url('battle/' . $battleHash),
+            'battle_hash' => $battleHash,
+            'battle'     => [
                 'monster_id' => (int) $monster->id,
                 'name'       => $monster->name,
                 'emoji'      => $monster->emoji,
@@ -2349,7 +2191,7 @@ class Game extends BaseController
                 'hp'         => (int) $monster->hp,
                 'monster_hp' => (int) $monster->hp,
             ],
-            'state'   => $this->characterState($character),
+            'state'      => $this->characterState($character),
         ];
     }
 

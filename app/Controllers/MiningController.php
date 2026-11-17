@@ -8,8 +8,10 @@ use App\Models\InventoryModel;
 use App\Models\ItemModel;
 use App\Models\MiningSessionModel;
 
-class MiningController extends BaseController
+class MiningController extends Game
 {
+    private const MINING_COOLDOWN_SECONDS = 2;
+
     public function mine()
     {
         return $this->mineAmount(1);
@@ -41,6 +43,19 @@ class MiningController extends BaseController
         $requestedHash = (string) $this->request->getPost('session_hash');
         if ($requestedHash !== '' && (! $session || ! hash_equals((string) $session->hash, $requestedHash))) {
             return $this->rollbackError($db, 'Эта залежь уже сменилась.');
+        }
+        if ($session && $session->last_mined_at !== null && $session->last_mined_at !== '') {
+            $lastMinedTs = strtotime((string) $session->last_mined_at);
+            if ($lastMinedTs !== false && (time() - $lastMinedTs) < self::MINING_COOLDOWN_SECONDS) {
+                $wait = max(1, self::MINING_COOLDOWN_SECONDS - (time() - $lastMinedTs));
+                $db->transRollback();
+                return $this->response->setStatusCode(429)->setJSON([
+                    'ok' => false,
+                    'cooldown' => true,
+                    'wait' => $wait,
+                    'message' => 'Подождите перед следующим ударом.',
+                ]);
+            }
         }
         $pickaxe = $this->equippedPickaxe((int) $character->id);
         if (! $session || (int) $session->remaining_strikes < 1) {
@@ -74,25 +89,10 @@ class MiningController extends BaseController
             $miningLevel++;
             $miningLevelsGained++;
         }
-        $xp = (int) $character->xp + ($amount * 5);
-        $level = (int) $character->level;
-        $levelUps = 0;
         $data = ['energy' => (int) $character->energy - $amount, 'last_energy_at' => date('Y-m-d H:i:s'), 'mining_level' => $miningLevel, 'mining_xp' => $miningXp];
-        while ($xp >= $this->xpNeeded($level)) {
-            $xp -= $this->xpNeeded($level);
-            $level++;
-            $levelUps++;
-            $data['level'] = $level;
-            $data['max_hp'] = 50 + ($level - 1) * 10;
-            $data['hp'] = $data['max_hp'];
-            $data['last_hp_at'] = null;
-            $data['attack'] = 5 + ($level - 1) * 2;
-            $data['defense'] = 2 + ($level - 1);
-        }
-        $data['xp'] = $xp;
         (new CharacterModel())->update($character->id, $data);
         $remaining = (int) $session->remaining_strikes - $amount;
-        $db->table('mining_sessions')->where('id', $session->id)->update(['remaining_strikes' => $remaining, 'mined_total' => (int) $session->mined_total + $amount]);
+        $db->table('mining_sessions')->where('id', $session->id)->update(['remaining_strikes' => $remaining, 'mined_total' => (int) $session->mined_total + $amount, 'last_mined_at' => date('Y-m-d H:i:s')]);
         if ($remaining <= 0) {
             $db->table('mining_sessions')->where('id', $session->id)->delete();
         }
@@ -102,8 +102,11 @@ class MiningController extends BaseController
         $db->transCommit();
         (new EventLogModel())->insert(['character_id' => $character->id, 'type' => 'mining', 'message' => "Добыта руда: {$ore->name} (+{$amount})", 'rarity' => 'common', 'emoji' => '/img/ores/copper_ore.png']);
 
+        // Прогресс задания на добычу руды: одиночный удар (mine) = 1, «Добыть всё» (mineAll) = фактическое количество
+        $this->progressTask((int) $character->id, 'mine', $amount);
+
         $updated = (new CharacterModel())->find($character->id);
-        return $this->response->setJSON(['success' => true, 'mined' => $amount, 'remaining_strikes' => max(0, $remaining), 'depleted' => $remaining <= 0, 'xp_gained' => $amount * 5, 'mining_xp_gained' => $amount * 4, 'mining_level' => $miningLevel, 'mining_xp' => $miningXp, 'mining_xp_needed' => $this->miningXpNeeded($miningLevel), 'mining_level_up' => $miningLevelsGained > 0, 'level' => $level, 'state' => $this->state($updated)]);
+        return $this->response->setJSON(['success' => true, 'mined' => $amount, 'remaining_strikes' => max(0, $remaining), 'depleted' => $remaining <= 0, 'mining_xp_gained' => $amount * 4, 'mining_level' => $miningLevel, 'mining_xp' => $miningXp, 'mining_xp_needed' => $this->miningXpNeeded($miningLevel), 'mining_level_up' => $miningLevelsGained > 0, 'state' => $this->characterState($updated)]);
     }
 
     private function currentMiningCharacter(): ?object
@@ -117,12 +120,6 @@ class MiningController extends BaseController
     }
 
     private function miningXpNeeded(int $level): int { return 50 + ($level - 1) * 25; }
-    private function xpNeeded(int $level): int { return 50 + ($level - 1) * 25; }
-
-    private function state(object $c): array
-    {
-        return ['energy' => (int) $c->energy, 'max_energy' => (int) $c->max_energy, 'xp' => (int) $c->xp, 'level' => (int) $c->level, 'xp_needed' => $this->xpNeeded((int) $c->level), 'gold' => (int) $c->gold, 'bank' => (int) ($c->bank_balance ?? 0), 'hp' => (int) $c->hp, 'max_hp' => (int) $c->max_hp, 'attack' => (int) $c->attack, 'defense' => (int) $c->defense, 'mining_level' => (int) $c->mining_level, 'mining_xp' => (int) $c->mining_xp];
-    }
 
     private function jsonError(string $message, int $status = 200) { return $this->response->setStatusCode($status)->setJSON(['success' => false, 'message' => $message]); }
     private function rollbackError($db, string $message, int $status = 200) { $db->transRollback(); return $this->jsonError($message, $status); }

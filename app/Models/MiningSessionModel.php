@@ -22,6 +22,7 @@ class MiningSessionModel extends Model
         'remaining_strikes',
         'max_strikes',
         'mined_total',
+        'last_mined_at',
         'created_at',
     ];
 
