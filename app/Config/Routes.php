@@ -71,3 +71,7 @@ $routes->post('game/bank/withdraw', 'Game::bankWithdraw');
 // Локации
 $routes->get('locations', 'Game::locations');
 $routes->post('locations/travel', 'Game::travelLocation');
+
+// Добыча руды из модального окна прогулки
+$routes->post('mining/mine', 'MiningController::mine');
+$routes->post('mining/mine-all', 'MiningController::mineAll');

@@ -22,6 +22,7 @@ class LocationModel extends Model
         'chance_text',
         'chance_item',
         'chance_monster',
+        'chance_material',
         'sort_order',
     ];
     protected $useTimestamps = false;

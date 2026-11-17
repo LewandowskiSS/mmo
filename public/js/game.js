@@ -140,6 +140,11 @@ if (window.Swal && Swal.defaults) {
         setBar('bar-energy', s.max_energy ? (s.energy / s.max_energy * 100) : 0);
         setText('st-attack', s.attack);
         setText('st-defense', s.defense);
+        if (s.mining_level !== undefined) {
+            const root = document.querySelector('[x-data^="layout("]');
+            const component = root && window.Alpine && Alpine.$data(root);
+            if (component) component.st.miningLevel = s.mining_level;
+        }
 
         const walkBtn = document.getElementById('walk-btn');
         if (walkBtn) walkBtn.disabled = (walkBtn.dataset.cooldown === '1') || s.energy < 1;
@@ -200,6 +205,7 @@ function layout(seed = {}) {
             maxHp: seed.maxHp || 50,
             attack: seed.attack || 0,
             defense: seed.defense || 0,
+            miningLevel: seed.miningLevel || 1,
             freeStatPoints: seed.freeStatPoints || 0,
             diamonds: seed.diamonds || 0,
             walks: seed.walks || 0,
@@ -328,6 +334,7 @@ function layout(seed = {}) {
                 this.st.maxHp = s.max_hp;
                 this.st.attack = s.attack || 0;
                 this.st.defense = s.defense || 0;
+                this.st.miningLevel = s.mining_level || this.st.miningLevel || 1;
                 this.st.diamonds = s.diamonds;
                 this.st.walks = s.walks || 0;
                 this.st.kills = s.npc_kills || 0;

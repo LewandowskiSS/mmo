@@ -226,6 +226,7 @@
     'hpNextIn'  => (int) (\App\Controllers\BaseController::$layoutData['characterHpNextIn'] ?? 0),
     'attack'    => (int) (\App\Controllers\BaseController::$layoutData['characterAttack'] ?? 0),
     'defense'   => (int) (\App\Controllers\BaseController::$layoutData['characterDefense'] ?? 0),
+    'miningLevel' => (int) (\App\Controllers\BaseController::$layoutData['characterMiningLevel'] ?? 1),
     'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
     'walks'     => (int) (\App\Controllers\BaseController::$layoutData['characterWalks'] ?? 0),
     'kills'     => (int) (\App\Controllers\BaseController::$layoutData['characterKills'] ?? 0),
@@ -319,6 +320,7 @@
                 <div id="profile-attributes" class="profile-accordion" :style="{gridTemplateRows: attributesOpen ? '1fr' : '0fr'}" :inert="!attributesOpen"><div>
                     <div class="profile-row"><span>Атака</span><span class="profile-value"><img src="/img/misc/fight.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.attack"></span></span></div>
                     <div class="profile-row"><span>Защита</span><span class="profile-value" x-text="st.defense"></span></div>
+                    <div class="profile-row"><span>Горное дело</span><span class="profile-value" x-text="st.miningLevel"></span></div>
                     <div class="profile-row"><span>Свободные очки</span><span class="profile-value" x-text="st.freeStatPoints || 0"></span></div>
                 </div></div>
                 <div class="profile-divider" style="margin:10px 0"></div>

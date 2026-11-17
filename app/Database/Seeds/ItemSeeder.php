@@ -8,8 +8,7 @@ class ItemSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->db->table('items')->emptyTable();
-
+        // Идемпотентный сидер: НИКОГДА не очищает таблицу (нет emptyTable/TRUNCATE).
         $items = [
             // common
             ['name' => 'Деревянный меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 3, 'price' => 50, 'description' => 'Простой, но надёжный меч.', 'emoji' => '🗡️', 'rarity' => 'common'],
@@ -44,8 +43,23 @@ class ItemSeeder extends Seeder
             // ancient
             ['name' => 'Древний клинок Вечности', 'type' => 'weapon', 'stat' => 'attack', 'value' => 130, 'price' => 150000, 'description' => 'Древний артефакт из забытых веков.', 'emoji' => '🗡️', 'rarity' => 'ancient'],
             ['name' => 'Древний доспех Эонов', 'type' => 'armor', 'stat' => 'defense', 'value' => 110, 'price' => 150000, 'description' => 'Доспех, созданный прежде сотворения мира.', 'emoji' => '🛡️', 'rarity' => 'ancient'],
+            // material (добыча из залежей)
+            ['name' => 'Медная руда', 'type' => 'material', 'stat' => '', 'value' => 1, 'price' => 1, 'description' => 'Кусок необработанной медной руды, добытый из залежи.', 'emoji' => '/img/ores/copper_ore.png', 'rarity' => 'common'],
+            // pickaxe (Лавка инструментов)
+            ['name' => 'Каменная кирка', 'type' => 'pickaxe', 'stat' => 'mining_power', 'value' => 3, 'price' => 500, 'description' => 'Простая каменная кирка. Позволяет добыть до 3 ед. руды с одной залежи.', 'emoji' => '/img/tools/stone_pickaxe.png', 'rarity' => 'common'],
+            ['name' => 'Железная кирка', 'type' => 'pickaxe', 'stat' => 'mining_power', 'value' => 5, 'price' => 15000, 'description' => 'Крепкая железная кирка. Позволяет добыть до 5 ед. руды с одной залежи.', 'emoji' => '/img/tools/iron_pickaxe.png', 'rarity' => 'uncommon'],
+            ['name' => 'Золотая кирка', 'type' => 'pickaxe', 'stat' => 'mining_power', 'value' => 7, 'price' => 150000, 'description' => 'Искусная золотая кирка. Позволяет добыть до 7 ед. руды с одной залежи.', 'emoji' => '/img/tools/gold_pickaxe.png', 'rarity' => 'rare'],
         ];
 
-        $this->db->table('items')->insertBatch($items);
+        $itemModel = new \App\Models\ItemModel();
+        foreach ($items as $item) {
+            $existing = $itemModel->where('name', $item['name'])->first();
+            if ($existing) {
+                // Обновляем только метаданные, id не трогаем.
+                $itemModel->where('id', $existing->id)->set($item)->update();
+            } else {
+                $itemModel->insert($item);
+            }
+        }
     }
 }

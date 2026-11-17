@@ -92,17 +92,20 @@ body.bg-slate-900 { background-color: var(--bg-body) !important; }
 /* --- Sprite Animation Styles --- */
 .walk-sprite {
     display: inline-block;
-    width: 24px; 
-    height: 24px;
-    background: url('/img/misc/walk_sprite.png') 0 0 / 400% 100% no-repeat;
+    width: 32px;
+    height: 32px;
+    background-image: url('/img/misc/walk_sprite.png');
+    background-repeat: no-repeat;
+    background-size: 256px 32px;
     image-rendering: pixelated;
-    animation: walk-cycle 0.7s steps(4) infinite;
+    animation: walk-cycle 0.8s steps(8) infinite;
+    vertical-align: middle;
+    margin-right: 8px;
 }
 
 @keyframes walk-cycle {
-    from { background-position: 0 0; } 
-    /* 4 кадра по 24px = 96px сдвига; -96px возвращает к первому кадру без пустого кадра */
-    to { background-position: -96px 0; }
+    from { background-position: 0 0; }
+    to { background-position: -256px 0; }
 }
 
 /* Полоса опыта: плавное заполнение + свечение при получении опыта */

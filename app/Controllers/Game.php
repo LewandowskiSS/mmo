@@ -13,6 +13,7 @@ use App\Models\FlavorTextModel;
 use App\Models\InventoryModel;
 use App\Models\ItemModel;
 use App\Models\LocationModel;
+use App\Models\MiningSessionModel;
 use App\Models\MonsterModel;
 use App\Models\StorageModel;
 
@@ -22,6 +23,16 @@ class Game extends BaseController
     private const ENERGY_REGEN_SECONDS = 180;
     private const HP_REGEN_SECONDS = 180;
     private const INVENTORY_CAPACITY = 10000;
+    /** ID предмета «Медная руда» в items — определяется по названию и типу. */
+    private function copperOreItemId(): int
+    {
+        $item = (new ItemModel())
+            ->where('name', 'Медная руда')
+            ->where('type', 'material')
+            ->first();
+
+        return $item ? (int) $item->id : 0;
+    }
 
     public function index()
     {
@@ -836,20 +847,50 @@ class Game extends BaseController
         }
 
         $invId = (int) $this->request->getPost('inv_id');
-        $inv   = (new InventoryModel())->where('id', $invId)->where('character_id', $character->id)->first();
+        $inventory = new InventoryModel();
+        $db = db_connect();
+        $db->transBegin();
+        try {
+            $inv = $db->table('inventory')->where('id', $invId)
+                ->where('character_id', $character->id)->where('equipped', 0)
+                ->get()->getRow();
+            if (! $inv || (int) $inv->quantity < 1) {
+                $db->transRollback();
+                return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден в сумке']);
+            }
 
-        if (! $inv) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден']);
+            $item = (new ItemModel())->find($inv->item_id);
+            if (! $item || in_array($item->type, ['consumable', 'material'], true)) {
+                $db->transRollback();
+                return $this->response->setJSON(['success' => false, 'message' => 'Этот предмет нельзя надеть']);
+            }
+
+            $this->unequipType($character->id, $item->type, $inventory);
+            // После снятия прежнего экземпляра исходная строка могла измениться.
+            $inv = $db->table('inventory')->where('id', $invId)
+                ->where('character_id', $character->id)->where('equipped', 0)->get()->getRow();
+            if (! $inv || (int) $inv->quantity < 1) {
+                throw new \RuntimeException('Equipment source disappeared');
+            }
+            if ((int) $inv->quantity > 1) {
+                $db->table('inventory')->where('id', $invId)
+                    ->set('quantity', 'quantity - 1', false)->update();
+                $inventory->insert([
+                    'character_id' => $character->id, 'item_id' => $inv->item_id,
+                    'quantity' => 1, 'equipped' => 1,
+                ]);
+            } else {
+                $db->table('inventory')->where('id', $invId)->update(['equipped' => 1, 'quantity' => 1]);
+            }
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Equipment update failed');
+            }
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Equip failed: {message}', ['message' => $e->getMessage()]);
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Не удалось надеть предмет']);
         }
-
-        $item = (new ItemModel())->find($inv->item_id);
-
-        if ($item->type === 'consumable') {
-            return $this->response->setJSON(['success' => false, 'message' => 'Расходники нельзя надеть']);
-        }
-
-        $this->unequipType($character->id, $item->type);
-        (new InventoryModel())->update($inv->id, ['equipped' => 1]);
 
         return $this->response->setJSON([
             'success' => true,
@@ -865,13 +906,26 @@ class Game extends BaseController
         }
 
         $invId = (int) $this->request->getPost('inv_id');
-        $inv   = (new InventoryModel())->where('id', $invId)->where('character_id', $character->id)->first();
-
-        if (! $inv) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден']);
+        $db = db_connect();
+        $db->transBegin();
+        try {
+            $inv = $db->table('inventory')->where('id', $invId)
+                ->where('character_id', $character->id)->where('equipped', 1)
+                ->get()->getRow();
+            if (! $inv) {
+                $db->transRollback();
+                return $this->response->setJSON(['success' => false, 'message' => 'Надетый предмет не найден']);
+            }
+            (new InventoryModel())->returnToBag($inv);
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Unequip update failed');
+            }
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Unequip failed: {message}', ['message' => $e->getMessage()]);
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Не удалось снять предмет']);
         }
-
-        (new InventoryModel())->update($inv->id, ['equipped' => 0]);
 
         return $this->response->setJSON(['success' => true, 'message' => 'Предмет снят']);
     }
@@ -1046,13 +1100,18 @@ class Game extends BaseController
         $categories = [
             'gear' => ['title' => 'Оружейная лавка', 'icon' => '⚔️', 'desc' => 'Оружие и броня для твоего героя. Лучший выбор для тех, кто идёт в бой!'],
             'potions' => ['title' => 'Аптека зелий', 'icon' => '🧪', 'desc' => 'Зелья на любой случай: здоровье, энергия — всё для выживания.'],
+            'tools' => ['title' => 'Лавка инструментов', 'icon' => '/img/tools/iron_pickaxe.png', 'desc' => 'Кирки и снаряжение для добычи руды'],
         ];
 
         if (! isset($categories[$category])) {
             return redirect()->to('/game/shop');
         }
 
-        $types = ($category === 'potions') ? ['consumable'] : ['weapon', 'armor', 'helmet', 'amulet', 'chestplate', 'gloves', 'leggings', 'boots'];
+        $types = match ($category) {
+            'potions' => ['consumable'],
+            'tools' => ['pickaxe'],
+            default => ['weapon', 'armor', 'helmet', 'amulet', 'chestplate', 'gloves', 'leggings', 'boots'],
+        };
 
         $items = (new ItemModel())
             ->whereIn('type', $types)
@@ -1145,6 +1204,91 @@ class Game extends BaseController
         }
 
         return $this->response->setJSON(['success' => true, 'periods' => $periods]);
+    }
+
+    private function materialEvent($character): array
+    {
+        $itemId = $this->copperOreItemId();
+        $pickaxe = $this->equippedPickaxe($character);
+        $strikes = $pickaxe ? max(1, (int) $pickaxe->value) : 3;
+        $hash = bin2hex(random_bytes(6));
+
+        if ($itemId > 0) {
+            $sessions = new MiningSessionModel();
+            $sessions->where('character_id', (int) $character->id)->delete();
+            $sessions->insert([
+                'hash'              => $hash,
+                'character_id'      => (int) $character->id,
+                'location_id'       => (int) ($character->location_id ?? 1),
+                'ore_item_id'       => $itemId,
+                'deposit_name'      => 'Медная залежь',
+                'deposit_image'     => '/img/ores/copper_deposit.png',
+                'remaining_strikes' => $strikes,
+                'max_strikes'       => $strikes,
+                'mined_total'       => 0,
+                'expires_at'        => null,
+                'created_at'        => date('Y-m-d H:i:s'),
+            ]);
+
+            $miningLevel = (int) ($character->mining_level ?? 1);
+            return [
+                'success' => true,
+                'type'    => 'material',
+                'session_hash' => $hash,
+                'deposit_name' => 'Медная залежь',
+                'deposit_image' => '/img/ores/copper_deposit.png',
+                'ore_name' => 'Медная руда',
+                'ore_image' => '/img/ores/copper_ore.png',
+                'ore_rarity' => 'common',
+                'ore_level' => 1,
+                'mining_level' => $miningLevel,
+                'mining_xp' => (int) ($character->mining_xp ?? 0),
+                'mining_xp_needed' => 50 + ($miningLevel - 1) * 25,
+            'pickaxe' => $pickaxe ? ['name' => $pickaxe->name, 'image' => '/img/tools/' . (str_contains(mb_strtolower($pickaxe->name), 'золот') ? 'gold' : (str_contains(mb_strtolower($pickaxe->name), 'желез') ? 'iron' : 'stone')) . '_pickaxe.png', 'rarity' => $pickaxe->rarity ?? 'common', 'strikes' => (int) $pickaxe->value] : null,
+                'remaining_strikes' => $strikes,
+                'max_strikes' => $strikes,
+                'depleted' => false,
+                'title' => 'Медная залежь',
+                'image' => '/img/ores/copper_deposit.png',
+                'message' => 'Среди камней поблескивает медная жила.',
+                'state'   => $this->characterState($character),
+            ];
+        }
+
+        return [
+            'success' => true,
+            'type'    => 'material',
+            'session_hash' => $hash,
+            'deposit_name' => 'Медная залежь',
+            'deposit_image' => '/img/ores/copper_deposit.png',
+            'ore_name' => 'Медная руда', 'ore_image' => '/img/ores/copper_ore.png', 'ore_rarity' => 'common', 'ore_level' => 1,
+            'mining_level' => (int) ($character->mining_level ?? 1), 'mining_xp' => (int) ($character->mining_xp ?? 0),
+            'mining_xp_needed' => 50 + ((int) ($character->mining_level ?? 1) - 1) * 25,
+            'pickaxe' => null, 'remaining_strikes' => 0, 'max_strikes' => $strikes, 'depleted' => true,
+            'title' => 'Медная залежь', 'image' => '/img/ores/copper_deposit.png',
+            'message' => 'Медная руда пока недоступна.',
+            'state'   => $this->characterState($character),
+        ];
+    }
+
+    /**
+     * Возвращает надетую кирку персонажа (type = 'pickaxe') или null.
+     */
+    private function equippedPickaxe($character): ?object
+    {
+        if (! $character || empty($character->id)) {
+            return null;
+        }
+
+        $item = (new InventoryModel())
+            ->select('items.id, items.name, items.value, items.rarity, items.emoji')
+            ->join('items', 'items.id = inventory.item_id')
+            ->where('inventory.character_id', $character->id)
+            ->where('inventory.equipped', 1)
+            ->where('items.type', 'pickaxe')
+            ->first();
+
+        return $item ?: null;
     }
 
     private function periodTasksData($character, string $period): array
@@ -1646,6 +1790,10 @@ class Game extends BaseController
             'max_energy'     => (int) $character->max_energy,
             'attack'         => (int) $character->attack,
             'defense'        => (int) $character->defense,
+            'mining_level'   => (int) ($character->mining_level ?? 1),
+            'mining_xp'      => (int) ($character->mining_xp ?? 0),
+            'mining_level'   => (int) ($character->mining_level ?? 1),
+            'mining_xp'      => (int) ($character->mining_xp ?? 0),
             'bronze_keys'    => (int) ($character->bronze_keys ?? 0),
             'silver_keys'    => (int) ($character->silver_keys ?? 0),
             'gold_keys'      => (int) ($character->gold_keys ?? 0),
@@ -1838,10 +1986,10 @@ class Game extends BaseController
         return ['attack' => $attack, 'defense' => $defense];
     }
 
-    private function unequipType($characterId, $type)
+    private function unequipType($characterId, $type, InventoryModel $inventory): void
     {
-        $equipped = (new InventoryModel())
-            ->select('inventory.id')
+        $equipped = $inventory
+            ->select('inventory.id, inventory.character_id, inventory.item_id, inventory.quantity, inventory.equipped')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $characterId)
             ->where('inventory.equipped', 1)
@@ -1849,7 +1997,7 @@ class Game extends BaseController
             ->findAll();
 
         foreach ($equipped as $eq) {
-            (new InventoryModel())->update($eq->id, ['equipped' => 0]);
+            $inventory->returnToBag($eq);
         }
     }
 
@@ -2208,22 +2356,24 @@ class Game extends BaseController
     private function walkEvent($character): array
     {
         $location = $this->currentLocation($character);
-        $chanceText    = (int) ($location->chance_text ?? 80);
-        $chanceItem    = (int) ($location->chance_item ?? 10);
-        $chanceMonster = (int) ($location->chance_monster ?? 10);
+        $chanceText     = (int) ($location->chance_text ?? 80);
+        $chanceItem     = (int) ($location->chance_item ?? 10);
+        $chanceMonster  = (int) ($location->chance_monster ?? 10);
+        $chanceMaterial = (int) ($location->chance_material ?? 0);
 
         // Нормализуем веса на случай расхождения в сумме
-        $totalWeight = max(1, $chanceText + $chanceItem + $chanceMonster);
+        $totalWeight = max(1, $chanceText + $chanceItem + $chanceMonster + $chanceMaterial);
         $roll        = random_int(1, $totalWeight);
 
-        // Монстр
-        if ($roll <= $chanceMonster) {
-            return $this->battleResponse($character, $this->spawnMonster($character->level));
+        if ($roll <= $chanceText) {
+            $text = $this->randomFlavorText();
+            $this->logEvent($character->id, 'walk', $text);
+            return ['success' => true, 'type' => 'text', 'message' => $text, 'state' => $this->characterState($character)];
         }
 
         // Предмет. Редчайшие предметы имеют отдельный шанс внутри дропа.
-        if ($roll <= $chanceMonster + $chanceItem) {
-            $items = (new ItemModel())->where('type !=', 'pet')->findAll();
+        if ($roll <= $chanceText + $chanceItem) {
+            $items = (new ItemModel())->whereNotIn('type', ['pet', 'pickaxe', 'material'])->findAll();
             $rareRoll = random_int(1, 10000);
             $rareRarity = $rareRoll === 1 ? 'ancient' : ($rareRoll <= 4 ? 'mythic' : null);
             if ($rareRarity !== null) {
@@ -2244,6 +2394,14 @@ class Game extends BaseController
                 'emoji'   => $item->emoji,
                 'state'   => $this->characterState($character),
             ];
+        }
+
+        // Монстр, затем залежь руды (последний интервал розыгрыша).
+        if ($roll <= $chanceText + $chanceItem + $chanceMonster) {
+            return $this->battleResponse($character, $this->spawnMonster($character->level));
+        }
+        if ($chanceMaterial > 0) {
+            return $this->materialEvent($character);
         }
 
         // Текст (оставшаяся вероятность)
@@ -2291,10 +2449,15 @@ class Game extends BaseController
         $items = (new ItemModel())
             ->where('rarity', $rarity)
             ->where('type !=', 'pet')
+            ->whereNotIn('type', ['material', 'pickaxe'])
             ->findAll();
 
         if (empty($items)) {
-            $items = (new ItemModel())->where('rarity', 'common')->where('type !=', 'pet')->findAll();
+            $items = (new ItemModel())
+                ->where('rarity', 'common')
+                ->where('type !=', 'pet')
+                ->whereNotIn('type', ['material', 'pickaxe'])
+                ->findAll();
         }
 
         return $items ? $items[array_rand($items)] : null;

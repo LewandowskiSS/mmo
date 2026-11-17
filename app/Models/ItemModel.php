@@ -11,6 +11,8 @@ class ItemModel extends Model
         'amulet' => 'Амулет', 'chestplate' => 'Нагрудник', 'gloves' => 'Перчатки',
         'leggings' => 'Поножи', 'boots' => 'Ботинки', 'pet' => 'Питомец',
         'consumable' => 'Расходник',
+        'material' => 'Руда',
+        'pickaxe' => 'Инструмент',
     ];
 
     protected $table         = 'items';

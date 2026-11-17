@@ -27,6 +27,16 @@
                 </div>
             </div>
         </a>
+
+        <a href="/game/shop/tools" class="block rounded-xl border border-slate-700 bg-slate-800 p-5 hover:border-sky-500/50 transition-colors md:col-span-2 lg:col-span-1">
+            <div class="flex items-center gap-3">
+                <?= game_icon('/img/tools/iron_pickaxe.png', 'w-10 h-10 shrink-0 object-contain', 'инструменты') ?>
+                <div>
+                    <h2 class="text-lg font-bold">Лавка инструментов</h2>
+                    <p class="text-sm text-slate-400">Кирки и снаряжение для добычи руды</p>
+                </div>
+            </div>
+        </a>
     </div>
 </div>
 

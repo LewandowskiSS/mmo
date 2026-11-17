@@ -26,7 +26,10 @@
                         <p class="text-xs text-slate-500 mt-0.5">
                             <span class="text-xs font-medium" :class="rarityClass(item.rarity)" x-text="rarityLabel(item.rarity)"></span>
                             <span class="ml-1" x-text="typeLabel(item)"></span>
-                            <template x-if="item.type !== 'consumable'">
+                            <template x-if="item.type === 'pickaxe'">
+                                <span x-text="' · Добыча: ' + item.value + ' руды за жилу'"></span>
+                            </template>
+                            <template x-if="item.type !== 'consumable' && item.type !== 'pickaxe'">
                                 <span x-text="' +' + item.value + (item.stat === 'attack' ? ' атаки' : ' защиты')"></span>
                             </template>
                             <template x-if="item.type === 'consumable'">

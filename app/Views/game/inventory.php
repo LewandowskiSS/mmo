@@ -77,7 +77,7 @@ $icon = function ($e): string {
 };
 ?>
 
-<div class="space-y-6" x-data="inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>)">
+<div class="space-y-6" x-data="Object.assign(inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>), { openMenuId: null })">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/bag.png" class="inline-block w-8 h-8 align-middle object-contain shrink-0" alt="инвентарь"> Инвентарь</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
@@ -260,7 +260,13 @@ $icon = function ($e): string {
                     <td class="py-2.5 pr-2 text-right text-amber-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <?= (int) ($it->price ?? 0) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
-                        <?php if ($it->type !== 'consumable'): ?>
+                        <?php if ($it->type === 'consumable'): ?>
+                            +<?= (int) $it->value ?> <?= $it->stat === 'hp' ? 'HP' : 'энергии' ?>
+                        <?php elseif ($it->type === 'pickaxe'): ?>
+                            <span class="inline-flex items-center gap-1">Добыча: <?= (int) $it->value ?> руды</span>
+                        <?php elseif ($it->type === 'material'): ?>
+                            —
+                        <?php else: ?>
                             <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
                             <?php if ($it->cmp === 'up'): ?>
                                 <svg class="inline w-3 h-3 align-middle text-emerald-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
@@ -269,8 +275,6 @@ $icon = function ($e): string {
                             <?php elseif ($it->cmp === 'equal'): ?>
                                 <span class="text-slate-500 font-bold">=</span>
                             <?php endif; ?>
-                        <?php else: ?>
-                            +<?= (int) $it->value ?> <?= $it->stat === 'hp' ? 'HP' : 'энергии' ?>
                         <?php endif; ?>
                     </td>
                     <td class="py-2.5 text-right">
@@ -278,13 +282,31 @@ $icon = function ($e): string {
                             <button type="button" data-action="use" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold">Использовать</button>
                         <?php elseif ($it->equipped): ?>
                             <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
+                        <?php elseif ($it->type === 'material'): ?>
+                            <div class="relative inline-block" :class="openMenuId === '{{ $it->inv_id }}' ? 'z-30' : 'z-10'" x-data="{ dummy: null }">
+                                <div class="flex rounded-lg overflow-hidden">
+                                    <button type="button" data-action="store" data-qty="<?= (int) $it->quantity ?>" class="px-3 py-1.5 whitespace-nowrap bg-sky-700 hover:bg-sky-600 text-white text-sm font-semibold rounded-l-lg">В хранилище</button>
+                                    <button type="button" @click.stop="openMenuId = openMenuId === '{{ $it->inv_id }}' ? null : '{{ $it->inv_id }}'" class="px-2 py-1.5 bg-sky-600 hover:bg-sky-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-sky-800/60"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                                </div>
+                                <div x-show="openMenuId === '{{ $it->inv_id }}'" x-cloak @click.stop @click.outside="openMenuId = null" class="absolute right-0 mt-1 w-56 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-50 py-1">
+                                    <button type="button"
+                                        data-action="sell"
+                                        data-name="<?= esc($it->name) ?>"
+                                        data-price="<?= (int) ($it->price ?? 0) ?>"
+                                        data-rarity="<?= esc($it->rarity) ?>"
+                                        data-qty="<?= (int) $it->quantity ?>"
+                                        class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
+                                        🪙 Продать за <span class="font-semibold"><?= (int) ($it->price ?? 0) ?></span> <img src="/img/misc/coin.png" class="w-4 h-4 shrink-0 object-contain" alt="золото">
+                                    </button>
+                                </div>
+                            </div>
                         <?php else: ?>
-                            <div class="relative inline-block" x-data="{ open: false }" @click.outside="open = false">
+                            <div class="relative inline-block" :class="openMenuId === '{{ $it->inv_id }}' ? 'z-30' : 'z-10'" x-data="{ dummy: null }">
                                 <div class="flex rounded-lg overflow-hidden">
                                     <button type="button" data-action="equip" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold rounded-l-lg">Надеть</button>
-                                    <button type="button" @click.stop="open = !open" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                                    <button type="button" @click.stop="openMenuId = openMenuId === '{{ $it->inv_id }}' ? null : '{{ $it->inv_id }}'" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="""><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                                 </div>
-                                <div x-show="open" x-cloak @click.stop class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10 py-1">
+                                <div x-show="openMenuId === '{{ $it->inv_id }}'" x-cloak @click.stop @click.outside="openMenuId = null" class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-50 py-1">
                                     <button type="button"
                                         data-action="store"
                                         data-qty="<?= (int) $it->quantity ?>"
@@ -352,7 +374,11 @@ $icon = function ($e): string {
                     <td class="py-2.5 pr-2 <?= esc($rc) ?>"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
-                        <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
+                        <?php if ($it->type === 'pickaxe'): ?>
+                            <span class="inline-flex items-center gap-1">Добыча: +<?= (int) $it->value ?> <img src="/img/ores/copper_ore.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="руда"> руды</span>
+                        <?php else: ?>
+                            <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
+                        <?php endif; ?>
                     </td>
                     <td class="py-2.5 text-right">
                         <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>

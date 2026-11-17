@@ -14,7 +14,7 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
 ?>
 
 <div class="relative mt-2 rounded-lg overflow-hidden p-4 sm:p-6 flex flex-col justify-between" style="min-height: 35rem; background: linear-gradient(to bottom, rgba(0,0,0,0.88), rgba(0,0,0,0.65)), url('<?= esc($location->image ?? '/img/locations/quiet_valley.png') ?>'); background-size: cover; background-position: bottom center;">
-    <div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>, <?= $gold_raw ?>)">
+    <div class="space-y-6" x-data="gameDashboard(<?= (int) $character->energy ?>, <?= $gold_raw ?>, <?= (int) ($character->mining_level ?? 1) ?>, <?= (int) ($character->mining_xp ?? 0) ?>)">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-white"><?= esc($character->name) ?></h1>
@@ -90,7 +90,21 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
                     </div>
                 </div>
             </template>
-            <template x-if="event.type !== 'monster'">
+            <template x-if="event.type === 'material'">
+                <div class="text-center space-y-2">
+                    <div class="w-20 h-20 flex items-center justify-center mx-auto">
+                        <img src="/img/ores/copper_deposit.png" alt="Медная залежь" class="w-16 h-16 object-contain shrink-0">
+                    </div>
+                    <p class="font-bold text-lg text-white" x-text="event.deposit_name || event.title"></p>
+                    <p class="text-xs rarity-common">Уровень 1 • Обычный</p>
+                    <p class="text-xs text-slate-400" x-text="event.message"></p>
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <button type="button" :disabled="event.depleted" class="py-2 rounded-lg bg-[#f8b896] hover:bg-[#f5a67c] text-neutral-900 font-bold disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5" @click="openMining()"><img src="/img/tools/stone_pickaxe.png" class="w-4 h-4 shrink-0 object-contain" alt=""> Добыть</button>
+                        <button type="button" class="py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold inline-flex items-center justify-center gap-1.5" @click="doAction('/game/skip')"><img src="/img/misc/right_arrow.png" class="w-4 h-4 shrink-0 object-contain" alt=""> Пропустить</button>
+                    </div>
+                </div>
+            </template>
+            <template x-if="event.type !== 'monster' && event.type !== 'material'">
                 <p x-ref="eventBox" :class="eventClass()" x-text="event.message"></p>
             </template>
         </div>
@@ -111,6 +125,20 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
     </div>
 
 </div>
+
+<div x-show="miningOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4" @click.self="miningOpen = false">
+    <div class="w-full max-w-md rounded-xl bg-neutral-900 border border-neutral-700 p-6 relative shadow-2xl">
+        <button type="button" class="absolute top-3 right-3 text-2xl text-slate-400 hover:text-white" @click="miningOpen = false">×</button>
+        <div class="text-center"><img src="/img/ores/copper_ore.png" class="w-20 h-20 object-contain mx-auto" alt="Медная руда"><div class="text-lg font-bold rarity-common">Медная руда</div><div class="text-white font-semibold">Горное дело</div><div class="text-sm text-slate-400">Уровень 1</div></div>
+        <div class="mt-5 text-sm"><div class="flex justify-between border-b border-neutral-700 py-2"><span>Уровень горного дела</span><b x-text="event.mining_level"></b></div><div class="flex justify-between border-b border-neutral-700 py-2"><span>Экипировано</span><span class="flex items-center gap-1" :class="event.pickaxe ? 'rarity-' + event.pickaxe.rarity : 'text-slate-500'"><img x-show="event.pickaxe" :src="event.pickaxe ? event.pickaxe.image : ''" class="w-5 h-5 object-contain"><span x-text="event.pickaxe ? event.pickaxe.name : 'Кирка не надета'"></span></span></div><div class="flex justify-between py-2"><span>Осталось руды</span><b x-text="event.remaining_strikes"></b></div></div>
+        <div class="mt-5"><div class="flex justify-between text-sm"><b x-text="miningPercent() + '%'" class="text-white"></b><span x-text="(event.mining_xp_needed - event.mining_xp) + ' опыта осталось'" class="text-slate-400"></span></div><div class="h-2 bg-neutral-700 rounded-full mt-2"><div class="h-full bg-emerald-500 rounded-full" :style="'width:' + miningPercent() + '%' "></div></div></div>
+        <button type="button" @click="mine('/mining/mine')" :disabled="busy || !event.pickaxe || energy < 1 || !event.remaining_strikes" class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold w-full py-2.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">⛏️ Добыть</button>
+        <button type="button" @click="mine('/mining/mine-all')" :disabled="busy || !event.pickaxe || energy < 1 || !event.remaining_strikes" class="bg-neutral-700 hover:bg-neutral-600 text-neutral-200 font-medium w-full py-2 rounded-lg mt-2 disabled:opacity-40 disabled:cursor-not-allowed">Добыть всё (Энергия: <span x-text="energy"></span>)</button>
+        <p class="text-center text-xs text-slate-500 mt-2">Это действие требует 1 энергии</p>
+    </div>
+</div>
+
+<div x-show="toastMining" x-cloak class="fixed top-4 left-4 z-50 bg-neutral-900/95 border border-neutral-700 rounded-xl px-3.5 py-2.5 shadow-2xl flex items-center gap-3"><div class="relative"><img src="/img/ores/copper_ore.png" class="w-9 h-9 object-contain"><span class="absolute -bottom-1 -left-1 bg-indigo-600 text-[10px] rounded px-1" x-text="toastMining.count + 'x'"></span></div><div class="text-xs"><div class="text-white">✨ +<span x-text="toastMining.xp"></span> Опыта</div><div class="text-emerald-300">⛏️ +<span x-text="toastMining.miningXp"></span> Опыта горного дела</div><div x-show="toastMining.levelUp" class="text-amber-300">Уровень горного дела повышен до <span x-text="event.mining_level"></span>!</div></div></div>
 
 <style>
     .ring-run {
@@ -133,12 +161,33 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
     }
 </style>
 <script>
-function gameDashboard(initialEnergy, initialGold) {
+function gameDashboard(initialEnergy, initialGold, initialMiningLevel, initialMiningXp) {
     return {
         energy: initialEnergy,
         gold: Math.floor(Number(initialGold) || 0),
         walking: false,
         event: { type: 'text', message: 'Нажми «Прогулка», чтобы отправиться в путь.' },
+        miningOpen: false, busy: false, toastMining: null, miningTimer: null,
+        openMining() { if (!this.event.depleted) this.miningOpen = true; },
+        miningPercent() { return Math.min(100, Math.round((Number(this.event.mining_xp || 0) / Math.max(1, Number(this.event.mining_xp_needed || 50))) * 100)); },
+        async mine(url) {
+            if (this.busy) return;
+            this.busy = true;
+            try {
+                const data = await Game.post(url, { session_hash: this.event.session_hash }, 0);
+                if (!data.success) { Game.toast(data.message || 'Не удалось добыть руду', 'error'); return; }
+                this.event.remaining_strikes = data.remaining_strikes;
+                this.event.depleted = data.depleted;
+                this.event.mining_level = data.mining_level;
+                this.event.mining_xp = data.mining_xp;
+                this.event.mining_xp_needed = data.mining_xp_needed;
+                this.energy = data.state.energy;
+                Game.updateState(data.state);
+                this.toastMining = { count: data.mined, xp: data.xp_gained, miningXp: data.mining_xp_gained, levelUp: data.mining_level_up };
+                clearTimeout(this.miningTimer); this.miningTimer = setTimeout(() => this.toastMining = null, 3500);
+                if (data.depleted) this.miningOpen = false;
+            } catch (e) { Game.toast('Ошибка соединения', 'error'); } finally { this.busy = false; }
+        },
 
         monsterPct() {
             const b = this.event.battle;

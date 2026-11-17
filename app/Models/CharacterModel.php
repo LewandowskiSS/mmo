@@ -18,5 +18,6 @@ class CharacterModel extends Model
         'steps_total', 'npc_kills', 'boss_kills', 'quests_done', 'player_kills', 'chests_opened',
         'heal_count', 'heal_last_date', 'healer_intro_seen',
         'location_id',
+        'mining_level', 'mining_xp',
     ];
 }

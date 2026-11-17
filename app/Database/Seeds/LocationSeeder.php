@@ -18,9 +18,10 @@ class LocationSeeder extends Seeder
                 'travel_steps'  => 0,
                 'travel_cost'   => 0,
                 'is_wip'        => 0,
-                'chance_text'   => 80,
-                'chance_item'   => 10,
+                'chance_text'   => 75,
+                'chance_item'   => 5,
                 'chance_monster' => 10,
+                'chance_material' => 10,
                 'sort_order'    => 1,
             ],
             [
@@ -35,6 +36,7 @@ class LocationSeeder extends Seeder
                 'chance_text'   => 75,
                 'chance_item'   => 12,
                 'chance_monster' => 13,
+                'chance_material' => 0,
                 'sort_order'    => 2,
             ],
             [
@@ -49,6 +51,7 @@ class LocationSeeder extends Seeder
                 'chance_text'   => 70,
                 'chance_item'   => 15,
                 'chance_monster' => 15,
+                'chance_material' => 0,
                 'sort_order'    => 3,
             ],
         ];

@@ -37,6 +37,9 @@
                             <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[11px] font-semibold">WIP / В разработке</span>
                         <?php endif; ?>
                     </div>
+                    <div class="text-[11px] text-slate-400">
+                        Материалы: <?= (int) ($loc->chance_material ?? 0) ?>%
+                    </div>
                     <button type="button"
                         @click="openModal(<?= (int) $loc->id ?>)"
                         class="mt-auto w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold transition-colors">
@@ -89,6 +92,7 @@
                 <span class="px-3 py-1.5 rounded-full bg-slate-700/60 text-slate-200 text-xs font-semibold"><span x-text="modalData.chance_text"></span>% Текст</span>
                 <span class="px-3 py-1.5 rounded-full bg-slate-700/60 text-slate-200 text-xs font-semibold"><span x-text="modalData.chance_item"></span>% Вещь</span>
                 <span class="px-3 py-1.5 rounded-full bg-slate-700/60 text-slate-200 text-xs font-semibold"><span x-text="modalData.chance_monster"></span>% Монстр</span>
+                <span class="px-3 py-1.5 rounded-full bg-slate-700/60 text-slate-200 text-xs font-semibold"><span x-text="modalData.chance_material ?? 0"></span>% Материалы</span>
             </div>
         </div>
         <!-- Футер -->
@@ -140,7 +144,8 @@ document.addEventListener('alpine:init', () => {
             is_wip: 0,
             chance_text: 80,
             chance_item: 10,
-            chance_monster: 10
+            chance_monster: 10,
+            chance_material: 0
         },
         locations: <?= json_encode($locations, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
 

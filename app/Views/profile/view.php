@@ -206,6 +206,18 @@ $numShort = function ($n): string {
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">👑 Убито боссов</span><span class="font-semibold" id="pf-bosskills" title="<?= number_format((int) ($character->boss_kills ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->boss_kills ?? 0) ?></span></div>
             <div class="flex justify-between px-4 py-3"><span class="text-slate-400">⚔️ Побед над игроками</span><span class="font-semibold" id="pf-playerkills" title="<?= number_format((int) ($character->player_kills ?? 0), 0, ',', ' ') ?>"><?= $numShort($character->player_kills ?? 0) ?></span></div>
         </div>
+
+        <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl divide-y divide-neutral-800 text-sm">
+            <div class="flex items-center justify-between px-4 py-3">
+                <span class="inline-flex items-center gap-2 text-neutral-300">
+                    <?= game_icon('/img/tools/stone_pickaxe.png', 'w-5 h-5 object-contain') ?>
+                    <span>Горное дело</span>
+                </span>
+                <span class="text-neutral-400">Уровень <?= (int) ($character->mining_level ?? 1) ?></span>
+            </div>
+        </div>
+
+        <p class="text-center text-xs text-neutral-500 mt-4">User ID: <?= (int) ($character->user_id ?? 0) ?></p>
     </div>
 
     <!-- ВКЛАДКА INTERACTION — комментарии живут внизу вкладки «Профиль» -->
