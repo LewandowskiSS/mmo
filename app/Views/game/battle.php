@@ -169,9 +169,6 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                         </span>
                     </button>
                     <button type="button" class="w-full py-2 rounded-lg mt-2 text-sm bg-neutral-800/90 hover:bg-neutral-700 text-neutral-300 transition-colors" @click="flee">Сбежать</button>
-                    <div x-show="logs.length" x-cloak class="mt-2 text-xs text-slate-300 space-y-0.5">
-                        <template x-for="l in logs" :key="l"><p x-text="'• ' + l"></p></template>
-                    </div>
                 </div>
             </template>
 
@@ -225,7 +222,6 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                 monsterShake: false,
                 playerShake: false,
                 floaters: [],
-                logs: [],
                 won: null,
                 resultMsg: '',
                 battleToast: null,
@@ -314,7 +310,6 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                             this.player.hp = d.player_hp;
                             if (d.dmg) { this.shake('monster'); this.float('monster', '-' + d.dmg); }
                             if (d.mDmg) { this.shake('player'); this.float('player', '-' + d.mDmg); }
-                            if (d.log) this.logs = d.log;
                         } else if (d.result === 'win') {
                             this.monster.hp = 0;
                             if (d.dmg) { this.shake('monster'); this.float('monster', '-' + d.dmg); }
@@ -351,7 +346,6 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                         this.monster = d.monster;
                         this.status = 'active';
                         this.won = null;
-                        this.logs = [];
                         if (d.state) this.applyState(d.state);
                         this.toastBattle(d.message, 'success', '/img/misc/coin.png');
                     } catch (e) {

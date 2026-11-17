@@ -19,5 +19,6 @@ class CharacterModel extends Model
         'heal_count', 'heal_last_date', 'healer_intro_seen',
         'location_id',
         'mining_level', 'mining_xp',
+        'crafting_level', 'crafting_xp', 'crafting_claimed_level',
     ];
 }

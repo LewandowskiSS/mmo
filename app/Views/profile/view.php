@@ -21,10 +21,11 @@ $rarityNames = [
 $typeNames = \App\Models\ItemModel::TYPE_NAMES;
 $xpNeeded = 50 + ((int) $character->level - 1) * 25;
 $hpPct = $character->max_hp > 0 ? (int) round($character->hp / $character->max_hp * 100) : 0;
-$icon = function ($e): string {
-    $e = (string) $e;
-    if (str_starts_with($e, '/')) {
-        return '<img src="' . esc($e) . '" class="w-6 h-6 object-contain" alt="">';
+$icon = function ($e, $type = ''): string {
+    $e   = (string) $e;
+    $src = game_icon_src($e, (string) $type);
+    if ($src !== '') {
+        return '<img src="' . esc($src) . '" class="w-6 h-6 object-contain" alt="">';
     }
     return '<span class="text-xl">' . esc($e) . '</span>';
 };
@@ -215,6 +216,13 @@ $numShort = function ($n): string {
                 </span>
                 <span class="text-neutral-400">Уровень <?= (int) ($character->mining_level ?? 1) ?></span>
             </div>
+            <div class="flex items-center justify-between px-4 py-3">
+                <span class="inline-flex items-center gap-2 text-neutral-300">
+                    <?= game_icon('/img/ores/copper_ingot.png', 'w-5 h-5 object-contain') ?>
+                    <span>Плавильня</span>
+                </span>
+                <span class="text-neutral-400">Уровень <?= (int) ($character->crafting_level ?? 1) ?></span>
+            </div>
         </div>
 
         <p class="text-center text-xs text-neutral-500 mt-4">User ID: <?= (int) ($character->user_id ?? 0) ?></p>
@@ -246,7 +254,7 @@ $numShort = function ($n): string {
                 <tr class="border-b border-slate-800">
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-2">
-                            <?= $icon($it->emoji) ?>
+                            <?= $icon($it->emoji, $it->type ?? '') ?>
                             <span class="font-semibold <?= $rcMap[$it->rarity] ?? 'text-slate-300' ?>"><?= esc($it->name) ?></span>
                         </span>
                     </td>

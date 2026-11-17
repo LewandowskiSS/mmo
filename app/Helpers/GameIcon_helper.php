@@ -14,6 +14,7 @@ if (! function_exists('game_icon_map')) {
             '🚶' => '/img/misc/map.png',
             '🗺️' => '/img/misc/map.png',
             '🧭' => '/img/misc/map.png',
+            '🏰' => '/img/misc/town.png',
             '🏆' => '/img/misc/quests.png',
             '🥇' => '/img/misc/quests.png',
             '🗝️' => '/img/misc/chest.png',
@@ -46,15 +47,19 @@ if (! function_exists('game_icon_is_path')) {
 }
 
 if (! function_exists('game_icon_src')) {
-    /** Путь к картинке для иконки: сам путь либо маппинг эмодзи → PNG. Иначе ''. */
-    function game_icon_src(string $icon): string
+    /** Путь к картинке для иконки: сам путь, затем иконка по типу предмета, затем маппинг эмодзи → PNG. Иначе ''. */
+    function game_icon_src(string $icon, string $type = ''): string
     {
         $icon = trim($icon);
+        if ($icon !== '' && game_icon_is_path($icon)) {
+            return $icon;
+        }
+        // Тип предмета приоритетнее сырого эмодзи (например, ⚡ у оружия не должно давать energy.png).
+        if ($type === 'weapon') {
+            return '/img/misc/fight.png';
+        }
         if ($icon === '') {
             return '';
-        }
-        if (game_icon_is_path($icon)) {
-            return $icon;
         }
 
         $map = game_icon_map();
@@ -79,10 +84,10 @@ if (! function_exists('game_icon_src')) {
 
 if (! function_exists('game_icon')) {
     /** Рендер иконки: картинка если есть путь/маппинг, иначе текст-эмодзи (никогда в src). */
-    function game_icon(string $icon, string $classes = 'h-6 w-6'): string
+    function game_icon(string $icon, string $classes = 'h-6 w-6', string $type = ''): string
     {
         $icon = trim($icon);
-        $src  = game_icon_src($icon);
+        $src  = game_icon_src($icon, $type);
 
         if ($src !== '') {
             return '<img src="' . esc($src) . '" class="shrink-0 object-contain ' . esc($classes) . '" alt="">';

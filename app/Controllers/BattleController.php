@@ -190,10 +190,6 @@ class BattleController extends Game
             'player_hp'  => $newHp,
             'dmg'        => $dmg,
             'mDmg'       => $mDmg,
-            'log'        => [
-                "Ты нанёс {$dmg} урона.",
-                "{$battle->monster_name} нанёс тебе {$mDmg} урона.",
-            ],
             'state'      => $this->characterState($character),
         ]);
     }

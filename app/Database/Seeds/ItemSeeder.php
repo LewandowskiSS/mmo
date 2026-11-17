@@ -38,13 +38,14 @@ class ItemSeeder extends Seeder
             ['name' => 'Клинок Бездны', 'type' => 'weapon', 'stat' => 'attack', 'value' => 75, 'price' => 30000, 'description' => 'Экзотический клинок из самой бездны.', 'emoji' => '🌌', 'rarity' => 'exotic'],
             ['name' => 'Доспех Бездны', 'type' => 'armor', 'stat' => 'defense', 'value' => 60, 'price' => 30000, 'description' => 'Броня, выкованная в пустоте.', 'emoji' => '🛡️', 'rarity' => 'exotic'],
             // mythic
-            ['name' => 'Клинок Хаоса', 'type' => 'weapon', 'stat' => 'attack', 'value' => 95, 'price' => 60000, 'description' => 'Мифический клинок, рожденный в хаосе.', 'emoji' => '⚡', 'rarity' => 'mythic'],
+            ['name' => 'Клинок Хаоса', 'type' => 'weapon', 'stat' => 'attack', 'value' => 95, 'price' => 60000, 'description' => 'Мифический клинок, рожденный в хаосе.', 'emoji' => '⚔️', 'rarity' => 'mythic'],
             ['name' => 'Доспех Хаоса', 'type' => 'armor', 'stat' => 'defense', 'value' => 80, 'price' => 60000, 'description' => 'Мифический доспех, не подвластный времени.', 'emoji' => '🛡️', 'rarity' => 'mythic'],
             // ancient
             ['name' => 'Древний клинок Вечности', 'type' => 'weapon', 'stat' => 'attack', 'value' => 130, 'price' => 150000, 'description' => 'Древний артефакт из забытых веков.', 'emoji' => '🗡️', 'rarity' => 'ancient'],
             ['name' => 'Древний доспех Эонов', 'type' => 'armor', 'stat' => 'defense', 'value' => 110, 'price' => 150000, 'description' => 'Доспех, созданный прежде сотворения мира.', 'emoji' => '🛡️', 'rarity' => 'ancient'],
             // material (добыча из залежей)
             ['name' => 'Медная руда', 'type' => 'material', 'stat' => '', 'value' => 1, 'price' => 1, 'description' => 'Кусок необработанной медной руды, добытый из залежи.', 'emoji' => '/img/ores/copper_ore.png', 'rarity' => 'common'],
+            ['name' => 'Медный слиток', 'type' => 'material', 'stat' => '', 'value' => 1, 'price' => 8, 'description' => 'Слиток меди, выплавленный в Плавильне из медной руды.', 'emoji' => '/img/ores/copper_ingot.png', 'rarity' => 'common'],
             // pickaxe (Лавка инструментов)
             ['name' => 'Каменная кирка', 'type' => 'pickaxe', 'stat' => 'mining_power', 'value' => 3, 'price' => 500, 'description' => 'Простая каменная кирка. Позволяет добыть до 3 ед. руды с одной залежи.', 'emoji' => '/img/tools/stone_pickaxe.png', 'rarity' => 'common'],
             ['name' => 'Железная кирка', 'type' => 'pickaxe', 'stat' => 'mining_power', 'value' => 5, 'price' => 15000, 'description' => 'Крепкая железная кирка. Позволяет добыть до 5 ед. руды с одной залежи.', 'emoji' => '/img/tools/iron_pickaxe.png', 'rarity' => 'uncommon'],

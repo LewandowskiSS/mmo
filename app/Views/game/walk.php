@@ -144,10 +144,11 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
             </div>
         </template>
         <p class="text-center text-xs text-slate-500 mt-2">Обычная добыча не тратит энергию · «Добыть всё» расходует 1 энергию за руду</p>
+        <p class="text-center text-xs text-slate-500 mt-1">Добытая руда отправляется в Хранилище</p>
     </div>
 </div>
 
-<template x-if="toastMining"><div x-cloak class="fixed top-4 left-4 z-50 bg-neutral-900/95 border border-neutral-700 rounded-xl px-3.5 py-2.5 shadow-2xl flex items-center gap-3"><div class="relative"><img src="/img/ores/copper_ore.png" class="w-9 h-9 object-contain"><span class="absolute -bottom-1 -left-1 bg-indigo-600 text-[10px] rounded px-1" x-text="toastMining.count + 'x'"></span></div><div class="text-xs"><div class="text-emerald-300">⛏️ +<span x-text="toastMining.miningXp"></span> Опыта горного дела</div><div x-show="toastMining.levelUp" class="text-amber-300">Уровень горного дела повышен до <span x-text="event?.mining_level ?? 1"></span>!</div></div></div></template>
+<template x-if="toastMining"><div x-cloak class="fixed top-4 left-4 z-50 bg-neutral-900/95 border border-neutral-700 rounded-xl px-3.5 py-2.5 shadow-2xl flex items-center gap-3"><div class="relative"><img src="/img/ores/copper_ore.png" class="w-9 h-9 object-contain"><span class="absolute -bottom-1 -left-1 bg-indigo-600 text-[10px] rounded px-1" x-text="toastMining.count + 'x'"></span></div><div class="text-xs"><div class="text-white font-medium">Добыто: +<span x-text="toastMining.count"></span> Медная руда <span class="text-slate-400">(в хранилище)</span></div><div class="text-slate-400">Всего в хранилище: <span x-text="toastMining.storageTotal"></span></div><div class="text-emerald-300">⛏️ +<span x-text="toastMining.miningXp"></span> Опыта горного дела</div><div x-show="toastMining.levelUp" class="text-amber-300">Уровень горного дела повышен до <span x-text="event?.mining_level ?? 1"></span>!</div></div></div></template>
 
 </div>
 </div>
@@ -221,7 +222,7 @@ function gameDashboard(initialEnergy, initialGold, initialMiningLevel, initialMi
                 this.event.mining_xp_needed = data.mining_xp_needed;
                 this.energy = data.state.energy;
                 Game.updateState(data.state);
-                this.toastMining = { count: data.mined, miningXp: data.mining_xp_gained, levelUp: data.mining_level_up };
+                this.toastMining = { count: data.mined, storageTotal: data.storage_total ?? 0, miningXp: data.mining_xp_gained, levelUp: data.mining_level_up };
                 clearTimeout(this.miningTimer); this.miningTimer = setTimeout(() => this.toastMining = null, 3500);
                 if (data.depleted) { this.miningOpen = false; this.stopMiningCooldown(); }
             } catch (e) { Game.toast('Ошибка соединения', 'error'); this.stopMiningCooldown(); } finally { this.busy = false; }

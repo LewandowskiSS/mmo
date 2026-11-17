@@ -68,16 +68,17 @@ foreach ($items as $i) {
         $sellableIds[] = (int) $i->inv_id;
     }
 }
-$icon = function ($e): string {
-    $e = (string) $e;
-    if (str_starts_with($e, '/')) {
-        return '<img src="' . esc($e) . '" class="w-6 h-6 object-contain" alt="">';
+$icon = function ($e, $type = ''): string {
+    $e   = (string) $e;
+    $src = game_icon_src($e, (string) $type);
+    if ($src !== '') {
+        return '<img src="' . esc($src) . '" class="w-6 h-6 object-contain" alt="">';
     }
     return '<span class="text-xl">' . esc($e) . '</span>';
 };
 ?>
 
-<div class="space-y-6" x-data="Object.assign(inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>), { openMenuId: null })">
+<div class="space-y-6" x-data="Object.assign(inventoryFilters(<?= htmlspecialchars(json_encode($sellableIds), ENT_QUOTES) ?>), { openDropdownId: null })">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/bag.png" class="inline-block w-8 h-8 align-middle object-contain shrink-0" alt="инвентарь"> Инвентарь</h1>
         <a href="/" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Назад</a>
@@ -248,7 +249,7 @@ $icon = function ($e): string {
                     </td>
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-1">
-                            <?= $icon($it->emoji) ?>
+                            <?= $icon($it->emoji, $it->type ?? '') ?>
                             <span class="text-xs bg-slate-700 rounded px-1.5 py-0.5 text-slate-300">x<?= (int) $it->quantity ?></span>
                         </span>
                     </td>
@@ -283,12 +284,12 @@ $icon = function ($e): string {
                         <?php elseif ($it->equipped): ?>
                             <button type="button" data-action="unequip" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-semibold">Снять</button>
                         <?php elseif ($it->type === 'material'): ?>
-                            <div class="relative inline-block" :class="openMenuId === '{{ $it->inv_id }}' ? 'z-30' : 'z-10'" x-data="{ dummy: null }">
+                            <div class="relative inline-block" :class="openDropdownId === rowId ? 'relative z-30' : 'relative z-10'" x-data="{ rowId: '<?= (int) $it->inv_id ?>' }" @click.outside="if (openDropdownId === rowId) openDropdownId = null">
                                 <div class="flex rounded-lg overflow-hidden">
                                     <button type="button" data-action="store" data-qty="<?= (int) $it->quantity ?>" class="px-3 py-1.5 whitespace-nowrap bg-sky-700 hover:bg-sky-600 text-white text-sm font-semibold rounded-l-lg">В хранилище</button>
-                                    <button type="button" @click.stop="openMenuId = openMenuId === '{{ $it->inv_id }}' ? null : '{{ $it->inv_id }}'" class="px-2 py-1.5 bg-sky-600 hover:bg-sky-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-sky-800/60"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                                    <button type="button" @click.stop="openDropdownId = (openDropdownId === rowId ? null : rowId)" class="px-2 py-1.5 bg-sky-600 hover:bg-sky-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-sky-800/60"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                                 </div>
-                                <div x-show="openMenuId === '{{ $it->inv_id }}'" x-cloak @click.stop @click.outside="openMenuId = null" class="absolute right-0 mt-1 w-56 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-50 py-1">
+                                <div x-show="openDropdownId === rowId" x-cloak class="absolute right-0 mt-1 w-56 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-40 py-1">
                                     <button type="button"
                                         data-action="sell"
                                         data-name="<?= esc($it->name) ?>"
@@ -296,17 +297,17 @@ $icon = function ($e): string {
                                         data-rarity="<?= esc($it->rarity) ?>"
                                         data-qty="<?= (int) $it->quantity ?>"
                                         class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
-                                        🪙 Продать за <span class="font-semibold"><?= (int) ($it->price ?? 0) ?></span> <img src="/img/misc/coin.png" class="w-4 h-4 shrink-0 object-contain" alt="золото">
+                                        <img src="<?= base_url('img/misc/coin.png') ?>" class="w-4 h-4 inline-block align-text-bottom" alt="Золото"> Продать за <span class="font-semibold"><?= (int) ($it->price ?? 0) ?></span>
                                     </button>
                                 </div>
                             </div>
                         <?php else: ?>
-                            <div class="relative inline-block" :class="openMenuId === '{{ $it->inv_id }}' ? 'z-30' : 'z-10'" x-data="{ dummy: null }">
+                            <div class="relative inline-block" :class="openDropdownId === rowId ? 'relative z-30' : 'relative z-10'" x-data="{ rowId: '<?= (int) $it->inv_id ?>' }" @click.outside="if (openDropdownId === rowId) openDropdownId = null">
                                 <div class="flex rounded-lg overflow-hidden">
                                     <button type="button" data-action="equip" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-semibold rounded-l-lg">Надеть</button>
-                                    <button type="button" @click.stop="openMenuId = openMenuId === '{{ $it->inv_id }}' ? null : '{{ $it->inv_id }}'" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="""><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                                    <button type="button" @click.stop="openDropdownId = (openDropdownId === rowId ? null : rowId)" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-slate-100 text-sm font-semibold rounded-r-lg border-l border-emerald-700/50"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                                 </div>
-                                <div x-show="openMenuId === '{{ $it->inv_id }}'" x-cloak @click.stop @click.outside="openMenuId = null" class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-50 py-1">
+                                <div x-show="openDropdownId === rowId" x-cloak class="absolute right-0 mt-1 w-48 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-40 py-1">
                                     <button type="button"
                                         data-action="store"
                                         data-qty="<?= (int) $it->quantity ?>"
@@ -320,7 +321,7 @@ $icon = function ($e): string {
                                         data-rarity="<?= esc($it->rarity) ?>"
                                         data-qty="<?= (int) $it->quantity ?>"
                                         class="w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-slate-600 flex items-center gap-2">
-                                        <img src="/img/misc/coin.png" class="w-4 h-4 shrink-0 object-contain" alt="золото"> Продать за <span class="font-semibold"><?= (int) ($it->price ?? 0) ?></span>
+                                        <img src="<?= base_url('img/misc/coin.png') ?>" class="w-4 h-4 inline-block align-text-bottom" alt="Золото"> Продать за <span class="font-semibold"><?= (int) ($it->price ?? 0) ?></span>
                                     </button>
                                 </div>
                             </div>
@@ -367,7 +368,7 @@ $icon = function ($e): string {
                 <tr class="border-b border-slate-800 hover:bg-slate-800/40" data-inv="<?= (int) $it->inv_id ?>">
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-1">
-                            <?= $icon($it->emoji) ?>
+                            <?= $icon($it->emoji, $it->type ?? '') ?>
                             <span class="font-semibold <?= $rc ?>"><?= esc($it->name) ?></span>
                         </span>
                     </td>

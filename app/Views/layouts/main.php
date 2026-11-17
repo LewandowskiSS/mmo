@@ -358,11 +358,11 @@
                 <a href="/game/shop" title="Магазин" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
                     <img src="/img/misc/shop.png" class="w-5 h-5 object-contain" alt="">
                 </a>
-                <a href="/game/tasks" title="Задания" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
-                    <img src="/img/misc/quests.png" class="w-5 h-5 object-contain" alt="">
-                </a>
                 <a href="/town" title="Город" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:bg-[#26262a] transition-colors">
-                    <img src="/img/misc/map.png" class="w-5 h-5 object-contain" alt="">
+                    <img src="/img/misc/town.png" class="w-5 h-5 object-contain" alt="">
+                </a>
+                <a href="/logout" title="Выйти" class="h-9 bg-[#1c1c1f] border border-white/5 rounded-md flex items-center justify-center hover:border-red-500/50 hover:bg-red-950/30 transition-colors">
+                    <img src="/img/misc/right_arrow.png" class="w-5 h-5 object-contain" alt="">
                 </a>
             </div>
 
@@ -383,7 +383,7 @@
                             <?= game_icon('/img/misc/main.png', 'h-5 w-5 shrink-0') ?> Главная
                         </a>
                         <a href="/town" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                            <?= game_icon('/img/misc/map.png', 'h-5 w-5') ?> Город
+                            <?= game_icon('/img/misc/town.png', 'h-5 w-5') ?> Город
                         </a>
                     </div>
                 </div>
@@ -407,8 +407,9 @@
                         <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
                             <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
                         </a>
-                        <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
-                            <?= game_icon('/img/misc/emerald.png', 'h-5 w-5') ?> Крафт <span class="text-[10px] text-slate-500 ml-auto">WIP</span>
+                        <?php $craftActive = str_starts_with(trim(uri_string(), '/'), 'craft'); ?>
+                        <a href="/craft" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 hover:text-white <?= $craftActive ? 'bg-slate-700 text-white' : 'text-slate-300' ?>">
+                            <?= game_icon('/img/ores/copper_ingot.png', 'h-5 w-5') ?> Плавильня
                         </a>
                         <a href="/game/tasks" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white relative">
                             <img src="/img/misc/quests.png" class="w-5 h-5 object-contain shrink-0" alt=""> Задания
@@ -451,11 +452,6 @@
                 </div>
             </div>
 
-            <div class="pt-2 mt-2 border-t border-slate-700/60">
-                <a href="/logout" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-red-900/50 text-red-300 hover:text-red-200">
-                    <?= game_icon('/img/misc/right_arrow.png', 'h-5 w-5') ?> <span x-show="!sidebarCollapsed || sidebarMobile" x-cloak>Выйти</span>
-                </a>
-            </div>
         </nav>
     </aside>
     <?php endif; ?>

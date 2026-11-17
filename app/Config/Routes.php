@@ -79,3 +79,10 @@ $routes->post('locations/travel', 'Game::travelLocation');
 // Добыча руды из модального окна прогулки
 $routes->post('mining/mine', 'MiningController::mine');
 $routes->post('mining/mine-all', 'MiningController::mineAll');
+
+// Плавильня
+$routes->get('craft', 'CraftController::index');
+$routes->get('craft/state', 'CraftController::state');
+$routes->post('craft/start', 'CraftController::start');
+$routes->post('craft/claim', 'CraftController::claim');
+$routes->post('craft/claim-reward', 'CraftController::claimReward');
