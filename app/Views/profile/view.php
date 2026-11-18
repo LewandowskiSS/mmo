@@ -177,11 +177,11 @@ $numShort = function ($n): string {
         <div class="grid grid-cols-2 gap-3">
             <div class="bg-slate-800 rounded-lg p-4">
                 <p class="text-xs text-slate-400">⚔️ Атака</p>
-                <p class="font-bold text-lg"><?= (int) $character->attack ?></p>
+                <p class="font-bold text-lg"><?= (int) ($effectiveAttack ?? $character->attack) ?></p>
             </div>
             <div class="bg-slate-800 rounded-lg p-4">
                 <p class="text-xs text-slate-400">🛡️ Защита</p>
-                <p class="font-bold text-lg"><?= (int) $character->defense ?></p>
+                <p class="font-bold text-lg"><?= (int) ($effectiveDefense ?? $character->defense) ?></p>
             </div>
         </div>
 
@@ -225,7 +225,17 @@ $numShort = function ($n): string {
             </div>
         </div>
 
-        <p class="text-center text-xs text-neutral-500 mt-4">User ID: <?= (int) ($character->user_id ?? 0) ?></p>
+        <div class="flex items-center justify-center gap-1.5 mt-4 text-xs text-neutral-500">
+            <span>User ID: <b class="text-neutral-300"><?= (int) ($character->user_id ?? 0) ?></b></span>
+            <span x-data="{ open: false }" class="relative inline-flex items-center group" @click="open = !open" @click.outside="open = false">
+                <span class="w-4 h-4 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-400 text-[10px] font-semibold inline-flex items-center justify-center cursor-help select-none">?</span>
+                <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute left-full ml-2.5 top-1/2 -translate-y-1/2 z-50 w-56 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 shadow-xl text-xs font-medium text-neutral-100 leading-snug text-left whitespace-normal"
+                      :class="open ? 'opacity-100' : ''">
+                    <span class="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-neutral-900"></span>
+                    Используйте этот ID при обращении в поддержку или сообщении об ошибке.
+                </span>
+            </span>
+        </div>
     </div>
 
     <!-- ВКЛАДКА INTERACTION — комментарии живут внизу вкладки «Профиль» -->

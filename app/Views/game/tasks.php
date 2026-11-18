@@ -135,13 +135,29 @@ function tasks(seed, resetIn) {
             '❤️': '/img/misc/Heart.png', '⚡': '/img/misc/energy.png'
         },
 
+        // Известные PNG монстров: используется для восстановления обрезанных путей из БД
+        // (/img/monsters/demon., /img/monsters/wolf.p, /img/monsters/skelet).
+        monsterIcons: ['dark_knight', 'demon', 'dragon', 'goblin', 'hydra', 'lich', 'skeleton', 'slime', 'wolf'],
+
         // Значение — путь к файлу-иконке (а не одиночный эмодзи)?
         iconIsImage(icon) {
             if (typeof icon !== 'string') return false;
             const v = icon.trim();
             if (v === '') return false;
-            if (v.startsWith('/') || v.startsWith('./')) return true;
+            if (v.startsWith('./')) return true;
+            if (v.startsWith('/')) return /\.(png|svg|webp|ico|gif|jpe?g)$/i.test(v);
             return /^https?:\/\//i.test(v) || /\.(png|svg|webp|ico|gif|jpe?g)$/i.test(v);
+        },
+
+        // Восстановление пути монстра по обрезанному значению ('demon.' → 'demon' → /img/monsters/demon.png)
+        repairMonsterIcon(v) {
+            if (!v.startsWith('/img/monsters/')) return '';
+            const base = v.slice('/img/monsters/'.length).replace(/\.+$/, '').trim().toLowerCase();
+            if (base === '') return '/img/misc/fight.png';
+            if (this.monsterIcons.includes(base)) return '/img/monsters/' + base + '.png';
+            // 'wolf.p', 'skelet', 'dark_k' → первый слаг, начинающийся с обрезка
+            const match = this.monsterIcons.filter(s => s.startsWith(base));
+            return match.length ? '/img/monsters/' + match[0] + '.png' : '/img/misc/fight.png';
         },
 
         // Итоговый src иконки: путь как есть, эмодзи — через маппинг, иначе ''
@@ -149,7 +165,13 @@ function tasks(seed, resetIn) {
             const v = typeof icon === 'string' ? icon.trim() : '';
             if (v === '') return '';
             if (this.iconIsImage(v)) return v;
+            if (v.startsWith('/img/monsters/')) return this.repairMonsterIcon(v);
+            // Любой другой путь без корректного расширения не отдаём браузеру (иначе 404)
+            if (v.startsWith('/')) return '';
             if (this.iconMap[v]) return this.iconMap[v];
+            // Голый слаг монстра ('demon', 'demon.') → /img/monsters/demon.png
+            const slug = v.replace(/\.+$/, '').trim().toLowerCase();
+            if (this.monsterIcons.includes(slug)) return '/img/monsters/' + slug + '.png';
             // Нормализация: убираем селектор вариации U+FE0F и пробелы
             const plain = v.replace(/\uFE0F/g, '').trim();
             if (this.iconMap[plain]) return this.iconMap[plain];

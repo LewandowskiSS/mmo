@@ -180,7 +180,6 @@ function layout(seed = {}) {
         statsOpen: localStorage.getItem('statsOpen') === '1',
         currenciesOpen: localStorage.getItem('profileCurrenciesOpen') !== '0',
         attributesOpen: localStorage.getItem('profileAttributesOpen') !== '0',
-        statisticsOpen: localStorage.getItem('sidebar_acc_statistics') !== '0',
         // Состояние аккордеонов навигации — живёт в корне, чтобы иконки
         // работали и при свёрнутом сайдбаре (разворачивают его).
         advOpen: localStorage.getItem('advOpen') === '1',
@@ -269,9 +268,9 @@ function layout(seed = {}) {
         },
 
         toggleProfileSection(key) {
-            if (key !== 'currenciesOpen' && key !== 'attributesOpen' && key !== 'statisticsOpen') return;
+            if (key !== 'currenciesOpen' && key !== 'attributesOpen') return;
             this[key] = !this[key];
-            const storageKey = key === 'currenciesOpen' ? 'profileCurrenciesOpen' : key === 'attributesOpen' ? 'profileAttributesOpen' : 'sidebar_acc_statistics';
+            const storageKey = key === 'currenciesOpen' ? 'profileCurrenciesOpen' : 'profileAttributesOpen';
             localStorage.setItem(storageKey, this[key] ? '1' : '0');
         },
 
@@ -334,6 +333,7 @@ function layout(seed = {}) {
                 this.st.maxHp = s.max_hp;
                 this.st.attack = s.attack || 0;
                 this.st.defense = s.defense || 0;
+                this.st.freeStatPoints = s.stat_points || 0;
                 this.st.miningLevel = s.mining_level || this.st.miningLevel || 1;
                 this.st.diamonds = s.diamonds;
                 this.st.walks = s.walks || 0;

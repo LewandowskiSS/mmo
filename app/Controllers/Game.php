@@ -24,6 +24,8 @@ class Game extends BaseController
     private const ENERGY_REGEN_SECONDS = 180;
     private const HP_REGEN_SECONDS = 180;
     private const INVENTORY_CAPACITY = 10000;
+    // Свободных очков характеристик за каждый новый уровень.
+    protected const STAT_POINTS_PER_LEVEL = 4;
     /** ID предмета «Медная руда» в items — определяется по названию и типу. */
     private function copperOreItemId(): int
     {
@@ -729,6 +731,7 @@ class Game extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'message' => $this->iconPrefix($item->emoji) . "{$item->name} — надето",
+            'state'   => $this->characterState((new CharacterModel())->find($character->id)),
         ]);
     }
 
@@ -761,7 +764,11 @@ class Game extends BaseController
             return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'Не удалось снять предмет']);
         }
 
-        return $this->response->setJSON(['success' => true, 'message' => 'Предмет снят']);
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Предмет снят',
+            'state'   => $this->characterState((new CharacterModel())->find($character->id)),
+        ]);
     }
 
     public function useItem()
@@ -1140,9 +1147,15 @@ class Game extends BaseController
             if (! $task) {
                 continue;
             }
+            // Иконка задания: путь приводится к существующему файлу (защита от обрезанных путей из старых БД).
+            $icon = (string) $task->emoji;
+            if ($icon !== '' && str_starts_with($icon, '/')) {
+                $resolved = game_icon_src($icon);
+                $icon     = $resolved !== '' ? $resolved : $icon;
+            }
             $items[] = [
                 'id'          => (int) $row->id,
-                'emoji'       => (string) $task->emoji,
+                'emoji'       => $icon,
                 'name'        => $this->taskDisplayText((string) $task->name, (int) $row->target),
                 'description' => $task->description ? $this->taskDisplayText((string) $task->description, (int) $row->target) : '',
                 'type'        => (string) $task->type,
@@ -1612,6 +1625,8 @@ class Game extends BaseController
         $character = $this->regenEnergy($character);
         $character = $this->regenHp($character);
 
+        $effective = $this->effectiveStats($character);
+
         return [
             'level'          => (int) $character->level,
             'xp'             => (int) $character->xp,
@@ -1622,8 +1637,14 @@ class Game extends BaseController
             'max_hp'         => (int) $character->max_hp,
             'energy'         => (int) $character->energy,
             'max_energy'     => (int) $character->max_energy,
-            'attack'         => (int) $character->attack,
-            'defense'        => (int) $character->defense,
+            // Итоговые статы (база + очки + бонусы + снаряжение) — как на вкладке «Итого».
+            'attack'         => $effective['attack'],
+            'defense'        => $effective['defense'],
+            'allocated_attack'  => (int) ($character->allocated_attack ?? 0),
+            'allocated_defense' => (int) ($character->allocated_defense ?? 0),
+            'bonus_attack'   => (int) ($character->bonus_attack ?? 0),
+            'bonus_defense'  => (int) ($character->bonus_defense ?? 0),
+            'stat_points'    => (int) ($character->stat_points ?? 0),
             'mining_level'   => (int) ($character->mining_level ?? 1),
             'mining_xp'      => (int) ($character->mining_xp ?? 0),
             'mining_level'   => (int) ($character->mining_level ?? 1),
@@ -1766,25 +1787,19 @@ class Game extends BaseController
 
     protected function effectiveStats($character): array
     {
-        $attack  = (int) $character->attack;
-        $defense = (int) $character->defense;
+        // Итоговые статы = база + вложенные игроком очки + бонусы + снаряжение.
+        $equipped = self::equippedStatTotals((int) $character->id);
 
-        $equipped = (new InventoryModel())
-            ->select('items.stat, items.value')
-            ->join('items', 'items.id = inventory.item_id')
-            ->where('inventory.character_id', $character->id)
-            ->where('inventory.equipped', 1)
-            ->findAll();
-
-        foreach ($equipped as $eq) {
-            if ($eq->stat === 'attack') {
-                $attack += (int) $eq->value;
-            } elseif ($eq->stat === 'defense') {
-                $defense += (int) $eq->value;
-            }
-        }
-
-        return ['attack' => $attack, 'defense' => $defense];
+        return [
+            'attack'  => (int) $character->attack
+                + (int) ($character->allocated_attack ?? 0)
+                + (int) ($character->bonus_attack ?? 0)
+                + $equipped['attack'],
+            'defense' => (int) $character->defense
+                + (int) ($character->allocated_defense ?? 0)
+                + (int) ($character->bonus_defense ?? 0)
+                + $equipped['defense'],
+        ];
     }
 
     private function unequipType($characterId, $type, InventoryModel $inventory): void
@@ -1815,16 +1830,23 @@ class Game extends BaseController
             'xp'   => (int) $character->xp + (int) $xp,
             'gold' => (int) $character->gold + (int) $gold,
         ];
+        $levelsGained = 0;
 
         while ($data['xp'] >= $this->xpNeeded($level)) {
             $data['xp'] -= $this->xpNeeded($level);
             $level++;
+            $levelsGained++;
             $data['level']      = $level;
             $data['max_hp']     = 50 + ($level - 1) * 10;
             $data['hp']         = $data['max_hp'];
             $data['last_hp_at'] = null;
-            $data['attack']     = 5 + ($level - 1) * 2;
-            $data['defense']    = 2 + ($level - 1);
+            // attack/defense больше не растут автоматически: их прирост даёт только
+            // свободные очки (stat_points), которые игрок распределяет вручную.
+        }
+
+        // За каждый новый уровень — 4 свободных очка характеристик.
+        if ($levelsGained > 0) {
+            $data['stat_points'] = (int) ($character->stat_points ?? 0) + $levelsGained * self::STAT_POINTS_PER_LEVEL;
         }
 
         $charModel->update($character->id, $data);

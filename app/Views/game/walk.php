@@ -32,9 +32,9 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
     </div>
 
     <div>
-        <div class="flex justify-between text-xs text-slate-400 mb-1">
-            <span>Опыт</span>
-            <span id="st-xp"><?= esc($character->xp) ?> / <?= esc($xp_needed) ?></span>
+        <div class="flex items-center justify-between h-5 mb-1.5 text-xs leading-none text-slate-400">
+            <span class="inline-flex items-center gap-1.5 leading-none">Опыт</span>
+            <span id="st-xp" class="tabular-nums"><?= esc($character->xp) ?> / <?= esc($xp_needed) ?></span>
         </div>
         <div class="w-full">
             <div class="h-2 bg-slate-700 rounded-full overflow-visible">
@@ -46,20 +46,20 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
 
     <div class="grid grid-cols-2 gap-4">
         <div>
-            <div class="flex justify-between text-xs text-slate-400 mb-1">
-                <span class="inline-flex items-center gap-1"><img src="/img/misc/Heart.png" alt="здоровье" class="w-3.5 h-3.5 object-contain">Здоровье</span>
-                <span id="st-hp"><?= esc($character->hp) ?> / <?= esc($character->max_hp) ?></span>
+            <div class="flex items-center justify-between h-5 mb-1.5 text-xs leading-none text-slate-400">
+                <span class="inline-flex items-center gap-1.5 leading-none"><img src="/img/misc/Heart.png" alt="здоровье" class="w-4 h-4 object-contain shrink-0 block">Здоровье</span>
+                <span id="st-hp" class="tabular-nums"><?= esc($character->hp) ?> / <?= esc($character->max_hp) ?></span>
             </div>
-            <div class="h-2 bg-slate-700 rounded-full">
+            <div class="h-2 rounded-full overflow-hidden bg-slate-700">
                 <div id="bar-hp" class="h-full bg-red-500 rounded-full" style="width: <?= esc($hp_percent) ?>%"></div>
             </div>
         </div>
         <div>
-            <div class="flex justify-between text-xs text-slate-400 mb-1">
-                <span><img src="/img/misc/energy.png" class="inline-block w-3.5 h-3.5 align-middle object-contain" alt="энергия"> Энергия</span>
-                <span id="st-energy"><?= esc($character->energy) ?> / <?= esc($character->max_energy) ?></span>
+            <div class="flex items-center justify-between h-5 mb-1.5 text-xs leading-none text-slate-400">
+                <span class="inline-flex items-center gap-1.5 leading-none"><img src="/img/misc/energy.png" alt="энергия" class="w-4 h-4 object-contain shrink-0 block">Энергия</span>
+                <span id="st-energy" class="tabular-nums"><?= esc($character->energy) ?> / <?= esc($character->max_energy) ?></span>
             </div>
-            <div class="h-2 bg-slate-700 rounded-full">
+            <div class="h-2 rounded-full overflow-hidden bg-slate-700">
                 <!-- Цвет синхронизирован с баром энергии в панели профиля (#eab308 = bg-yellow-500) -->
                 <div id="bar-energy" class="h-full bg-yellow-500 rounded-full" style="width: <?= esc($energy_percent) ?>%"></div>
             </div>
@@ -148,7 +148,7 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
     </div>
 </div>
 
-<template x-if="toastMining"><div x-cloak class="fixed top-4 left-4 z-50 bg-neutral-900/95 border border-neutral-700 rounded-xl px-3.5 py-2.5 shadow-2xl flex items-center gap-3"><div class="relative"><img src="/img/ores/copper_ore.png" class="w-9 h-9 object-contain"><span class="absolute -bottom-1 -left-1 bg-indigo-600 text-[10px] rounded px-1" x-text="toastMining.count + 'x'"></span></div><div class="text-xs"><div class="text-white font-medium">Добыто: +<span x-text="toastMining.count"></span> Медная руда <span class="text-slate-400">(в хранилище)</span></div><div class="text-slate-400">Всего в хранилище: <span x-text="toastMining.storageTotal"></span></div><div class="text-emerald-300">⛏️ +<span x-text="toastMining.miningXp"></span> Опыта горного дела</div><div x-show="toastMining.levelUp" class="text-amber-300">Уровень горного дела повышен до <span x-text="event?.mining_level ?? 1"></span>!</div></div></div></template>
+<template x-if="toastMining"><div x-cloak class="fixed top-4 left-4 z-50 bg-neutral-900/95 border border-neutral-700 rounded-xl px-3.5 py-2.5 shadow-2xl flex items-center gap-3"><div class="relative"><img src="/img/ores/copper_ore.png" class="w-9 h-9 object-contain"><span class="absolute -bottom-1 -left-1 bg-indigo-600 text-[10px] rounded px-1" x-text="toastMining.count + 'x'"></span></div><div class="text-xs"><div class="text-white font-medium">Добыто: +<span x-text="toastMining.count"></span> Медная руда <span class="text-slate-400">(в хранилище)</span></div><div class="text-emerald-300">⛏️ +<span x-text="toastMining.miningXp"></span> Опыта горного дела</div><div x-show="toastMining.levelUp" class="text-amber-300">Уровень горного дела повышен до <span x-text="event?.mining_level ?? 1"></span>!</div></div></div></template>
 
 </div>
 </div>
@@ -222,7 +222,7 @@ function gameDashboard(initialEnergy, initialGold, initialMiningLevel, initialMi
                 this.event.mining_xp_needed = data.mining_xp_needed;
                 this.energy = data.state.energy;
                 Game.updateState(data.state);
-                this.toastMining = { count: data.mined, storageTotal: data.storage_total ?? 0, miningXp: data.mining_xp_gained, levelUp: data.mining_level_up };
+                this.toastMining = { count: data.mined, miningXp: data.mining_xp_gained, levelUp: data.mining_level_up };
                 clearTimeout(this.miningTimer); this.miningTimer = setTimeout(() => this.toastMining = null, 3500);
                 if (data.depleted) { this.miningOpen = false; this.stopMiningCooldown(); }
             } catch (e) { Game.toast('Ошибка соединения', 'error'); this.stopMiningCooldown(); } finally { this.busy = false; }

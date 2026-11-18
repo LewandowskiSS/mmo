@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <title>⚔️ Моя ММО</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?= base_url('js/tailwindcss.js') ?>"></script>
     <script>
+        if (typeof tailwind !== 'undefined') {
         tailwind.config = {
             theme: {
                 extend: {
@@ -43,11 +44,12 @@
                 },
             },
         };
+        }
     </script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script defer src="<?= base_url('js/alpine.min.js') ?>"></script>
+    <script src="<?= base_url('js/sweetalert2.all.min.js') ?>"></script>
     <script src="/js/game.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="<?= base_url('js/chart.umd.min.js') ?>"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <style>[x-cloak]{display:none!important}
     /* Скрываем скроллбар страницы, прокрутка остаётся */
@@ -152,13 +154,16 @@
     @keyframes mythic-glow { from { filter: drop-shadow(#ff9e00 0 0 .2px) drop-shadow(#ff6d00 0 0 3px); } to { filter: drop-shadow(#fff0a6 0 0 1px) drop-shadow(#ff3d00 0 0 9px); } }
     @keyframes ancient-shift { 0%, 100% { background-position: 15% 35%; } 50% { background-position: 85% 65%; } }
 
-    .profile-panel { position:absolute; top:calc(100% + 6px); left:8px; right:8px; z-index:100; background:#141416; border:1px solid #27272a; border-radius:10px; padding:14px; box-shadow:0 12px 32px rgba(0,0,0,.85); max-height:calc(100dvh - 90px); overflow-y:auto; }
-    .profile-label { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:5px; font-size:13px; color:#a1a1aa; flex-wrap:wrap; }
+    /* Панель не клиппит содержимое (иначе тултип User ID обрезался бы справа):
+       вертикальная прокрутка вынесена во внутренний .profile-panel-scroll */
+    .profile-panel { position:absolute; top:calc(100% + 6px); left:8px; right:8px; z-index:100; background:#141416; border:1px solid #27272a; border-radius:10px; padding:14px; box-shadow:0 12px 32px rgba(0,0,0,.85); max-height:calc(100dvh - 90px); display:flex; flex-direction:column; overflow:visible; }
+    .profile-panel-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; }
+    .profile-label { display:flex; justify-content:space-between; align-items:center; gap:6px; min-height:20px; margin-bottom:5px; font-size:13px; line-height:1; color:#a1a1aa; flex-wrap:wrap; }
     .profile-label strong { display:inline-flex; align-items:center; gap:5px; color:#e4e4e7; font-weight:600; }
     /* Энергия: строка значений + опциональная строка таймера. При полной энергии
        таймер скрыт, поэтому отступ снимается и жёлтая полоса ложится вплотную. */
     .profile-energy { margin-bottom:6px; }
-    .profile-energy-row { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:13px; line-height:1.25; white-space:nowrap; }
+    .profile-energy-row { display:flex; justify-content:space-between; align-items:center; gap:6px; min-height:20px; font-size:13px; line-height:1; white-space:nowrap; }
     .profile-energy-row + .profile-energy-row { margin-top:3px; }
     .profile-energy-title { display:inline-flex; align-items:center; gap:5px; color:#e4e4e7; font-weight:600; }
     .profile-energy-value { display:inline-flex; align-items:center; gap:4px; color:#f4f4f5; font-weight:600; }
@@ -238,6 +243,7 @@
     'attack'    => (int) (\App\Controllers\BaseController::$layoutData['characterAttack'] ?? 0),
     'defense'   => (int) (\App\Controllers\BaseController::$layoutData['characterDefense'] ?? 0),
     'miningLevel' => (int) (\App\Controllers\BaseController::$layoutData['characterMiningLevel'] ?? 1),
+    'freeStatPoints' => (int) (\App\Controllers\BaseController::$layoutData['characterFreeStatPoints'] ?? 0),
     'diamonds'  => (int) (\App\Controllers\BaseController::$layoutData['characterDiamonds'] ?? 0),
     'walks'     => (int) (\App\Controllers\BaseController::$layoutData['characterWalks'] ?? 0),
     'kills'     => (int) (\App\Controllers\BaseController::$layoutData['characterKills'] ?? 0),
@@ -301,14 +307,15 @@
 
             <!-- Stats overlay panel (hidden by default, overlays buttons/nav) -->
             <div id="profile-panel" class="profile-panel no-scrollbar" x-show="statsOpen" x-transition.opacity.duration.150ms x-cloak>
-                <div class="profile-label"><strong><img src="/img/misc/Heart.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Здоровье</strong><span><span id="st-hp" x-text="st.hp + ' / ' + st.maxHp"></span> HP (<span x-text="st.maxHp ? Math.round(st.hp / st.maxHp * 100) : 0"></span>%)</span></div>
+                <div class="profile-panel-scroll no-scrollbar">
+                <div class="profile-label"><strong><img src="/img/misc/Heart.png" class="w-4 h-4 object-contain shrink-0 block" alt="">Здоровье</strong><span><span id="st-hp" x-text="st.hp + ' / ' + st.maxHp"></span> HP (<span x-text="st.maxHp ? Math.round(st.hp / st.maxHp * 100) : 0"></span>%)</span></div>
                 <div class="profile-track" style="margin-bottom:12px"><div style="background:#ef4444" :style="{width: Math.max(0, Math.min(100, st.maxHp ? st.hp / st.maxHp * 100 : 0)) + '%'}"></div></div>
                 <div class="profile-label"><strong>Опыт</strong><span><span id="st-xp" x-text="st.xp + ' / ' + st.xpNeeded"></span> EXP</span></div>
                 <div class="profile-track"><div class="xp-glow" style="background:#a855f7" :style="{width: Math.max(0, Math.min(100, st.xpPercent)) + '%'}"></div></div>
                 <div class="profile-divider"></div>
                 <div class="profile-energy" :class="{ 'has-timer': st.energy < st.maxEnergy && (st.nextEnergyIn || 0) > 0 }">
                     <div class="profile-energy-row">
-                        <span class="profile-energy-title"><img src="/img/misc/energy.png" class="inline-block w-4 h-4 object-contain align-middle" alt="">Энергия</span>
+                        <span class="profile-energy-title"><img src="/img/misc/energy.png" class="w-4 h-4 object-contain shrink-0 block" alt="">Энергия</span>
                         <span class="profile-energy-value"><span id="st-energy" x-text="st.energy"></span> EP <a href="/game/shop" class="profile-action">Пополнить</a></span>
                     </div>
                     <div class="profile-energy-row" x-show="st.energy < st.maxEnergy" x-cloak>
@@ -328,19 +335,11 @@
                 <div id="profile-attributes" class="profile-accordion" :style="{gridTemplateRows: attributesOpen ? '1fr' : '0fr'}" :inert="!attributesOpen"><div>
                     <div class="profile-row"><span>Атака</span><span class="profile-value"><img src="/img/misc/fight.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.attack"></span></span></div>
                     <div class="profile-row"><span>Защита</span><span class="profile-value" x-text="st.defense"></span></div>
-                    <div class="profile-row"><span>Горное дело</span><span class="profile-value" x-text="st.miningLevel"></span></div>
                     <div class="profile-row"><span>Свободные очки</span><span class="profile-value" x-text="st.freeStatPoints || 0"></span></div>
                 </div></div>
                 <div class="profile-divider" style="margin:10px 0"></div>
-                <button type="button" class="profile-heading" @click="toggleProfileSection('statisticsOpen')" :aria-expanded="statisticsOpen" aria-controls="profile-statistics">Статистика<svg :style="{transform: statisticsOpen ? 'rotate(180deg)' : 'rotate(0deg)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></button>
-                <div id="profile-statistics" class="profile-accordion" :style="{gridTemplateRows: statisticsOpen ? '1fr' : '0fr'}" :inert="!statisticsOpen"><div>
-                    <div class="profile-row"><span>Прогулки</span><span class="profile-value" x-text="st.walks"></span></div>
-                    <div class="profile-row"><span>Убийства</span><span class="profile-value" x-text="st.kills || 0"></span></div>
-                    <div class="profile-row"><span>Задания</span><span class="profile-value"><img src="/img/misc/quests.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.quests || 0"></span></span></div>
-                    <div class="profile-row"><span>Сундуки</span><span class="profile-value"><img src="/img/misc/chest.png" class="inline-block w-4 h-4 object-contain align-middle" alt=""><span x-text="st.chests || 0"></span></span></div>
-                </div></div>
-                <div class="profile-divider" style="margin:10px 0"></div>
-                <div style="text-align:center;font-size:12px;color:#a1a1aa;display:flex;justify-content:center;align-items:center;gap:6px">User ID: <b style="color:#fff" x-text="st.userId || 0"></b><span title="Идентификатор вашего аккаунта" style="width:16px;height:16px;border-radius:50%;background:#3f3f46;color:#d4d4d8;display:inline-flex;align-items:center;justify-content:center;font-size:11px">?</span></div>
+                </div>
+                <div style="text-align:center;font-size:12px;color:#a1a1aa;display:flex;justify-content:center;align-items:center;gap:6px;padding-top:2px">User ID: <b style="color:#fff" x-text="st.userId || 0"></b><span x-data="{ open: false }" class="relative inline-flex items-center group" @click="open = !open" @click.outside="open = false"><span class="cursor-help select-none" style="width:16px;height:16px;border-radius:50%;background:#3f3f46;color:#d4d4d8;display:inline-flex;align-items:center;justify-content:center;font-size:11px">?</span><span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute left-full ml-2.5 top-1/2 -translate-y-1/2 z-50 w-[13rem] px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 shadow-xl text-xs font-medium text-neutral-100 leading-snug text-left whitespace-normal" :class="open ? 'opacity-100' : ''"><span class="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-neutral-900"></span>Используйте этот ID при обращении в поддержку или сообщении об ошибке.</span></span></div>
             </div>
         </div>
 
@@ -401,8 +400,12 @@
                 </button>
                 <div class="nav-accordion" :class="(charOpen && (!sidebarCollapsed || sidebarMobile)) ? 'is-open' : ''">
                     <div class="pt-1 space-y-0.5">
-                        <a href="/view/<?= (int)(session()->get('character_id') ?? 0) ?>" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
-                            <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Мой персонаж
+                        <a href="/view/<?= (int)(session()->get('character_id') ?? 0) ?>" title="Публичный профиль" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white">
+                            <?= game_icon('/img/misc/character.png', 'h-5 w-5') ?> Публичный профиль
+                        </a>
+                        <?php $userCharActive = str_starts_with(trim(uri_string(), '/'), 'user/character'); ?>
+                        <a href="<?= base_url('user/character') ?>" title="Персонаж" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 hover:text-white <?= $userCharActive ? 'bg-slate-700 text-white' : 'text-slate-300' ?>">
+                            <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> Персонаж
                         </a>
                         <a href="#" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white opacity-50 pointer-events-none">
                             <?= game_icon('/img/misc/bag.png', 'h-5 w-5') ?> Профессия <span class="text-[10px] text-slate-500 ml-auto">WIP</span>

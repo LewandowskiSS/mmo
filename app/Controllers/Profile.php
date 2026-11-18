@@ -30,12 +30,24 @@ class Profile extends BaseController
             ->orderBy('id', 'DESC')
             ->findAll(6);
 
+        $equippedStats = self::equippedStatTotals((int) $character->id);
+        $effectiveAttack  = (int) $character->attack
+            + (int) ($character->allocated_attack ?? 0)
+            + (int) ($character->bonus_attack ?? 0)
+            + $equippedStats['attack'];
+        $effectiveDefense = (int) $character->defense
+            + (int) ($character->allocated_defense ?? 0)
+            + (int) ($character->bonus_defense ?? 0)
+            + $equippedStats['defense'];
+
         return view('profile/view', [
             'character'  => $character,
             'equipped'   => $equipped,
             'feed'       => $feed,
             'me'         => $me,
             'isOwn'      => $meId === (int) $character->id,
+            'effectiveAttack'  => $effectiveAttack,
+            'effectiveDefense' => $effectiveDefense,
             'xpPercent'  => min(100, (int) round($character->xp / max(1, 50 + ($character->level - 1) * 25) * 100)),
         ]);
     }

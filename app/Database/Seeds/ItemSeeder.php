@@ -26,19 +26,21 @@ class ItemSeeder extends Seeder
             ['name' => 'Рунический меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 20, 'price' => 900, 'description' => 'Клинок, покрытый светящимися рунами.', 'emoji' => '🗡️', 'rarity' => 'elite'],
             ['name' => 'Руническая броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 17, 'price' => 950, 'description' => 'Доспех, усиленный древними рунами.', 'emoji' => '🛡️', 'rarity' => 'elite'],
             // epic
-            ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '/img/monsters/dragon.png', 'rarity' => 'epic'],
+            ['name' => 'Драконий меч', 'type' => 'weapon', 'stat' => 'attack', 'value' => 25, 'price' => 1500, 'description' => 'Клинок, выкованный из клыка дракона.', 'emoji' => '/img/weapons/dragon_sword.png', 'rarity' => 'epic'],
             ['name' => 'Драконья броня', 'type' => 'armor', 'stat' => 'defense', 'value' => 20, 'price' => 1600, 'description' => 'Чешуйчатая драконья броня.', 'emoji' => '🛡️', 'rarity' => 'epic'],
             // legendary
-            ['name' => 'Меч Богов', 'type' => 'weapon', 'stat' => 'attack', 'value' => 40, 'price' => 5000, 'description' => 'Легендарный клинок богов.', 'emoji' => '⚔️', 'rarity' => 'legendary'],
-            ['name' => 'Броня Богов', 'type' => 'armor', 'stat' => 'defense', 'value' => 30, 'price' => 5000, 'description' => 'Непробиваемая броня богов.', 'emoji' => '🛡️', 'rarity' => 'legendary'],
+            ['name' => 'Меч Богов', 'type' => 'weapon', 'stat' => 'attack', 'value' => 40, 'price' => 5000, 'description' => 'Легендарный клинок богов.', 'emoji' => '/img/weapons/god_sword.png', 'rarity' => 'legendary'],
+            // Алиас: в старой БД этот предмет называется «Броня Богов» (миграция 000028),
+            // а инвентарь игрока ссылается на его id — переименовываем ту же строку, не создавая дубль.
+            ['name' => 'Щит Богов', 'aliases' => ['Броня Богов'], 'type' => 'armor', 'stat' => 'defense', 'value' => 30, 'price' => 5000, 'description' => 'Непробиваемая броня богов.', 'emoji' => '/img/shields/god_shield.png', 'rarity' => 'legendary'],
             // celestial
             ['name' => 'Клинок Рассвета', 'type' => 'weapon', 'stat' => 'attack', 'value' => 55, 'price' => 12000, 'description' => 'Небесный клинок, сияющий светом.', 'emoji' => '🌅', 'rarity' => 'celestial'],
             ['name' => 'Доспех Света', 'type' => 'armor', 'stat' => 'defense', 'value' => 42, 'price' => 12000, 'description' => 'Священный доспех небесных воинов.', 'emoji' => '🛡️', 'rarity' => 'celestial'],
             // exotic
-            ['name' => 'Клинок Бездны', 'type' => 'weapon', 'stat' => 'attack', 'value' => 75, 'price' => 30000, 'description' => 'Экзотический клинок из самой бездны.', 'emoji' => '🌌', 'rarity' => 'exotic'],
+            ['name' => 'Клинок Бездны', 'type' => 'weapon', 'stat' => 'attack', 'value' => 75, 'price' => 30000, 'description' => 'Экзотический клинок из самой бездны.', 'emoji' => '/img/weapons/abyss_sword.png', 'rarity' => 'exotic'],
             ['name' => 'Доспех Бездны', 'type' => 'armor', 'stat' => 'defense', 'value' => 60, 'price' => 30000, 'description' => 'Броня, выкованная в пустоте.', 'emoji' => '🛡️', 'rarity' => 'exotic'],
             // mythic
-            ['name' => 'Клинок Хаоса', 'type' => 'weapon', 'stat' => 'attack', 'value' => 95, 'price' => 60000, 'description' => 'Мифический клинок, рожденный в хаосе.', 'emoji' => '⚔️', 'rarity' => 'mythic'],
+            ['name' => 'Клинок Хаоса', 'type' => 'weapon', 'stat' => 'attack', 'value' => 95, 'price' => 60000, 'description' => 'Мифический клинок, рожденный в хаосе.', 'emoji' => '/img/weapons/chaos_sword.png', 'rarity' => 'mythic'],
             ['name' => 'Доспех Хаоса', 'type' => 'armor', 'stat' => 'defense', 'value' => 80, 'price' => 60000, 'description' => 'Мифический доспех, не подвластный времени.', 'emoji' => '🛡️', 'rarity' => 'mythic'],
             // ancient
             ['name' => 'Древний клинок Вечности', 'type' => 'weapon', 'stat' => 'attack', 'value' => 130, 'price' => 150000, 'description' => 'Древний артефакт из забытых веков.', 'emoji' => '🗡️', 'rarity' => 'ancient'],
@@ -54,12 +56,47 @@ class ItemSeeder extends Seeder
 
         $itemModel = new \App\Models\ItemModel();
         foreach ($items as $item) {
-            $existing = $itemModel->where('name', $item['name'])->first();
+            $aliases = $item['aliases'] ?? [];
+            unset($item['aliases']);
+
+            // Поиск существующей записи: по новому имени, затем по старым алиасам
+            // (миграция 000028 переименовала брони в щиты — иначе создастся дубль с новым id,
+            // а inventory/storage останутся ссылаться на старый предмет).
+            $existing = null;
+            $names    = array_merge([$item['name']], $aliases);
+            foreach ($names as $n) {
+                $existing = $itemModel->where('name', $n)->orderBy('id', 'ASC')->first();
+                if ($existing) {
+                    break;
+                }
+            }
+
+            if (! $existing && in_array($item['type'], ['weapon', 'armor'], true)) {
+                // Страховка от дублей: ищем по сигнатуре type + rarity + value,
+                // если точного имени нет (предмет уже переименован в БД).
+                // Только при однозначном совпадении — иначе можно перезаписать чужой предмет.
+                $same = $itemModel
+                    ->where('type', $item['type'])
+                    ->where('rarity', $item['rarity'])
+                    ->where('value', $item['value'])
+                    ->orderBy('id', 'ASC')
+                    ->findAll();
+                if (count($same) === 1) {
+                    $existing = $same[0];
+                }
+            }
+
             if ($existing) {
-                // Обновляем только метаданные, id не трогаем.
+                // Обновляем только метаданные, id не трогаем — ссылки inventory/storage сохраняются.
                 $itemModel->where('id', $existing->id)->set($item)->update();
             } else {
-                $itemModel->insert($item);
+                // Перед вставкой убеждаемся, что записи с таким name+type ещё нет (дубль по имени).
+                $dupe = $itemModel->where('name', $item['name'])->where('type', $item['type'])->first();
+                if (! $dupe) {
+                    $itemModel->insert($item);
+                } else {
+                    $itemModel->where('id', $dupe->id)->set($item)->update();
+                }
             }
         }
     }

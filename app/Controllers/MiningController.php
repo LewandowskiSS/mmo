@@ -118,14 +118,13 @@ class MiningController extends Game
             return $this->rollbackError($db, 'Не удалось сохранить добычу.', 500);
         }
         $db->transCommit();
-        $storageTotal = $db->table('storage')->selectSum('quantity')->where('character_id', (int) $character->id)->where('item_id', (int) $ore->id)->get()->getRow();
         (new EventLogModel())->insert(['character_id' => $character->id, 'type' => 'mining', 'message' => "Добыто: +{$amount} {$ore->name} (в хранилище)", 'rarity' => 'common', 'emoji' => '/img/ores/copper_ore.png']);
 
         // Прогресс задания на добычу руды: одиночный удар (mine) = 1, «Добыть всё» (mineAll) = фактическое количество
         $this->progressTask((int) $character->id, 'mine', $amount);
 
         $updated = (new CharacterModel())->find($character->id);
-        return $this->response->setJSON(['success' => true, 'mined' => $amount, 'in_storage' => true, 'storage_total' => (int) ($storageTotal->quantity ?? 0), 'remaining_strikes' => max(0, $remaining), 'depleted' => $remaining <= 0, 'mining_xp_gained' => $amount * 4, 'mining_level' => $miningLevel, 'mining_xp' => $miningXp, 'mining_xp_needed' => $this->miningXpNeeded($miningLevel), 'mining_level_up' => $miningLevelsGained > 0, 'state' => $this->characterState($updated)]);
+        return $this->response->setJSON(['success' => true, 'mined' => $amount, 'in_storage' => true, 'remaining_strikes' => max(0, $remaining), 'depleted' => $remaining <= 0, 'mining_xp_gained' => $amount * 4, 'mining_level' => $miningLevel, 'mining_xp' => $miningXp, 'mining_xp_needed' => $this->miningXpNeeded($miningLevel), 'mining_level_up' => $miningLevelsGained > 0, 'state' => $this->characterState($updated)]);
     }
 
     private function currentMiningCharacter(): ?object

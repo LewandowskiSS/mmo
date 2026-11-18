@@ -20,6 +20,13 @@ $routes->post('view/(:num)/comment/(:num)/delete', 'Profile::deleteComment/$1/$2
 $routes->get('view/(:num)/comments', 'Profile::comments/$1');
 $routes->post('profile/bio', 'Profile::saveBio');
 
+// Страница управления персонажем
+$routes->get('user/character', 'CharacterController::index');
+$routes->post('user/character/allocate', 'CharacterController::allocate');
+$routes->post('user/character/motto', 'CharacterController::motto');
+$routes->post('user/character/rename', 'CharacterController::rename');
+$routes->post('user/character/number', 'CharacterController::number');
+
 // Авторизация
 $routes->get('login', 'Auth::login');
 $routes->post('login', 'Auth::login');

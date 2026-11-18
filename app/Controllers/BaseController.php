@@ -84,6 +84,9 @@ abstract class BaseController extends Controller
                     }
                 }
 
+                // Снаряжение учитывается в итоговых статах виджета «Характеристики».
+                $equippedStats = self::equippedStatTotals((int) $character->id);
+
                 self::$layoutData = [
                     'characterName'      => $character->name,
                     'characterTag'       => $character->tag ?? '0000',
@@ -92,8 +95,15 @@ abstract class BaseController extends Controller
                     'characterXp'        => (int) $character->xp,
                     'characterXpNeeded'  => (int) $xpNeeded,
                     'characterXpPercent' => min(100, (int) round($character->xp / $xpNeeded * 100)),
-                    'characterAttack'    => (int) ($character->attack ?? 0),
-                    'characterDefense'   => (int) ($character->defense ?? 0),
+                    'characterAttack'    => (int) ($character->attack ?? 0)
+                        + (int) ($character->allocated_attack ?? 0)
+                        + (int) ($character->bonus_attack ?? 0)
+                        + $equippedStats['attack'],
+                    'characterDefense'   => (int) ($character->defense ?? 0)
+                        + (int) ($character->allocated_defense ?? 0)
+                        + (int) ($character->bonus_defense ?? 0)
+                        + $equippedStats['defense'],
+                    'characterFreeStatPoints' => (int) ($character->stat_points ?? 0),
                     'characterMiningLevel' => (int) ($character->mining_level ?? 1),
                     'characterGold'      => (int) $character->gold,
                     'characterBank'      => (int) ($character->bank_balance ?? 0),
@@ -116,6 +126,32 @@ abstract class BaseController extends Controller
 
     // Данные лейаута (доступны в шаблонах через статический вызов).
     public static array $layoutData = [];
+
+    /** Сумма статов надетого снаряжения: ['attack' => n, 'defense' => n]. */
+    protected static function equippedStatTotals(int $characterId): array
+    {
+        $totals = ['attack' => 0, 'defense' => 0];
+        if ($characterId <= 0) {
+            return $totals;
+        }
+
+        $rows = (new \App\Models\InventoryModel())
+            ->select('items.stat, items.value')
+            ->join('items', 'items.id = inventory.item_id')
+            ->where('inventory.character_id', $characterId)
+            ->where('inventory.equipped', 1)
+            ->findAll();
+
+        foreach ($rows as $row) {
+            if ($row->stat === 'attack') {
+                $totals['attack'] += (int) $row->value;
+            } elseif ($row->stat === 'defense') {
+                $totals['defense'] += (int) $row->value;
+            }
+        }
+
+        return $totals;
+    }
 
     // Секунды до следующего +1 HP (0, если здоровье полное или таймер ещё не запущен).
     private function hpNextInFor($character): int

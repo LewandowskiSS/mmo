@@ -566,6 +566,8 @@ function inventoryFilters(sellableIds = []) {
                 const data = await Game.post(urls[action], { inv_id: invId, quantity: sellQty });
                 Game.toast(data.message, data.success ? 'success' : 'error');
                 if (data.success) {
+                    // Виджет «Характеристики» в сайдбаре сразу получает итоговые статы.
+                    if (data.state) Game.updateState(data.state);
                     setTimeout(() => window.location.reload(), 600);
                 }
             } catch (e) {
