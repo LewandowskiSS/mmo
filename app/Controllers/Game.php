@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Config\ItemLevels;
+use App\Libraries\LootGenerator;
 use App\Models\BattleLogModel;
 use App\Models\CharacterModel;
 use App\Models\BankTransactionModel;
@@ -387,7 +389,12 @@ class Game extends BaseController
             array_keys(ItemModel::TYPE_NAMES)
         ));
 
-        $applyInventoryFilters = static function ($builder) use ($filterName, $filterRarities, $filterTypes) {
+        // Фильтр по уровню: диапазон От–До и «доступные по уровню» (level <= персонажа)
+        $filterLevelMin = (int) ($this->request->getGet('level_min') ?: 0);
+        $filterLevelMax = (int) ($this->request->getGet('level_max') ?: 0);
+        $filterLevelAvailable = (int) ($this->request->getGet('level_available') ?: 0) === 1;
+
+        $applyInventoryFilters = static function ($builder) use ($filterName, $filterRarities, $filterTypes, $filterLevelMin, $filterLevelMax, $filterLevelAvailable, $character) {
             if ($filterName !== '') {
                 $builder->like('items.name', $filterName);
             }
@@ -396,6 +403,15 @@ class Game extends BaseController
             }
             if ($filterTypes !== []) {
                 $builder->whereIn('items.type', $filterTypes);
+            }
+            if ($filterLevelMin > 0) {
+                $builder->where('inventory.item_level >=', $filterLevelMin);
+            }
+            if ($filterLevelMax > 0) {
+                $builder->where('inventory.item_level <=', $filterLevelMax);
+            }
+            if ($filterLevelAvailable) {
+                $builder->where('inventory.item_level <=', (int) $character->level);
             }
             return $builder;
         };
@@ -406,6 +422,7 @@ class Game extends BaseController
             'price' => 'items.price',
             'type'  => 'items.type',
             'stat'  => 'items.value',
+            'level' => 'inventory.item_level',
         ];
         $orderSql = $sortMap[$orderCol] ?? 'inventory.id';
 
@@ -422,7 +439,7 @@ class Game extends BaseController
         $offset     = ($page - 1) * $perPage;
 
         $itemsQuery = (new InventoryModel())
-            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, inventory.item_level, inventory.rolled_value, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity, items.required_level')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->where('inventory.equipped', 0);
@@ -440,7 +457,7 @@ class Game extends BaseController
 
         // Надетые предметы (подвкладка «Экипировано»)
         $equippedItems = (new InventoryModel())
-            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, inventory.item_level, inventory.rolled_value, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity, items.required_level')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->where('inventory.equipped', 1)
@@ -449,7 +466,8 @@ class Game extends BaseController
 
         $equippedValue = [];
         foreach ($equippedItems as $eq) {
-            $equippedValue[$eq->type] = (int) $eq->value;
+            $slot = ItemLevels::slotFor((string) $eq->type) ?? (string) $eq->type;
+            $equippedValue[$slot] = (int) ($eq->rolled_value ?? 0) ?: (int) $eq->value;
         }
 
         foreach ($items as $it) {
@@ -463,19 +481,20 @@ class Game extends BaseController
                 continue;
             }
 
-            $current = $equippedValue[$it->type] ?? null;
+            $slot = ItemLevels::slotFor((string) $it->type) ?? (string) $it->type;
+            $current = $equippedValue[$slot] ?? null;
+            $value   = (int) ($it->rolled_value ?? 0) ?: (int) $it->value;
 
             if ($current === null) {
                 $it->cmp = 'up'; // ничего не надето — апгрейд
-            } elseif ((int) $it->value > $current) {
+            } elseif ($value > $current) {
                 $it->cmp = 'up';
-            } elseif ((int) $it->value < $current) {
+            } elseif ($value < $current) {
                 $it->cmp = 'down';
             } else {
                 $it->cmp = 'equal';
             }
         }
-
         // Счётчики редкости — по всему инвентарю, а не по текущей странице
         $counts = [];
         $rarityRows = (new InventoryModel())
@@ -503,6 +522,9 @@ class Game extends BaseController
             'filterName'    => $filterName,
             'filterRarities'=> $filterRarities,
             'filterTypes'   => $filterTypes,
+            'filterLevelMin'=> $filterLevelMin,
+            'filterLevelMax'=> $filterLevelMax,
+            'filterLevelAvailable' => $filterLevelAvailable,
         ]);
     }
 
@@ -559,7 +581,7 @@ class Game extends BaseController
 
         // Надетые предметы (для индикатора сравнения в хранилище)
         $equippedItems = (new InventoryModel())
-            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity')
+            ->select('inventory.id AS inv_id, inventory.quantity, inventory.equipped, inventory.item_level, inventory.rolled_value, items.id AS item_id, items.name, items.type, items.stat, items.value, items.price, items.description, items.emoji, items.rarity, items.required_level')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->where('inventory.equipped', 1)
@@ -632,17 +654,27 @@ class Game extends BaseController
         $db->transBegin();
 
         try {
-            $source = $db->table($sourceTable)->where('id', $id)->where('character_id', $character->id)->get()->getRow();
+            $source = $db->table($sourceTable)
+                ->select($sourceTable . '.*, items.type AS item_type')
+                ->join('items', 'items.id = ' . $sourceTable . '.item_id')
+                ->where($sourceTable . '.id', $id)
+                ->where($sourceTable . '.character_id', $character->id)
+                ->get()->getRow();
             if (! $source || ($sourceTable === 'inventory' && (int) ($source->equipped ?? 0) === 1)) {
                 $db->transRollback();
                 return $this->response->setJSON(['success' => false, 'message' => 'Предмет не найден или экипирован']);
             }
 
             $quantity = min($quantity, (int) $source->quantity);
-            $target = $db->table($targetTable)
+            $targetBuilder = $db->table($targetTable)
                 ->where('character_id', $character->id)
-                ->where('item_id', $source->item_id)
-                ->get()->getRow();
+                ->where('item_id', $source->item_id);
+            // Экземплярная экипировка переносится/стакуется только с полным совпадением уровня и стата.
+            if (ItemLevels::isInstanceType((string) ($source->item_type ?? ''))) {
+                $targetBuilder->where('item_level', (int) ($source->item_level ?? 0))
+                    ->where('rolled_value', $source->rolled_value !== null ? (int) $source->rolled_value : 0);
+            }
+            $target = $targetBuilder->get()->getRow();
 
             if ($target) {
                 $db->table($targetTable)->where('id', $target->id)->where('character_id', $character->id)
@@ -652,6 +684,8 @@ class Game extends BaseController
                     'character_id' => $character->id,
                     'item_id' => $source->item_id,
                     'quantity' => $quantity,
+                    'item_level' => (int) ($source->item_level ?? 0),
+                    'rolled_value' => $source->rolled_value !== null ? (int) $source->rolled_value : null,
                     ...($targetTable === 'inventory' ? ['equipped' => 0] : []),
                 ]);
             }
@@ -696,9 +730,34 @@ class Game extends BaseController
             }
 
             $item = (new ItemModel())->find($inv->item_id);
-            if (! $item || in_array($item->type, ['consumable', 'material'], true)) {
+            $isTool = $item !== null && in_array((string) $item->type, ['pickaxe', 'tool'], true);
+            if (! $item || in_array($item->type, ['consumable', 'material', 'ore'], true)
+                || ! (ItemLevels::isEquippable((string) $item->type) || $isTool)
+            ) {
                 $db->transRollback();
                 return $this->response->setJSON(['success' => false, 'message' => 'Этот предмет нельзя надеть']);
+            }
+
+            // Серверная защита по уровню: уровень экземпляра (или required_level предмета).
+            $reqLevel = $this->equipRequiredLevel($inv, $item);
+            if ($reqLevel > 0 && (int) $character->level < $reqLevel) {
+                $db->transRollback();
+                $charLevel = (int) $character->level;
+                $message = sprintf(
+                    'Невозможно надеть «%s» (Ур. %d): требуется %d уровень (ваш уровень: %d).',
+                    $item->name,
+                    $reqLevel,
+                    $reqLevel,
+                    $charLevel
+                );
+
+                return $this->response->setJSON([
+                    'success' => false,
+                    'level_gate' => true,
+                    'required_level' => $reqLevel,
+                    'character_level' => $charLevel,
+                    'message' => $message,
+                ]);
             }
 
             $this->unequipType($character->id, $item->type, $inventory);
@@ -714,6 +773,8 @@ class Game extends BaseController
                 $inventory->insert([
                     'character_id' => $character->id, 'item_id' => $inv->item_id,
                     'quantity' => 1, 'equipped' => 1,
+                    'item_level' => (int) ($inv->item_level ?? 0),
+                    'rolled_value' => $inv->rolled_value !== null ? (int) $inv->rolled_value : null,
                 ]);
             } else {
                 $db->table('inventory')->where('id', $invId)->update(['equipped' => 1, 'quantity' => 1]);
@@ -850,7 +911,7 @@ class Game extends BaseController
         $quantity = (int) ($this->request->getPost('quantity') ?: 1);
         $quantity = max(1, min($quantity, $maxQty));
 
-        $price = max(0, (int) $item->price) * $quantity;
+        $price = $this->sellPrice($item, $inv) * $quantity;
 
         if ($quantity < $maxQty) {
             $inventory->update($inv->id, ['quantity' => $maxQty - $quantity]);
@@ -901,7 +962,7 @@ class Game extends BaseController
                 continue;
             }
 
-            $gold += max(0, (int) $item->price) * (int) $inv->quantity;
+            $gold += $this->sellPrice($item, $inv) * (int) $inv->quantity;
             $sold += (int) $inv->quantity;
             $inventory->delete($inv->id);
         }
@@ -950,8 +1011,9 @@ class Game extends BaseController
 
         $types = match ($category) {
             'potions' => ['consumable'],
-            'tools' => ['pickaxe'],
-            default => ['weapon', 'armor', 'helmet', 'amulet', 'chestplate', 'gloves', 'leggings', 'boots'],
+            'tools' => ['pickaxe', 'tool'],
+            default => ['weapon', 'shield', 'helmet', 'armor', 'gauntlet', 'greaves', 'boots', 'amulet',
+                'chestplate', 'gloves', 'leggings'],
         };
 
         $items = (new ItemModel())
@@ -965,6 +1027,7 @@ class Game extends BaseController
             'category'  => $category,
             'shopInfo'  => $categories[$category],
             'initialGold' => (int) $character->gold,
+            'characterLevel' => (int) $character->level,
         ]);
     }
 
@@ -991,11 +1054,12 @@ class Game extends BaseController
         }
 
         (new CharacterModel())->update($character->id, ['gold' => $character->gold - $item->price]);
-        $this->giveItem($character->id, $item->id);
+        $instance = $this->giveItem($character->id, $item->id, (int) $character->level);
+        $reqLevel = (int) ($instance['item_level'] ?? 0);
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => 'Куплено: ' . $this->iconPrefix($item->emoji) . "{$item->name} (-{$item->price} золота)",
+            'message' => 'Куплено: ' . $this->iconPrefix($item->emoji) . "{$item->name}" . ($reqLevel > 0 ? " (Ур. {$reqLevel})" : '') . " (-{$item->price} золота)",
             'state'   => $this->characterState($character),
         ]);
     }
@@ -1418,8 +1482,12 @@ class Game extends BaseController
         for ($i = 0; $i < $quantity; $i++) {
             $rarity = $this->rollRarity($chest);
             $item   = $this->randomItemByRarity($rarity);
-            $this->giveItem($character->id, $item->id);
-            $results[] = ['name' => $item->name, 'emoji' => $item->emoji, 'rarity' => $rarity];
+            $instance = $this->giveItem($character->id, $item->id, (int) $character->level);
+            $results[] = [
+                'name' => $item->name, 'emoji' => $item->emoji, 'rarity' => $rarity,
+                'item_level' => $instance['item_level'] ?? 0,
+                'rolled_value' => $instance['rolled_value'] ?? (int) $item->value,
+            ];
         }
 
         (new CharacterModel())->update($character->id, [$keyField => $keyCount - $quantity]);
@@ -1802,18 +1870,62 @@ class Game extends BaseController
         ];
     }
 
+    /**
+     * Цена продажи NPC для экипировки по схеме SimpleMMO:
+     * max(10, $level * $priceMult) с коэффициентом редкости.
+     * Для материалов/расходников — базовая цена.
+     */
+    protected function sellPrice(object $item, object $inv): int
+    {
+        $base = max(0, (int) $item->price);
+
+        if (! ItemLevels::isInstanceType((string) $item->type)) {
+            return $base;
+        }
+
+        $level = (int) ($inv->item_level ?? 0);
+        if ($level > 0) {
+            return ItemLevels::calculateSellPrice((string) ($item->rarity ?? 'common'), $level);
+        }
+
+        return $base;
+    }
+
+    /**
+     * Требуемый уровень для надевания: уровень экземпляра (item_level),
+     * либо required_level предмета (0 — без ограничения).
+     */
+    protected function equipRequiredLevel(object $inv, object $item): int
+    {
+        $level = (int) ($inv->item_level ?? 0);
+        if ($level > 0) {
+            return $level;
+        }
+
+        return ItemModel::requiredLevelOf($item);
+    }
+
+    /**
+     * Снимает всё, что надето в тот же слот, что и тип нового предмета
+     * (старые типы gloves/chestplate маппятся на gauntlet/armor).
+     */
     private function unequipType($characterId, $type, InventoryModel $inventory): void
     {
+        $slot = ItemLevels::slotFor((string) $type) ?? (string) $type;
+
         $equipped = $inventory
-            ->select('inventory.id, inventory.character_id, inventory.item_id, inventory.quantity, inventory.equipped')
+            ->select('inventory.id, inventory.character_id, inventory.item_id, inventory.quantity,
+                      inventory.equipped, inventory.item_level, inventory.rolled_value, items.type')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $characterId)
             ->where('inventory.equipped', 1)
-            ->where('items.type', $type)
             ->findAll();
 
         foreach ($equipped as $eq) {
-            $inventory->returnToBag($eq);
+            $eqSlot = ItemLevels::slotFor((string) $eq->type) ?? (string) $eq->type;
+            if ($eqSlot === $slot) {
+                $inventory->returnToBag($eq);
+            }
         }
     }
 
@@ -1888,9 +2000,23 @@ class Game extends BaseController
         (new CharacterModel())->update($characterId, [$field => (int) ($char->$field ?? 0) + $amount]);
     }
 
-    protected function giveItem($characterId, $itemId): void
+    /**
+     * Выдаёт предмет в инвентарь.
+     *
+     * Материалы и расходники стакуются по item_id; экипировка/инструменты
+     * стакуются только при совпадении item_id + item_level + rolled_value.
+     * Для выпавших предметов уровень и стат роллятся по редкости
+     * (не выше уровня персонажа, см. ItemLevels::rollStats).
+     *
+     * @return array{item_level:int, rolled_value:int}|null
+     */
+    protected function giveItem($characterId, $itemId, ?int $characterLevel = null): ?array
     {
         $inventory = new InventoryModel();
+        $item      = (new ItemModel())->find($itemId);
+        if (! $item) {
+            return null;
+        }
 
         // Лимит вместимости инвентаря
         $used = (int) (($inventory
@@ -1898,24 +2024,60 @@ class Game extends BaseController
             ->where('character_id', $characterId)
             ->first()->quantity ?? 0));
         if ($used >= self::INVENTORY_CAPACITY) {
-            return;
+            return null;
         }
 
-        $existing  = $inventory
+        [$itemLevel, $rolledValue] = $this->itemInstance($item, $characterId, $characterLevel);
+
+        $builder = $inventory
             ->where('character_id', $characterId)
-            ->where('item_id', $itemId)
-            ->first();
+            ->where('item_id', $itemId);
+
+        if (ItemLevels::isInstanceType((string) $item->type)) {
+            // Экипировка: стак только при полном совпадении экземпляра.
+            $builder->where('item_level', $itemLevel)
+                ->where('rolled_value', $rolledValue);
+        }
+
+        $existing = $builder->first();
 
         if ($existing) {
-            $inventory->update($existing->id, ['quantity' => $existing->quantity + 1]);
+            $inventory->update($existing->id, ['quantity' => (int) $existing->quantity + 1]);
         } else {
             $inventory->insert([
                 'character_id' => $characterId,
                 'item_id'      => $itemId,
                 'quantity'     => 1,
                 'equipped'     => 0,
+                'item_level'   => $itemLevel,
+                'rolled_value' => $rolledValue,
             ]);
         }
+
+        return ['item_level' => $itemLevel, 'rolled_value' => $rolledValue];
+    }
+
+    /**
+     * Уровень и фактический стат экземпляра.
+     * Если уровень персонажа не передан — берём текущий уровень из БД.
+     *
+     * @return array{0:int,1:int} [item_level, rolled_value]
+     */
+    protected function itemInstance(object $item, int $characterId, ?int $characterLevel = null): array
+    {
+        if (ItemLevels::isEquipType((string) $item->type)) {
+            if ($characterLevel === null) {
+                $characterLevel = (int) ((new CharacterModel())->find($characterId)->level ?? 1);
+            }
+            $rolled = ItemLevels::rollStats($item, $characterLevel);
+
+            return [(int) $rolled['item_level'], (int) $rolled['rolled_value']];
+        }
+
+        $level  = ItemModel::requiredLevelOf($item);
+        $rolled = (int) $item->value;
+
+        return [$level, $rolled];
     }
 
     private const TASK_LIMITS = ['daily' => 5, 'weekly' => 5, 'monthly' => 5];
@@ -1995,8 +2157,10 @@ class Game extends BaseController
                 // таблице шансов серебряного сундука, а не по фиксированному ID.
                 $item = $this->randomItemBySilverChest();
                 if ($item) {
-                    $this->giveItem($character->id, $item->id);
-                    return '+' . $m['amount'] . ' золота ' . $coinIcon . ' + ' . $this->iconPrefix($item->emoji) . $item->name;
+                    $instance = $this->giveItem($character->id, $item->id, (int) $character->level);
+                    $lvl = (int) ($instance['item_level'] ?? 0);
+                    $lvlLabel = $lvl > 0 ? ' (Ур. ' . $lvl . ')' : '';
+                    return '+' . $m['amount'] . ' золота ' . $coinIcon . ' + ' . $this->iconPrefix($item->emoji) . $item->name . $lvlLabel;
                 }
                 return '+' . $m['amount'] . ' золота ' . $coinIcon;
             }
@@ -2245,7 +2409,7 @@ class Game extends BaseController
 
         // Предмет. Редчайшие предметы имеют отдельный шанс внутри дропа.
         if ($roll <= $chanceText + $chanceItem) {
-            $items = (new ItemModel())->whereNotIn('type', ['pet', 'pickaxe', 'material'])->findAll();
+            $items = (new ItemModel())->whereNotIn('type', ['pet', 'pickaxe', 'material', 'ore'])->findAll();
             $rareRoll = random_int(1, 10000);
             $rareRarity = $rareRoll === 1 ? 'ancient' : ($rareRoll <= 4 ? 'mythic' : null);
             if ($rareRarity !== null) {
@@ -2254,7 +2418,7 @@ class Game extends BaseController
             $item = ! empty($rareItems ?? [])
                 ? $rareItems[array_rand($rareItems)]
                 : $items[array_rand($items)];
-            $this->giveItem($character->id, $item->id);
+            $instance = $this->giveItem($character->id, $item->id, (int) $character->level);
             $this->progressTask($character->id, 'item');
             $this->logEvent($character->id, 'item', $item->name, $item->rarity, $item->emoji);
 
@@ -2264,15 +2428,39 @@ class Game extends BaseController
                 'message' => "Ты нашёл предмет: {$item->name}!",
                 'rarity'  => $item->rarity,
                 'emoji'   => $item->emoji,
+                'item_level'   => $instance['item_level'] ?? 0,
+                'rolled_value' => $instance['rolled_value'] ?? (int) $item->value,
                 'state'   => $this->characterState($character),
             ];
         }
 
-        // Монстр, затем залежь руды (последний интервал розыгрыша).
+        // Монстр, затем руда (последний интервал розыгрыша).
         if ($roll <= $chanceText + $chanceItem + $chanceMonster) {
             return $this->battleResponse($character, $this->spawnMonster($character->level));
         }
         if ($chanceMaterial > 0) {
+            // Двухэтапный ролл руды: внешний шанс + взвешенная редкость (7 тиров).
+            $findChance = (int) round($chanceMaterial / max(1, $totalWeight) * 100);
+            $ore        = LootGenerator::rollWalkOreDrop((int) $character->level, $findChance);
+            if ($ore !== null && $ore['item_id'] > 0) {
+                $this->giveItem($character->id, $ore['item_id'], (int) $character->level);
+                $this->progressTask($character->id, 'item');
+                $this->logEvent($character->id, 'item', $ore['name'], $ore['rarity'], $ore['emoji']);
+
+                return [
+                    'success' => true,
+                    'type'    => 'ore',
+                    'message' => "Ты нашёл руду: {$ore['name']}!",
+                    'rarity'  => $ore['rarity'],
+                    'emoji'   => $ore['emoji'],
+                    'ore_name'   => $ore['name'],
+                    'ore_image'  => $ore['emoji'],
+                    'ore_rarity' => $ore['rarity'],
+                    'ore_level'  => $ore['item_level'],
+                    'state'   => $this->characterState($character),
+                ];
+            }
+
             return $this->materialEvent($character);
         }
 
@@ -2321,14 +2509,14 @@ class Game extends BaseController
         $items = (new ItemModel())
             ->where('rarity', $rarity)
             ->where('type !=', 'pet')
-            ->whereNotIn('type', ['material', 'pickaxe'])
+            ->whereNotIn('type', ['material', 'ore', 'pickaxe', 'tool'])
             ->findAll();
 
         if (empty($items)) {
             $items = (new ItemModel())
                 ->where('rarity', 'common')
                 ->where('type !=', 'pet')
-                ->whereNotIn('type', ['material', 'pickaxe'])
+                ->whereNotIn('type', ['material', 'ore', 'pickaxe', 'tool'])
                 ->findAll();
         }
 

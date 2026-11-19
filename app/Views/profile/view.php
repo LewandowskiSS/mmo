@@ -247,6 +247,42 @@ $numShort = function ($n): string {
 
     <!-- ВКЛАДКА EQUIPPED -->
     <div x-show="tab === 'equipped'" x-cloak class="space-y-6">
+        <?php
+        $slotNames = \App\Config\ItemLevels::SLOT_NAMES;
+        $slotOrder = \App\Config\ItemLevels::EQUIP_SLOTS;
+        $slotRcMap = [
+            'common' => 'rarity-common', 'uncommon' => 'rarity-uncommon', 'rare' => 'rarity-rare',
+            'elite' => 'rarity-elite', 'epic' => 'rarity-epic', 'legendary' => 'rarity-legendary',
+            'celestial' => 'rarity-celestial', 'exotic' => 'rarity-exotic', 'mythic' => 'rarity-mythic',
+            'ancient' => 'rarity-ancient-textured',
+        ];
+        ?>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <?php foreach ($slotOrder as $slot): ?>
+                <?php $si = $equippedSlots[$slot] ?? null; ?>
+                <div class="rounded-xl bg-slate-900 border <?= $si ? 'border-slate-700' : 'border-dashed border-slate-800' ?> p-3">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] uppercase tracking-wider text-slate-500"><?= esc($slotNames[$slot]) ?></span>
+                        <?php if ($si && (int) $si['item_level'] > 0): ?>
+                            <span class="text-[11px] font-semibold text-slate-400">Ур. <?= (int) $si['item_level'] ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex items-center gap-2 min-h-[1.75rem]">
+                        <?php if ($si): ?>
+                            <?= game_icon((string) $si['emoji'], 'w-7 h-7', (string) $si['type']) ?>
+                            <span class="text-sm font-semibold truncate <?= $slotRcMap[$si['rarity']] ?? 'text-slate-200' ?>"><?= esc($si['name']) ?></span>
+                        <?php else: ?>
+                            <span class="w-7 h-7 rounded-md bg-slate-950 border border-slate-800 shrink-0"></span>
+                            <span class="text-sm text-slate-600">Пусто</span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($si && (int) $si['rolled_value'] > 0): ?>
+                        <div class="mt-1 text-xs text-slate-400">+<?= (int) $si['rolled_value'] ?> <?= $si['stat'] === 'attack' ? 'атаки' : 'защиты' ?></div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
         <?php if (empty($equipped)): ?>
             <p class="text-center py-8 text-slate-500 text-sm">Ничего не надето.</p>
         <?php else: ?>
@@ -256,11 +292,16 @@ $numShort = function ($n): string {
                     <th class="py-2 pr-2 text-left">Предмет</th>
                     <th class="py-2 pr-2 text-left w-36">Редкость</th>
                     <th class="py-2 pr-2 text-left w-28">Тип</th>
+                    <th class="py-2 pr-2 text-left w-20">Уровень</th>
                     <th class="py-2 text-left w-44">Статы</th>
                 </tr>
             </thead>
             <tbody>
             <?php foreach ($equipped as $it): ?>
+                <?php
+                $itLevel  = (int) ($it->item_level ?? 0) ?: (int) ($it->required_level ?? 0);
+                $itValue  = (int) ($it->rolled_value ?? 0) ?: (int) $it->value;
+                ?>
                 <tr class="border-b border-slate-800">
                     <td class="py-2.5 pr-2">
                         <span class="inline-flex items-center gap-2">
@@ -270,8 +311,9 @@ $numShort = function ($n): string {
                     </td>
                     <td class="py-2.5 pr-2 font-semibold <?= $rcMap[$it->rarity] ?? 'text-slate-300' ?>"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
                     <td class="py-2.5 pr-2 text-indigo-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
+                    <td class="py-2.5 pr-2 text-slate-300"><?= $itLevel > 0 ? 'Ур. ' . $itLevel : '—' ?></td>
                     <td class="py-2.5 text-slate-300">
-                        <span class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">+<?= (int) $it->value ?> <?= $it->stat === 'attack' ? 'атаки' : ($it->stat === 'defense' ? 'защиты' : ($it->stat === 'hp' ? 'HP' : 'энергии')) ?></span>
+                        <span class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">+<?= $itValue ?> <?= $it->stat === 'attack' ? 'атаки' : ($it->stat === 'defense' ? 'защиты' : ($it->stat === 'hp' ? 'HP' : 'энергии')) ?></span>
                     </td>
                 </tr>
             <?php endforeach; ?>

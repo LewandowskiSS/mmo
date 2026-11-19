@@ -103,8 +103,23 @@ $gold_text = rtrim(rtrim(number_format($gold_num, $gold_dec, '.', ''), '0'), '.'
                     </div>
                 </div>
             </template>
-            <template x-if="event && event.type !== 'monster' && event.type !== 'material'">
+            <template x-if="event && event.type !== 'monster' && event.type !== 'material' && event.type !== 'ore'">
                 <p x-ref="eventBox" :class="eventClass()" x-text="event.message" class="max-w-xl mx-auto leading-relaxed"></p>
+            </template>
+            <template x-if="event && event.type === 'ore'">
+                <div class="text-center space-y-2 w-full max-w-md mx-auto">
+                    <div class="w-20 h-20 flex items-center justify-center mx-auto">
+                        <template x-if="Game.isImage(event.ore_image || event.emoji)">
+                            <img x-bind:src="event.ore_image || event.emoji" alt="" class="w-16 h-16 object-contain shrink-0">
+                        </template>
+                        <template x-if="!Game.isImage(event.ore_image || event.emoji)">
+                            <div class="text-5xl leading-none" x-text="event.ore_image || event.emoji"></div>
+                        </template>
+                    </div>
+                    <p class="font-bold text-lg" :class="rarityText(event.ore_rarity || event.rarity)" x-text="event.ore_name || event.message"></p>
+                    <p class="text-xs text-slate-400" x-text="'Ур. ' + (event.ore_level || 1) + ' • ' + rarityLabel(event.ore_rarity || event.rarity)"></p>
+                    <p class="text-xs text-slate-500" x-text="event.message"></p>
+                </div>
             </template>
         </div>
     </div>
@@ -248,6 +263,26 @@ function gameDashboard(initialEnergy, initialGold, initialMiningLevel, initialMi
                 nothing: 'text-slate-400', text: 'text-slate-300',
             };
             return map[this.event.type] || 'text-slate-300';
+        },
+
+        rarityText(r) {
+            const map = {
+                common: 'rarity-common', uncommon: 'rarity-uncommon', rare: 'rarity-rare',
+                elite: 'rarity-elite', epic: 'rarity-epic', legendary: 'rarity-legendary',
+                celestial: 'rarity-celestial', exotic: 'rarity-exotic', mythic: 'rarity-mythic',
+                ancient: 'rarity-ancient-textured',
+            };
+            return map[r] || 'text-slate-200';
+        },
+
+        rarityLabel(r) {
+            const labels = {
+                common: 'Обычный', uncommon: 'Необычный', rare: 'Редкий',
+                elite: 'Элитный', epic: 'Эпический', legendary: 'Легендарный',
+                celestial: 'Небесный', exotic: 'Экзотический', mythic: 'Мифический',
+                ancient: 'Древний',
+            };
+            return labels[r] || r || '';
         },
 
         animateEvent() {

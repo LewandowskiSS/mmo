@@ -18,11 +18,13 @@ class Profile extends BaseController
         $meId = $me ? (int) $me->id : 0;
 
         $equipped = (new \App\Models\InventoryModel())
-            ->select('inventory.id AS inv_id, items.name, items.type, items.stat, items.value, items.emoji, items.rarity')
+            ->select('inventory.id AS inv_id, inventory.item_level, inventory.rolled_value, items.name, items.type, items.stat, items.value, items.emoji, items.rarity, items.required_level')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $character->id)
             ->where('inventory.equipped', 1)
             ->findAll();
+
+        $equippedSlots = self::equippedSlots((int) $character->id);
 
         // Feed: последние события из журнала
         $feed = (new \App\Models\EventLogModel())
@@ -43,6 +45,7 @@ class Profile extends BaseController
         return view('profile/view', [
             'character'  => $character,
             'equipped'   => $equipped,
+            'equippedSlots' => $equippedSlots,
             'feed'       => $feed,
             'me'         => $me,
             'isOwn'      => $meId === (int) $character->id,

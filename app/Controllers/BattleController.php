@@ -329,7 +329,7 @@ class BattleController extends Game
             return null;
         }
 
-        $items = (new ItemModel())->whereNotIn('type', ['pet', 'pickaxe', 'material'])->findAll();
+        $items = (new ItemModel())->whereNotIn('type', ['pet', 'pickaxe', 'tool', 'material', 'ore'])->findAll();
         if (empty($items)) {
             return null;
         }
@@ -343,7 +343,7 @@ class BattleController extends Game
 
         $item = ! empty($rareItems) ? $rareItems[array_rand($rareItems)] : $items[array_rand($items)];
 
-        $this->giveItem($character->id, $item->id);
+        $instance = $this->giveItem($character->id, $item->id, (int) $character->level);
         $this->progressTask($character->id, 'item');
         $this->logEvent($character->id, 'item', $item->name, $item->rarity, $item->emoji);
 
@@ -351,6 +351,8 @@ class BattleController extends Game
             'name'   => $item->name,
             'emoji'  => $item->emoji,
             'rarity' => $item->rarity,
+            'item_level'   => $instance['item_level'] ?? 0,
+            'rolled_value' => $instance['rolled_value'] ?? (int) $item->value,
         ];
     }
 

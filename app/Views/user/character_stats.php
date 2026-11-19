@@ -41,6 +41,36 @@
             </div>
         </div>
 
+        <div x-show="tab === 'equipment'" x-cloak class="mt-5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <template x-for="slot in slots" :key="slot.key">
+                    <div class="rounded-xl bg-neutral-950 border p-3 flex flex-col gap-1.5"
+                        :class="slot.name ? 'border-neutral-700' : 'border-dashed border-neutral-800'">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] uppercase tracking-wider text-neutral-500" x-text="slot.label"></span>
+                            <template x-if="slot.level > 0">
+                                <span class="text-[11px] font-semibold text-neutral-400" x-text="'Ур. ' + slot.level"></span>
+                            </template>
+                        </div>
+                        <div class="flex items-center gap-2 min-h-[2rem]">
+                            <template x-if="slot.icon">
+                                <img :src="slot.icon" class="w-7 h-7 object-contain shrink-0" alt="">
+                            </template>
+                            <template x-if="!slot.icon">
+                                <span class="w-7 h-7 rounded-md bg-neutral-900 border border-neutral-800 shrink-0"></span>
+                            </template>
+                            <span class="text-sm font-semibold truncate" :class="slot.name ? rarityClass(slot.rarity) : 'text-neutral-600'"
+                                x-text="slot.name || 'Пусто'"></span>
+                        </div>
+                        <template x-if="slot.name && slot.value > 0">
+                            <span class="text-xs text-neutral-400"
+                                x-text="'+' + slot.value + ' ' + (slot.stat === 'attack' ? 'атаки' : 'защиты')"></span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+
         <?php $hidePoints = ((int) ($seed['stat_points'] ?? 0)) <= 0; ?>
         <div class="mt-4 text-center text-sm text-neutral-400" x-show="tab !== 'person' || statPoints > 0" x-cloak<?= $hidePoints ? ' style="display: none;"' : '' ?>>
             <span x-show="tab === 'person' && statPoints > 0" x-cloak<?= $hidePoints ? ' style="display: none;"' : '' ?>>

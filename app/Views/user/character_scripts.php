@@ -13,6 +13,7 @@ document.addEventListener('alpine:init', () => {
             stats: seed.stats || { attack: {}, defense: {} },
             skills: seed.skills || { mining_level: 1, crafting_level: 1 },
             progress: seed.progress || { hp: 0, max_hp: 1, hp_percent: 0, energy: 0, max_energy: 1, energy_percent: 0 },
+            slots: seed.slots || [],
 
             tabs: [
                 { key: 'person', label: 'Персонаж' },
@@ -45,6 +46,16 @@ document.addEventListener('alpine:init', () => {
                 }
             },
 
+            rarityClass(r) {
+                const map = {
+                    common: 'rarity-common', uncommon: 'rarity-uncommon', rare: 'rarity-rare',
+                    elite: 'rarity-elite', epic: 'rarity-epic', legendary: 'rarity-legendary',
+                    celestial: 'rarity-celestial', exotic: 'rarity-exotic', mythic: 'rarity-mythic',
+                    ancient: 'rarity-ancient-textured',
+                };
+                return map[r] || 'text-neutral-200';
+            },
+
             applyCharacter(c) {
                 if (!c) return;
                 this.name = c.name;
@@ -56,6 +67,7 @@ document.addEventListener('alpine:init', () => {
                 this.stats = c.stats;
                 this.skills = c.skills;
                 this.progress = c.progress;
+                if (c.slots) this.slots = c.slots;
                 // Синхронизируем шапку/сайдбар с новым именем и номером.
                 const root = document.querySelector('[x-data^="layout("]');
                 const layout = root && window.Alpine ? Alpine.$data(root) : null;

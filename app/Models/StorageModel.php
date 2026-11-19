@@ -11,7 +11,7 @@ class StorageModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType       = 'object';
     protected $useSoftDeletes   = false;
-    protected $allowedFields    = ['character_id', 'item_id', 'quantity'];
+    protected $allowedFields    = ['character_id', 'item_id', 'quantity', 'item_level', 'rolled_value'];
     protected $useTimestamps    = true;
     protected $dateFormat       = 'datetime';
     protected $createdField     = 'created_at';

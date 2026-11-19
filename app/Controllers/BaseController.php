@@ -127,7 +127,11 @@ abstract class BaseController extends Controller
     // Данные лейаута (доступны в шаблонах через статический вызов).
     public static array $layoutData = [];
 
-    /** Сумма статов надетого снаряжения: ['attack' => n, 'defense' => n]. */
+    /**
+     * Сумма статов надетого снаряжения по всем 8 слотам (weapon, shield, helmet,
+     * armor, gauntlet, greaves, boots, amulet): ['attack' => n, 'defense' => n].
+     * Используется фактический стат экземпляра (rolled_value), фолбэк — items.value.
+     */
     protected static function equippedStatTotals(int $characterId): array
     {
         $totals = ['attack' => 0, 'defense' => 0];
@@ -136,21 +140,70 @@ abstract class BaseController extends Controller
         }
 
         $rows = (new \App\Models\InventoryModel())
-            ->select('items.stat, items.value')
+            ->select('items.stat, items.value, inventory.rolled_value')
             ->join('items', 'items.id = inventory.item_id')
             ->where('inventory.character_id', $characterId)
             ->where('inventory.equipped', 1)
             ->findAll();
 
         foreach ($rows as $row) {
+            $value = (int) ($row->rolled_value ?? 0);
+            if ($value <= 0) {
+                $value = (int) $row->value;
+            }
             if ($row->stat === 'attack') {
-                $totals['attack'] += (int) $row->value;
+                $totals['attack'] += $value;
             } elseif ($row->stat === 'defense') {
-                $totals['defense'] += (int) $row->value;
+                $totals['defense'] += $value;
             }
         }
 
         return $totals;
+    }
+
+    /**
+     * Список надетых предметов по 8 слотам экипировки.
+     * Ключ — слот (ItemLevels::EQUIP_SLOTS), значение — данные экземпляра.
+     */
+    protected static function equippedSlots(int $characterId): array
+    {
+        $slots = [];
+        foreach (\App\Config\ItemLevels::EQUIP_SLOTS as $slot) {
+            $slots[$slot] = null;
+        }
+        if ($characterId <= 0) {
+            return $slots;
+        }
+
+        $rows = (new \App\Models\InventoryModel())
+            ->select('inventory.id AS inv_id, inventory.item_level, inventory.rolled_value,
+                      items.id AS item_id, items.name, items.type, items.stat, items.value,
+                      items.emoji, items.rarity, items.required_level')
+            ->join('items', 'items.id = inventory.item_id')
+            ->where('inventory.character_id', $characterId)
+            ->where('inventory.equipped', 1)
+            ->orderBy('inventory.id', 'ASC')
+            ->findAll();
+
+        foreach ($rows as $row) {
+            $slot = \App\Config\ItemLevels::slotFor((string) $row->type);
+            if ($slot === null || isset($slots[$slot])) {
+                continue;
+            }
+            $slots[$slot] = [
+                'inv_id'       => (int) $row->inv_id,
+                'item_id'      => (int) $row->item_id,
+                'name'         => (string) $row->name,
+                'type'         => (string) $row->type,
+                'stat'         => (string) $row->stat,
+                'emoji'        => (string) $row->emoji,
+                'rarity'       => (string) $row->rarity,
+                'item_level'   => (int) ($row->item_level ?? 0) ?: (int) $row->required_level,
+                'rolled_value' => (int) ($row->rolled_value ?? 0) ?: (int) $row->value,
+            ];
+        }
+
+        return $slots;
     }
 
     // Секунды до следующего +1 HP (0, если здоровье полное или таймер ещё не запущен).

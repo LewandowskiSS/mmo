@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<div class="space-y-6" x-data="shopCategory(<?= (int) ($initialGold ?? 0) ?>, <?= htmlspecialchars(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
+<div class="space-y-6" x-data="shopCategory(<?= (int) ($initialGold ?? 0) ?>, <?= (int) ($characterLevel ?? 1) ?>, <?= htmlspecialchars(json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES) ?>)">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold flex items-center gap-2 whitespace-nowrap"><img src="/img/misc/shop.png" class="w-6 h-6 object-contain shrink-0" alt="магазин"><?= esc($shopInfo['title']) ?></h1>
         <a href="/game/shop" class="text-sm text-slate-400 hover:text-white flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> К магазинам</a>
@@ -26,11 +26,14 @@
                         <p class="text-xs text-slate-500 mt-0.5">
                             <span class="text-xs font-medium" :class="rarityClass(item.rarity)" x-text="rarityLabel(item.rarity)"></span>
                             <span class="ml-1" x-text="typeLabel(item)"></span>
-                            <template x-if="item.type === 'pickaxe'">
+                            <template x-if="requiredLevel(item) > 0">
+                                <span :class="levelTooLow(item) ? 'text-red-400 font-semibold' : ''" x-text="' · Ур. ' + requiredLevel(item)"></span>
+                            </template>
+                            <template x-if="item.type === 'pickaxe' || item.type === 'tool'">
                                 <span x-text="' · Добыча: ' + item.value + ' руды за жилу'"></span>
                             </template>
-                            <template x-if="item.type !== 'consumable' && item.type !== 'pickaxe'">
-                                <span x-text="' +' + item.value + (item.stat === 'attack' ? ' атаки' : ' защиты')"></span>
+                            <template x-if="item.type !== 'consumable' && item.type !== 'pickaxe' && item.type !== 'tool'">
+                                <span x-text="' · +' + item.value + (item.stat === 'attack' ? ' атаки' : ' защиты')"></span>
                             </template>
                             <template x-if="item.type === 'consumable'">
                                 <span x-text="' · восстанавливает ' + item.value + (item.stat === 'hp' ? ' HP' : ' энергии')"></span>
@@ -60,18 +63,29 @@
 </div>
 
 <script>
-function shopCategory(initialGold, items) {
+function shopCategory(initialGold, characterLevel, items) {
     return {
         gold: initialGold,
+        charLevel: characterLevel || 1,
         allItems: items,
         page: 1,
         perPage: 5,
+
+        requiredLevel(item) {
+            return Number(item.required_level || 0) > 0 ? Number(item.required_level) : 0;
+        },
+
+        levelTooLow(item) {
+            const req = this.requiredLevel(item);
+            return req > 0 && this.charLevel < req;
+        },
 
         totalPages() {
             return Math.max(1, Math.ceil(this.allItems.length / this.perPage));
         },
 
         pageItems() {
+            this.page = Math.min(Math.max(1, this.page), this.totalPages());
             const start = (this.page - 1) * this.perPage;
             return this.allItems.slice(start, start + this.perPage);
         },

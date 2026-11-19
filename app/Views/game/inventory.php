@@ -44,6 +44,10 @@ $filterQuery = [
     'rarities' => $filterRarities,
     'types' => $filterTypes,
 ];
+if (($filterLevelMin ?? 0) > 0) { $filterQuery['level_min'] = (int) $filterLevelMin; }
+if (($filterLevelMax ?? 0) > 0) { $filterQuery['level_max'] = (int) $filterLevelMax; }
+if (! empty($filterLevelAvailable)) { $filterQuery['level_available'] = 1; }
+$charLevel = (int) ($character->level ?? 1);
 $sortLink = function (string $key, string $label) use ($order_col, $order, $filterQuery): string {
     $arrow = '';
     if ($order_col === $key) {
@@ -158,6 +162,19 @@ $icon = function ($e, $type = ''): string {
                         class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none">
                 </label>
 
+                <div class="col-span-2 space-y-1 text-xs text-slate-300 lg:col-span-1">
+                    <span>Уровень (От – До)</span>
+                    <div class="flex items-center gap-2">
+                        <input name="level_min" value="<?= ((int) ($filterLevelMin ?? 0)) > 0 ? (int) $filterLevelMin : '' ?>" type="number" min="0" max="700" placeholder="От"
+                            class="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none">
+                        <input name="level_max" value="<?= ((int) ($filterLevelMax ?? 0)) > 0 ? (int) $filterLevelMax : '' ?>" type="number" min="0" max="700" placeholder="До"
+                            class="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <label class="mt-1 flex cursor-pointer items-center gap-2 text-xs text-slate-300">
+                        <input type="checkbox" name="level_available" value="1" class="accent-emerald-500" <?= ! empty($filterLevelAvailable) ? 'checked' : '' ?>>
+                        Доступные по уровню (≤ <?= $charLevel ?>)
+                    </label>
+                </div>
                 <div class="relative flex flex-col items-start space-y-1 text-xs text-slate-300 lg:col-start-4 lg:items-end">
                     <div>Редкость<?= $filterRarities !== [] ? ' (' . count($filterRarities) . ')' : '' ?></div>
                     <button type="button" @click="rarityOpen = !rarityOpen; typeOpen = false"
@@ -227,7 +244,7 @@ $icon = function ($e, $type = ''): string {
                     </th>
                     <th class="py-2 pr-2 text-left w-16"><?= $sortLink('qty', 'Кол-во') ?></th>
                     <th class="py-2 pr-2 text-left"><?= $sortLink('name', 'Имя') ?></th>
-                    <th class="py-2 pr-2 text-left w-20">Уровень</th>
+                    <th class="py-2 pr-2 text-left w-20"><?= $sortLink('level', 'Уровень') ?></th>
                     <th class="py-2 pr-2 text-right w-28"><?= $sortLink('price', 'Ценность') ?></th>
                     <th class="py-2 pr-2 text-left w-28"><?= $sortLink('type', 'Тип') ?></th>
                     <th class="py-2 pr-2 text-left w-40"><?= $sortLink('stat', 'Статы') ?></th>
@@ -257,18 +274,25 @@ $icon = function ($e, $type = ''): string {
                         <span class="font-semibold <?= $rc ?>"><?= esc($it->name) ?></span>
                         <?php if ($it->equipped): ?><span class="text-xs text-emerald-400 ml-1">✓ надето</span><?php endif; ?>
                     </td>
-                    <td class="py-2.5 pr-2 text-slate-500">—</td>
+                    <?php
+                    $itemLevel = (int) ($it->item_level ?? 0) ?: (int) ($it->required_level ?? 0);
+                    $levelLow  = $itemLevel > 0 && $charLevel < $itemLevel;
+                    ?>
+                    <td class="py-2.5 pr-2 <?= $levelLow ? 'text-red-400 font-semibold' : 'text-slate-300' ?>" title="<?= $levelLow ? 'Уровень персонажа ниже требуемого' : '' ?>">
+                        <?= $itemLevel > 0 ? 'Ур. ' . $itemLevel : '—' ?>
+                    </td>
                     <td class="py-2.5 pr-2 text-right text-amber-400"><img src="/img/misc/coin.png" class="inline-block w-4 h-4 align-middle object-contain" alt="золото"> <?= (int) ($it->price ?? 0) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
+                        <?php $rolledValue = (int) ($it->rolled_value ?? 0) ?: (int) $it->value; ?>
                         <?php if ($it->type === 'consumable'): ?>
                             +<?= (int) $it->value ?> <?= $it->stat === 'hp' ? 'HP' : 'энергии' ?>
-                        <?php elseif ($it->type === 'pickaxe'): ?>
+                        <?php elseif ($it->type === 'pickaxe' || $it->type === 'tool'): ?>
                             <span class="inline-flex items-center gap-1">Добыча: <?= (int) $it->value ?> руды</span>
                         <?php elseif ($it->type === 'material'): ?>
                             —
                         <?php else: ?>
-                            <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
+                            <span class="inline-flex items-center gap-1">+<?= $rolledValue ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
                             <?php if ($it->cmp === 'up'): ?>
                                 <svg class="inline w-3 h-3 align-middle text-emerald-400 font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                             <?php elseif ($it->cmp === 'down'): ?>
@@ -358,6 +382,7 @@ $icon = function ($e, $type = ''): string {
                     <th class="py-2 pr-2 text-left">Предмет</th>
                     <th class="py-2 pr-2 text-left w-32">Редкость</th>
                     <th class="py-2 pr-2 text-left w-28">Тип</th>
+                    <th class="py-2 pr-2 text-left w-20">Уровень</th>
                     <th class="py-2 pr-2 text-left">Статы</th>
                     <th class="py-2 w-28"></th>
                 </tr>
@@ -374,11 +399,13 @@ $icon = function ($e, $type = ''): string {
                     </td>
                     <td class="py-2.5 pr-2 <?= esc($rc) ?>"><?= esc($rarityNames[$it->rarity] ?? $it->rarity) ?></td>
                     <td class="py-2.5 pr-2 text-slate-300"><?= esc($typeNames[$it->type] ?? $it->type) ?></td>
+                    <td class="py-2.5 pr-2 text-slate-300"><?= ((int) ($it->item_level ?? 0)) > 0 ? 'Ур. ' . (int) $it->item_level : '—' ?></td>
                     <td class="py-2.5 pr-2 text-slate-300">
-                        <?php if ($it->type === 'pickaxe'): ?>
+                        <?php $eqValue = (int) ($it->rolled_value ?? 0) ?: (int) $it->value; ?>
+                        <?php if ($it->type === 'pickaxe' || $it->type === 'tool'): ?>
                             <span class="inline-flex items-center gap-1">Добыча: +<?= (int) $it->value ?> <img src="/img/ores/copper_ore.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="руда"> руды</span>
                         <?php else: ?>
-                            <span class="inline-flex items-center gap-1">+<?= (int) $it->value ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
+                            <span class="inline-flex items-center gap-1">+<?= $eqValue ?> <?php if ($it->stat === 'attack'): ?><img src="/img/misc/fight.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="атака"> атаки<?php else: ?><img src="/img/equipment/Iron%20Armor.png" class="w-3.5 h-3.5 shrink-0 object-contain" alt="защита"> защиты<?php endif; ?></span>
                         <?php endif; ?>
                     </td>
                     <td class="py-2.5 text-right">

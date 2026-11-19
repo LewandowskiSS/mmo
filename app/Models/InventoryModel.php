@@ -10,9 +10,9 @@ class InventoryModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = true;
-    protected $allowedFields = ['character_id', 'item_id', 'quantity', 'equipped'];
+    protected $allowedFields = ['character_id', 'item_id', 'quantity', 'equipped', 'item_level', 'rolled_value'];
 
-    /** Возвращает надетую строку в сумку, сохраняя и старые стаки с quantity > 1. */
+    /** Возвращает надетую строку в сумку, склеивая её с таким же экземпляром (item_level + rolled_value). */
     public function returnToBag(object $equipped): void
     {
         $db = db_connect();
@@ -25,6 +25,11 @@ class InventoryModel extends Model
             ->where('character_id', $equipped->character_id)
             ->where('item_id', $equipped->item_id)
             ->where('equipped', 0)
+            ->where('item_level', (int) ($equipped->item_level ?? 0))
+            ->groupStart()
+                ->where('rolled_value', (int) ($equipped->rolled_value ?? 0))
+                ->orWhere('rolled_value IS NULL', null, false)
+            ->groupEnd()
             ->orderBy('id', 'ASC')
             ->get()->getRow();
 

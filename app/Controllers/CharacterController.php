@@ -305,7 +305,31 @@ class CharacterController extends Game
                 'max_energy'     => $maxEn,
                 'energy_percent' => min(100, (int) round($energy / $maxEn * 100)),
             ],
+            'slots'       => $this->slotPayload($character),
         ];
+    }
+
+    /** Данные 8 слотов экипировки для вкладки «Снаряжение». */
+    private function slotPayload($character): array
+    {
+        $slots = self::equippedSlots((int) $character->id);
+        $out   = [];
+
+        foreach (\App\Config\ItemLevels::EQUIP_SLOTS as $slot) {
+            $item = $slots[$slot] ?? null;
+            $out[] = [
+                'key'    => $slot,
+                'label'  => \App\Config\ItemLevels::SLOT_NAMES[$slot],
+                'icon'   => $item ? game_icon_src((string) $item['emoji'], (string) $item['type']) : '',
+                'name'   => $item['name'] ?? '',
+                'rarity' => $item['rarity'] ?? '',
+                'stat'   => $item['stat'] ?? '',
+                'level'  => (int) ($item['item_level'] ?? 0),
+                'value'  => (int) ($item['rolled_value'] ?? 0),
+            ];
+        }
+
+        return $out;
     }
 
     private function unauthorized()
