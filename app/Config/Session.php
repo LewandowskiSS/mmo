@@ -40,8 +40,11 @@ class Session extends BaseConfig
      *
      * The number of SECONDS you want the session to last.
      * Setting to 0 (zero) means expire when the browser is closed.
+     *
+     * 86400 = 24 часа бездействия; скользящее продление при каждом запросе
+     * (фреймворк также использует это значение для gc_maxlifetime и cookie lifetime).
      */
-    public int $expiration = 7200;
+    public int $expiration = 86400;
 
     /**
      * --------------------------------------------------------------------------
@@ -78,8 +81,12 @@ class Session extends BaseConfig
      * --------------------------------------------------------------------------
      *
      * How many seconds between CI regenerating the session ID.
+     *
+     * 3600: AJAX-запросы (X-Requested-With) регенерацию пропускают, а при
+     * обычных переходах ID меняется раз в час; вместе с $regenerateDestroy = false
+     * это исключает случайный разлогин из-за гонки параллельных запросов.
      */
-    public int $timeToUpdate = 300;
+    public int $timeToUpdate = 3600;
 
     /**
      * --------------------------------------------------------------------------
