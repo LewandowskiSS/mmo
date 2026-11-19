@@ -174,13 +174,20 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
 
             <template x-if="status === 'won'">
                 <div>
-                    <button type="button" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                            :disabled="busy || gold < generateCost || energy < 1" @click="generate">
-                        <span class="inline-flex items-center justify-center gap-1.5">
+                    <button type="button" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none"
+                            :disabled="busy || isGenerating || generateCooldown > 0 || gold < generateCost || energy < 1" @click="generate" @keydown.enter.prevent="generate" @keydown.space.prevent="generate">
+                        <span x-show="!isGenerating" class="inline-flex items-center justify-center gap-1.5">
                             Сгенерировать монстра (<img src="<?= base_url('img/misc/coin.png') ?>" class="w-4 h-4 inline-block align-text-bottom object-contain" alt="Золото">
                             <span x-text="generateCostFormatted"></span>
                             <img src="<?= base_url('img/misc/energy.png') ?>" class="w-4 h-4 inline-block align-text-bottom object-contain" alt="Энергия">
                             1)
+                        </span>
+                        <span x-show="isGenerating" x-cloak class="inline-flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.3" stroke-width="3"></circle>
+                                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                            </svg>
+                            Генерация...
                         </span>
                     </button>
                     <p x-show="gold < generateCost || energy < 1" class="mt-1.5 text-xs text-red-400 text-center">Недостаточно золота или энергии</p>
@@ -219,6 +226,9 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                 busy: false,
                 cooldownSecs: 0,
                 _tick: null,
+                isGenerating: false,
+                generateCooldown: 0,
+                _genTick: null,
                 monsterShake: false,
                 playerShake: false,
                 floaters: [],
@@ -263,6 +273,23 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                     this._tick = null;
                     this.cooldownSecs = 0;
                     this.busy = false;
+                },
+
+                startGenerateCooldown(secs) {
+                    this.stopGenerateCooldown();
+                    this.isGenerating = false;
+                    this.generateCooldown = secs || 1.2;
+                    this._genTick = setInterval(() => {
+                        this.generateCooldown = Math.max(0, Math.round((this.generateCooldown - 0.1) * 10) / 10);
+                        if (this.generateCooldown <= 0) this.stopGenerateCooldown();
+                    }, 100);
+                },
+
+                stopGenerateCooldown() {
+                    clearInterval(this._genTick);
+                    this._genTick = null;
+                    this.generateCooldown = 0;
+                    this.isGenerating = false;
                 },
 
                 float(side, text) {
@@ -335,23 +362,41 @@ $cfgJson = json_encode($cfg, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNIC
                 },
 
                 async generate() {
+                    // Анти-спам: один запрос за раз + пауза после ответа сервера
+                    if (this.isGenerating || this.generateCooldown > 0) return;
                     if (this.busy || this.status !== 'won') return;
-                    this.busy = true;
+
+                    const canAfford = this.gold >= this.generateCost && this.energy >= 1;
+                    if (!canAfford) {
+                        this.toastBattle('Недостаточно золота или энергии', 'error');
+                        return;
+                    }
+
+                    this.isGenerating = true;
                     try {
                         const d = await Game.post('/battle/' + this.battleHash + '/generate', {}, 0);
                         if (!d.success) {
-                            this.toastBattle(d.message || 'Ошибка', 'error');
+                            if (d.type === 'cooldown') {
+                                this.startGenerateCooldown(Math.max(1, Number(d.cooldown) || 2));
+                                this.toastBattle(d.message || 'Подождите немного перед следующей генерацией монстра.', 'info');
+                                if (d.state) this.applyState(d.state);
+                            } else {
+                                this.startGenerateCooldown(1.2);
+                                this.toastBattle(d.message || 'Ошибка', 'error');
+                            }
                             return;
                         }
                         this.monster = d.monster;
                         this.status = 'active';
                         this.won = null;
                         if (d.state) this.applyState(d.state);
+                        this.startGenerateCooldown(1.2);
                         this.toastBattle(d.message, 'success', '/img/misc/coin.png');
                     } catch (e) {
+                        this.startGenerateCooldown(1.2);
                         this.toastBattle('Ошибка соединения', 'error');
                     } finally {
-                        this.busy = false;
+                        this.isGenerating = false;
                     }
                 },
 

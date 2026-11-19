@@ -12,6 +12,9 @@ class BattleController extends Game
     /** Минимальная серверная задержка между атаками (сек). */
     private const ATTACK_COOLDOWN_SECONDS = 2;
 
+    /** Минимальный интервал между генерациями монстра (сек) — анти-спам. */
+    private const GENERATE_COOLDOWN_SECONDS = 2;
+
     /**
      * Стоимость генерации нового монстра после победы.
      * Коэффициент ~0.75 от уровня, минимум 10 золота.
@@ -217,42 +220,116 @@ class BattleController extends Game
             return $this->response->setJSON(['success' => false, 'message' => 'У тебя нет здоровья для нового боя.']);
         }
 
-        $cost = $this->generateCost((int) $character->level);
+        // Анти-спам: блокировка параллельных запросов + не чаще 1 генерации в GENERATE_COOLDOWN_SECONDS.
+        $charId   = (int) $character->id;
+        $cacheKey = 'battle_generate_at_' . $charId;
+        $lockKey  = 'battle_generate_lock_' . $charId;
+        $lastAt   = cache($cacheKey);
+        if (cache($lockKey) || ($lastAt !== null && (time() - (int) $lastAt) < self::GENERATE_COOLDOWN_SECONDS)) {
+            $wait = ($lastAt !== null && (time() - (int) $lastAt) < self::GENERATE_COOLDOWN_SECONDS)
+                ? max(1, self::GENERATE_COOLDOWN_SECONDS - (time() - (int) $lastAt))
+                : self::GENERATE_COOLDOWN_SECONDS;
 
-        if ((int) $character->gold < $cost) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Недостаточно золота для генерации монстра.']);
+            return $this->response->setStatusCode(429)->setJSON([
+                'success'  => false,
+                'type'     => 'cooldown',
+                'cooldown' => $wait,
+                'message'  => 'Подождите немного перед следующей генерацией монстра.',
+                'state'    => $this->characterState($character),
+            ]);
+        }
+        cache()->save($lockKey, 1, 5);
+
+        $charModel    = new CharacterModel();
+        $sessionModel = new BattleSessionModel();
+        $db           = db_connect();
+        $db->transBegin();
+
+        try {
+            // Блокируем строку персонажа — параллельные запросы встанут в очередь.
+            $locked = $db->query('SELECT * FROM characters WHERE id = ? FOR UPDATE', [(int) $character->id])->getRow();
+            if (! $locked) {
+                $db->transRollback();
+
+                return $this->response->setJSON(['success' => false, 'message' => 'Персонаж не найден']);
+            }
+
+            // Перепроверяем бой под блокировкой: другой запрос мог уже его заменить.
+            $fresh = $sessionModel->where('battle_hash', $hash)->first();
+            if (! $fresh || (int) $fresh->character_id !== (int) $character->id || $fresh->status !== 'won') {
+                $db->transRollback();
+
+                return $this->response->setJSON(['success' => false, 'message' => 'Сначала победи монстра.']);
+            }
+
+            if ((int) $locked->hp <= 0) {
+                $db->transRollback();
+
+                return $this->response->setJSON(['success' => false, 'message' => 'У тебя нет здоровья для нового боя.']);
+            }
+
+            $cost = $this->generateCost((int) $locked->level);
+
+            if ((int) $locked->gold < $cost) {
+                $db->transRollback();
+
+                return $this->response->setJSON(['success' => false, 'message' => 'Недостаточно золота для генерации монстра.']);
+            }
+
+            if ((int) $locked->energy < 1) {
+                $db->transRollback();
+
+                return $this->response->setJSON(['success' => false, 'message' => 'Недостаточно энергии для генерации монстра.']);
+            }
+
+            $monster = $this->spawnMonster((int) $locked->level);
+
+            $charModel->update($locked->id, [
+                'gold'   => (int) $locked->gold - $cost,
+                'energy' => (int) $locked->energy - 1,
+                // Штампуем время списания, иначе regenEnergy вернёт энергию по старой задержке.
+                'last_energy_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $sessionModel->update($fresh->id, [
+                'monster_id'      => (int) $monster->id,
+                'monster_name'    => $monster->name,
+                'monster_emoji'   => $monster->emoji,
+                'monster_level'   => (int) $monster->level,
+                'monster_hp'      => (int) $monster->hp,
+                'monster_max_hp'  => (int) $monster->hp,
+                'monster_attack'  => (int) $monster->attack,
+                'monster_defense' => (int) $monster->defense,
+                'status'          => 'active',
+                'last_attack_at'  => null,
+            ]);
+
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+
+                return $this->response->setJSON(['success' => false, 'message' => 'Не удалось сгенерировать монстра. Попробуйте ещё раз.']);
+            }
+
+            $db->transCommit();
+
+            // Штампуем кулдаун ДО освобождения lock, чтобы параллельный запрос не проскочил между проверками.
+            cache()->save($cacheKey, time(), self::GENERATE_COOLDOWN_SECONDS * 5);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Battle generate failed: ' . $e->getMessage());
+
+            return $this->response->setJSON(['success' => false, 'message' => 'Не удалось сгенерировать монстра. Попробуйте ещё раз.']);
+        } finally {
+            cache()->delete($lockKey);
         }
 
-        if ((int) $character->energy < 1) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Недостаточно энергии для генерации монстра.']);
-        }
-
-        // Атомарно списываем золото и энергию
-        (new CharacterModel())->update($character->id, [
-            'gold'   => (int) $character->gold - $cost,
-            'energy' => (int) $character->energy - 1,
-        ]);
-
-        $monster = $this->spawnMonster((int) $character->level);
-
-        (new BattleSessionModel())->update($battle->id, [
-            'monster_id'      => (int) $monster->id,
-            'monster_name'    => $monster->name,
-            'monster_emoji'   => $monster->emoji,
-            'monster_level'   => (int) $monster->level,
-            'monster_hp'      => (int) $monster->hp,
-            'monster_max_hp'  => (int) $monster->hp,
-            'monster_attack'  => (int) $monster->attack,
-            'monster_defense' => (int) $monster->defense,
-            'status'          => 'active',
-            'last_attack_at'  => null,
-        ]);
+        $updated = $charModel->find($character->id) ?? $character;
 
         return $this->response->setJSON([
             'success'   => true,
             'status'    => 'active',
             'message'   => "Сгенерирован {$monster->name}!",
-            'battle_hash' => $battle->battle_hash,
+            'battle_hash' => $hash,
             'monster'   => [
                 'id'     => (int) $monster->id,
                 'name'   => $monster->name,
@@ -261,7 +338,7 @@ class BattleController extends Game
                 'hp'     => (int) $monster->hp,
                 'max_hp' => (int) $monster->hp,
             ],
-            'state'     => $this->characterState($character),
+            'state'     => $this->characterState($updated),
         ]);
     }
 
